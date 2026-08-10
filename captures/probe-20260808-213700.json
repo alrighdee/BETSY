@@ -1,0 +1,57 @@
+{
+ "started": "20260808-213700",
+ "port": "/dev/cu.OBDII",
+ "mode": "quick",
+ "exchanges": [
+  {
+   "t": 55.206,
+   "header": "7E3",
+   "request": "21CE",
+   "why": "sanity: adapter+bus alive, service 21 known-good on 7E3",
+   "raw": "",
+   "hex": "",
+   "bytes": 0,
+   "verdict": "NO DATA / silence \u2014 discriminates nothing"
+  },
+  {
+   "t": 67.441,
+   "header": "7E2",
+   "request": "13B0",
+   "why": "baseline: is a fault stored? changes what the rest can prove",
+   "raw": "",
+   "hex": "",
+   "bytes": 0,
+   "verdict": "NO DATA / silence \u2014 discriminates nothing"
+  },
+  {
+   "t": 79.664,
+   "header": "7E2",
+   "request": "2101",
+   "why": "THE unknown: does 7E2 answer service 21?",
+   "raw": "",
+   "hex": "",
+   "bytes": 0,
+   "verdict": "NO DATA / silence \u2014 discriminates nothing"
+  },
+  {
+   "t": 91.87,
+   "header": "7E2",
+   "request": "21CA",
+   "why": "detail table 5 \u2014 payload LENGTH is the falsifiable bit",
+   "raw": "",
+   "hex": "",
+   "bytes": 0,
+   "verdict": "NO DATA / silence \u2014 discriminates nothing"
+  },
+  {
+   "t": 104.115,
+   "header": "7E2",
+   "request": "2205CA",
+   "why": "control: expect 7F 22 11",
+   "raw": "",
+   "hex": "",
+   "bytes": 0,
+   "verdict": "NO DATA / silence \u2014 discriminates nothing"
+  }
+ ]
+}

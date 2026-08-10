@@ -1,0 +1,17 @@
+# Android / Gradle
+app/build/
+app/.gradle/
+app/local.properties
+.gradle/
+build/
+
+# Python
+tools/__pycache__/
+*.pyc
+
+# Local tooling / editor
+.DS_Store
+
+# Release signing, NEVER commit. Losing these means users must uninstall to update.
+betsy-release.jks
+keystore.properties

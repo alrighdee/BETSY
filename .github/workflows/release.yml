@@ -1,0 +1,98 @@
+name: release
+
+# Builds a signed APK for a tag that already has a GitHub Release, and attaches it. Releases are
+# cut by release-please (see release-please.yml), which calls this workflow. The manual trigger is
+# the escape hatch for re-attaching an APK to an existing release.
+on:
+  workflow_call:
+    inputs:
+      tag:
+        description: Existing tag whose release should receive a signed APK.
+        required: true
+        type: string
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing tag whose release should receive a signed APK.
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag }}
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      # Reconstruct the signing material the build expects. The keystore never lives in the
+      # repository, it arrives as a secret and is written outside the checkout's tracked paths.
+      - name: restore signing config
+        env:
+          KEYSTORE_B64: ${{ secrets.BETSY_KEYSTORE_BASE64 }}
+          STORE_PASSWORD: ${{ secrets.BETSY_STORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.BETSY_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.BETSY_KEY_PASSWORD }}
+        run: |
+          if [ -z "$KEYSTORE_B64" ]; then
+            echo "No signing secrets set, cannot produce an installable APK." >&2
+            exit 1
+          fi
+          echo "$KEYSTORE_B64" | base64 -d > betsy-release.jks
+          cat > keystore.properties <<EOF
+          storeFile=betsy-release.jks
+          storePassword=$STORE_PASSWORD
+          keyAlias=$KEY_ALIAS
+          keyPassword=$KEY_PASSWORD
+          EOF
+
+      - name: check
+        working-directory: app
+        run: ./gradlew check --no-daemon
+
+      - name: assemble release
+        working-directory: app
+        run: ./gradlew assembleRelease --no-daemon
+
+      - name: verify it is signed
+        run: |
+          APK=$(ls app/build/outputs/apk/release/*.apk | head -1)
+          "$ANDROID_HOME"/build-tools/34.0.0/apksigner verify --print-certs "$APK"
+
+      - name: shred signing material
+        if: always()
+        run: rm -f betsy-release.jks keystore.properties
+
+      # Upload rather than create: release-please already wrote the release and its changelog body,
+      # and re-creating it here would overwrite those notes.
+      - name: attach the APK
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag }}
+        run: gh release upload "$TAG" app/build/outputs/apk/release/*.apk --clobber
+
+      - name: prepend the sideload note
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag }}
+        run: |
+          if gh release view "$TAG" --json body -q .body | grep -q '<!-- sideload-note -->'; then
+            echo "Preamble already present, leaving the notes alone."
+            exit 0
+          fi
+          {
+            cat .github/RELEASE_PREAMBLE.md
+            echo
+            gh release view "$TAG" --json body -q .body
+          } > "$RUNNER_TEMP/notes.md"
+          gh release edit "$TAG" --notes-file "$RUNNER_TEMP/notes.md"

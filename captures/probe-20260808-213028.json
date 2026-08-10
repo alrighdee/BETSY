@@ -1,0 +1,147 @@
+{
+ "started": "20260808-213028",
+ "port": "/dev/cu.OBDII",
+ "mode": "full",
+ "exchanges": [
+  {
+   "t": 55.17,
+   "header": "7E2",
+   "request": "13B0",
+   "why": "baseline: DTC count on the HV ECU",
+   "raw": "",
+   "hex": "",
+   "bytes": 0,
+   "verdict": "NO DATA / silence \u2014 discriminates nothing"
+  },
+  {
+   "t": 67.397,
+   "header": "7E3",
+   "request": "1380",
+   "why": "baseline: DTC count on the battery ECU",
+   "raw": "",
+   "hex": "",
+   "bytes": 0,
+   "verdict": "NO DATA / silence \u2014 discriminates nothing"
+  },
+  {
+   "t": 79.629,
+   "header": "7E3",
+   "request": "21CE",
+   "why": "sanity: service 21 known-good on 7E3",
+   "raw": "",
+   "hex": "",
+   "bytes": 0,
+   "verdict": "NO DATA / silence \u2014 discriminates nothing"
+  },
+  {
+   "t": 91.85,
+   "header": "7E2",
+   "request": "2101",
+   "why": "THE load-bearing unknown: does 7E2 answer service 21?",
+   "raw": "",
+   "hex": "",
+   "bytes": 0,
+   "verdict": "NO DATA / silence \u2014 discriminates nothing"
+  },
+  {
+   "t": 104.071,
+   "header": "7E2",
+   "request": "21CA",
+   "why": "detail table 5 (INF 6xx) \u2014 the headline read",
+   "raw": "",
+   "hex": "",
+   "bytes": 0,
+   "verdict": "NO DATA / silence \u2014 discriminates nothing"
+  },
+  {
+   "t": 116.288,
+   "header": "7E2",
+   "request": "21C9",
+   "why": "detail table 4 (INF 5xx) \u2014 other half of a P0AA6 pair",
+   "raw": "",
+   "hex": "",
+   "bytes": 0,
+   "verdict": "NO DATA / silence \u2014 discriminates nothing"
+  },
+  {
+   "t": 128.512,
+   "header": "7E2",
+   "request": "21C6C7C8C9CA",
+   "why": "all five tables in one request",
+   "raw": "",
+   "hex": "",
+   "bytes": 0,
+   "verdict": "NO DATA / silence \u2014 discriminates nothing"
+  },
+  {
+   "t": 140.731,
+   "header": "7E2",
+   "request": "2105CA",
+   "why": "variant: service 21 with a two-byte identifier",
+   "raw": "",
+   "hex": "",
+   "bytes": 0,
+   "verdict": "NO DATA / silence \u2014 discriminates nothing"
+  },
+  {
+   "t": 152.94,
+   "header": "7E2",
+   "request": "2205CA",
+   "why": "control: expect 7F 22 11",
+   "raw": "",
+   "hex": "",
+   "bytes": 0,
+   "verdict": "NO DATA / silence \u2014 discriminates nothing"
+  },
+  {
+   "t": 165.178,
+   "header": "7E2",
+   "request": "22F186",
+   "why": "control: any UDS DID at all",
+   "raw": "",
+   "hex": "",
+   "bytes": 0,
+   "verdict": "NO DATA / silence \u2014 discriminates nothing"
+  },
+  {
+   "t": 177.385,
+   "header": "7E3",
+   "request": "21CA",
+   "why": "in case the tables sit on the battery ECU",
+   "raw": "",
+   "hex": "",
+   "bytes": 0,
+   "verdict": "NO DATA / silence \u2014 discriminates nothing"
+  },
+  {
+   "t": 189.602,
+   "header": "7E3",
+   "request": "21C9",
+   "why": "likewise",
+   "raw": "",
+   "hex": "",
+   "bytes": 0,
+   "verdict": "NO DATA / silence \u2014 discriminates nothing"
+  },
+  {
+   "t": 201.841,
+   "header": "7E2",
+   "request": "1381",
+   "why": "additional DTC status mask",
+   "raw": "",
+   "hex": "",
+   "bytes": 0,
+   "verdict": "NO DATA / silence \u2014 discriminates nothing"
+  },
+  {
+   "t": 214.092,
+   "header": "7E2",
+   "request": "1382",
+   "why": "additional DTC status mask",
+   "raw": "",
+   "hex": "",
+   "bytes": 0,
+   "verdict": "NO DATA / silence \u2014 discriminates nothing"
+  }
+ ]
+}

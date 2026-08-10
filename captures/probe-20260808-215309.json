@@ -1,0 +1,387 @@
+{
+ "started": "20260808-215309",
+ "port": "/dev/cu.OBDII",
+ "mode": "sweep",
+ "exchanges": [
+  {
+   "t": 4.402,
+   "header": "7E2",
+   "request": "21C0",
+   "why": "identifier sweep 0xc0",
+   "raw": "SEARCHING... 61C0F7F0A001",
+   "hex": "61C0F7F0A001",
+   "bytes": 6,
+   "verdict": "POSITIVE 61. payload 4 bytes  (layout predicts 57 \u2014 4 means a different generation/table)"
+  },
+  {
+   "t": 5.781,
+   "header": "7E2",
+   "request": "21C1",
+   "why": "identifier sweep 0xc1",
+   "raw": "014 0:61C14E485732 1:302020314E5A46 2:58450400416A20",
+   "hex": "61C14E485732302020314E5A4658450400416A20",
+   "bytes": 20,
+   "verdict": "POSITIVE 61. payload 18 bytes  (layout predicts 57 \u2014 18 means a different generation/table)"
+  },
+  {
+   "t": 6.144,
+   "header": "7E2",
+   "request": "21C2",
+   "why": "identifier sweep 0xc2",
+   "raw": "00A 0:61C234373231 1:32000005000000",
+   "hex": "61C23437323132000005",
+   "bytes": 10,
+   "verdict": "POSITIVE 61. payload 8 bytes  (layout predicts 57 \u2014 8 means a different generation/table)"
+  },
+  {
+   "t": 6.515,
+   "header": "7E2",
+   "request": "21C3",
+   "why": "identifier sweep 0xc3",
+   "raw": "027 0:61C33FFF0FA0 1:00003FFF0FA000 2:00000000000080 3:6B417A0080005F 4:5E595A6900827A 5:7A4A4C01800000",
+   "hex": "61C33FFF0FA000003FFF0FA000000000000000806B417A0080005F5E595A6900827A7A4A4C0180",
+   "bytes": 39,
+   "verdict": "POSITIVE 61. payload 37 bytes  (layout predicts 57 \u2014 37 means a different generation/table)"
+  },
+  {
+   "t": 6.907,
+   "header": "7E2",
+   "request": "21C4",
+   "why": "identifier sweep 0xc4",
+   "raw": "011 0:61C400400064 1:46625F06048080 2:FF20001D000000",
+   "hex": "61C40040006446625F06048080FF20001D",
+   "bytes": 17,
+   "verdict": "POSITIVE 61. payload 15 bytes  (layout predicts 57 \u2014 15 means a different generation/table)"
+  },
+  {
+   "t": 8.307,
+   "header": "7E2",
+   "request": "21C5",
+   "why": "identifier sweep 0xc5",
+   "raw": "NO DATA",
+   "hex": "",
+   "bytes": 0,
+   "verdict": "NO DATA / silence \u2014 discriminates nothing"
+  },
+  {
+   "t": 8.689,
+   "header": "7E2",
+   "request": "21C6",
+   "why": "identifier sweep 0xc6",
+   "raw": "032 0:61C600000000 1:00000000000000 2:00000000000000 3:00000000000000 4:00000000000000 5:00000000000000 6:00000000000000 7:00000000000000",
+   "hex": "61C6000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+   "bytes": 50,
+   "verdict": "POSITIVE 61. payload 48 bytes  (layout predicts 57 \u2014 48 means a different generation/table); all zero (expected on a fault-free car)"
+  },
+  {
+   "t": 9.039,
+   "header": "7E2",
+   "request": "21C7",
+   "why": "identifier sweep 0xc7",
+   "raw": "032 0:61C700000000 1:00000000000000 2:00000000000000 3:00000000000000 4:00000000000000 5:00000000000000 6:00000000000000 7:00000000000000",
+   "hex": "61C7000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+   "bytes": 50,
+   "verdict": "POSITIVE 61. payload 48 bytes  (layout predicts 57 \u2014 48 means a different generation/table); all zero (expected on a fault-free car)"
+  },
+  {
+   "t": 9.398,
+   "header": "7E2",
+   "request": "21C8",
+   "why": "identifier sweep 0xc8",
+   "raw": "032 0:61C800000000 1:00000000000000 2:00000000000000 3:00000000000000 4:00000000000000 5:00000000000000 6:00000000000000 7:00000000000000",
+   "hex": "61C8000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+   "bytes": 50,
+   "verdict": "POSITIVE 61. payload 48 bytes  (layout predicts 57 \u2014 48 means a different generation/table); all zero (expected on a fault-free car)"
+  },
+  {
+   "t": 9.723,
+   "header": "7E2",
+   "request": "21C9",
+   "why": "identifier sweep 0xc9",
+   "raw": "032 0:61C900000000 1:00000000000000 2:00000000000000 3:00000000000000 4:00000000000000 5:00000000000000 6:00000000000000 7:00000000000000",
+   "hex": "61C9000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+   "bytes": 50,
+   "verdict": "POSITIVE 61. payload 48 bytes  (layout predicts 57 \u2014 48 means a different generation/table); all zero (expected on a fault-free car)"
+  },
+  {
+   "t": 10.047,
+   "header": "7E2",
+   "request": "21CA",
+   "why": "identifier sweep 0xca",
+   "raw": "032 0:61CA00000000 1:00000000000000 2:00000000000000 3:00000000000000 4:00000000000000 5:00000000000000 6:00000000000000 7:00000000000000",
+   "hex": "61CA000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+   "bytes": 50,
+   "verdict": "POSITIVE 61. payload 48 bytes  (layout predicts 57 \u2014 48 means a different generation/table); all zero (expected on a fault-free car)"
+  },
+  {
+   "t": 10.408,
+   "header": "7E2",
+   "request": "21CB",
+   "why": "identifier sweep 0xcb",
+   "raw": "026 0:61CB00000000 1:00000000000000 2:00010200000000 3:00000000000000 4:00000000000000 5:00000000000000",
+   "hex": "61CB000000000000000000000000010200000000000000000000000000000000000000000000",
+   "bytes": 38,
+   "verdict": "POSITIVE 61. payload 36 bytes  (layout predicts 57 \u2014 36 means a different generation/table)"
+  },
+  {
+   "t": 10.754,
+   "header": "7E2",
+   "request": "21CC",
+   "why": "identifier sweep 0xcc",
+   "raw": "032 0:61CC00000000 1:00000000000000 2:00000000000000 3:00000000000000 4:00000000000000 5:04020105000000 6:00010600000000 7:00000000000000",
+   "hex": "61CC000000000000000000000000000000000000000000000000000000000000000004020105000000000106000000000000",
+   "bytes": 50,
+   "verdict": "POSITIVE 61. payload 48 bytes  (layout predicts 57 \u2014 48 means a different generation/table)"
+  },
+  {
+   "t": 12.117,
+   "header": "7E2",
+   "request": "21CD",
+   "why": "identifier sweep 0xcd",
+   "raw": "NO DATA",
+   "hex": "",
+   "bytes": 0,
+   "verdict": "NO DATA / silence \u2014 discriminates nothing"
+  },
+  {
+   "t": 13.51,
+   "header": "7E2",
+   "request": "21CE",
+   "why": "identifier sweep 0xce",
+   "raw": "NO DATA",
+   "hex": "",
+   "bytes": 0,
+   "verdict": "NO DATA / silence \u2014 discriminates nothing"
+  },
+  {
+   "t": 14.847,
+   "header": "7E2",
+   "request": "21CF",
+   "why": "identifier sweep 0xcf",
+   "raw": "NO DATA",
+   "hex": "",
+   "bytes": 0,
+   "verdict": "NO DATA / silence \u2014 discriminates nothing"
+  },
+  {
+   "t": 16.173,
+   "header": "7E2",
+   "request": "21D0",
+   "why": "identifier sweep 0xd0",
+   "raw": "NO DATA",
+   "hex": "",
+   "bytes": 0,
+   "verdict": "NO DATA / silence \u2014 discriminates nothing"
+  },
+  {
+   "t": 16.524,
+   "header": "7E2",
+   "request": "21D1",
+   "why": "identifier sweep 0xd1",
+   "raw": "008 0:61D17E0103FF 1:0AE80000000000",
+   "hex": "61D17E0103FF0AE8",
+   "bytes": 8,
+   "verdict": "POSITIVE 61. payload 6 bytes  (layout predicts 57 \u2014 6 means a different generation/table)"
+  },
+  {
+   "t": 17.844,
+   "header": "7E2",
+   "request": "21D2",
+   "why": "identifier sweep 0xd2",
+   "raw": "NO DATA",
+   "hex": "",
+   "bytes": 0,
+   "verdict": "NO DATA / silence \u2014 discriminates nothing"
+  },
+  {
+   "t": 18.193,
+   "header": "7E2",
+   "request": "21D3",
+   "why": "identifier sweep 0xd3",
+   "raw": "61D30000000000",
+   "hex": "61D30000000000",
+   "bytes": 7,
+   "verdict": "POSITIVE 61. payload 5 bytes  (layout predicts 57 \u2014 5 means a different generation/table); all zero (expected on a fault-free car)"
+  },
+  {
+   "t": 19.562,
+   "header": "7E2",
+   "request": "21D4",
+   "why": "identifier sweep 0xd4",
+   "raw": "NO DATA",
+   "hex": "",
+   "bytes": 0,
+   "verdict": "NO DATA / silence \u2014 discriminates nothing"
+  },
+  {
+   "t": 20.923,
+   "header": "7E2",
+   "request": "21D5",
+   "why": "identifier sweep 0xd5",
+   "raw": "NO DATA",
+   "hex": "",
+   "bytes": 0,
+   "verdict": "NO DATA / silence \u2014 discriminates nothing"
+  },
+  {
+   "t": 22.277,
+   "header": "7E2",
+   "request": "21D6",
+   "why": "identifier sweep 0xd6",
+   "raw": "NO DATA",
+   "hex": "",
+   "bytes": 0,
+   "verdict": "NO DATA / silence \u2014 discriminates nothing"
+  },
+  {
+   "t": 23.613,
+   "header": "7E2",
+   "request": "21D7",
+   "why": "identifier sweep 0xd7",
+   "raw": "NO DATA",
+   "hex": "",
+   "bytes": 0,
+   "verdict": "NO DATA / silence \u2014 discriminates nothing"
+  },
+  {
+   "t": 24.939,
+   "header": "7E2",
+   "request": "21D8",
+   "why": "identifier sweep 0xd8",
+   "raw": "NO DATA",
+   "hex": "",
+   "bytes": 0,
+   "verdict": "NO DATA / silence \u2014 discriminates nothing"
+  },
+  {
+   "t": 26.285,
+   "header": "7E2",
+   "request": "21D9",
+   "why": "identifier sweep 0xd9",
+   "raw": "NO DATA",
+   "hex": "",
+   "bytes": 0,
+   "verdict": "NO DATA / silence \u2014 discriminates nothing"
+  },
+  {
+   "t": 27.647,
+   "header": "7E2",
+   "request": "21DA",
+   "why": "identifier sweep 0xda",
+   "raw": "NO DATA",
+   "hex": "",
+   "bytes": 0,
+   "verdict": "NO DATA / silence \u2014 discriminates nothing"
+  },
+  {
+   "t": 28.979,
+   "header": "7E2",
+   "request": "21DB",
+   "why": "identifier sweep 0xdb",
+   "raw": "NO DATA",
+   "hex": "",
+   "bytes": 0,
+   "verdict": "NO DATA / silence \u2014 discriminates nothing"
+  },
+  {
+   "t": 30.334,
+   "header": "7E2",
+   "request": "21DC",
+   "why": "identifier sweep 0xdc",
+   "raw": "NO DATA",
+   "hex": "",
+   "bytes": 0,
+   "verdict": "NO DATA / silence \u2014 discriminates nothing"
+  },
+  {
+   "t": 31.663,
+   "header": "7E2",
+   "request": "21DD",
+   "why": "identifier sweep 0xdd",
+   "raw": "NO DATA",
+   "hex": "",
+   "bytes": 0,
+   "verdict": "NO DATA / silence \u2014 discriminates nothing"
+  },
+  {
+   "t": 33.012,
+   "header": "7E2",
+   "request": "21DE",
+   "why": "identifier sweep 0xde",
+   "raw": "NO DATA",
+   "hex": "",
+   "bytes": 0,
+   "verdict": "NO DATA / silence \u2014 discriminates nothing"
+  },
+  {
+   "t": 34.342,
+   "header": "7E2",
+   "request": "21DF",
+   "why": "identifier sweep 0xdf",
+   "raw": "NO DATA",
+   "hex": "",
+   "bytes": 0,
+   "verdict": "NO DATA / silence \u2014 discriminates nothing"
+  },
+  {
+   "t": 34.694,
+   "header": "7E2",
+   "request": "21E0",
+   "why": "identifier sweep 0xe0",
+   "raw": "61E0E0000004",
+   "hex": "61E0E0000004",
+   "bytes": 6,
+   "verdict": "POSITIVE 61. payload 4 bytes  (layout predicts 57 \u2014 4 means a different generation/table)"
+  },
+  {
+   "t": 35.032,
+   "header": "7E2",
+   "request": "21E1",
+   "why": "identifier sweep 0xe1",
+   "raw": "61E10000",
+   "hex": "61E10000",
+   "bytes": 4,
+   "verdict": "POSITIVE 61. payload 2 bytes  (layout predicts 57 \u2014 2 means a different generation/table); all zero (expected on a fault-free car)"
+  },
+  {
+   "t": 35.361,
+   "header": "7E2",
+   "request": "21E2",
+   "why": "identifier sweep 0xe2",
+   "raw": "61E2FFF3D9F340",
+   "hex": "61E2FFF3D9F340",
+   "bytes": 7,
+   "verdict": "POSITIVE 61. payload 5 bytes  (layout predicts 57 \u2014 5 means a different generation/table)"
+  },
+  {
+   "t": 35.679,
+   "header": "7E2",
+   "request": "21E3",
+   "why": "identifier sweep 0xe3",
+   "raw": "61E300",
+   "hex": "61E300",
+   "bytes": 3,
+   "verdict": "POSITIVE 61. payload 1 bytes  (layout predicts 57 \u2014 1 means a different generation/table); all zero (expected on a fault-free car)"
+  },
+  {
+   "t": 37.04,
+   "header": "7E2",
+   "request": "21E4",
+   "why": "identifier sweep 0xe4",
+   "raw": "NO DATA",
+   "hex": "",
+   "bytes": 0,
+   "verdict": "NO DATA / silence \u2014 discriminates nothing"
+  },
+  {
+   "t": 38.417,
+   "header": "7E2",
+   "request": "21E5",
+   "why": "identifier sweep 0xe5",
+   "raw": "NO DATA",
+   "hex": "",
+   "bytes": 0,
+   "verdict": "NO DATA / silence \u2014 discriminates nothing"
+  }
+ ]
+}

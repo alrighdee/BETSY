@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      Matches the artwork's own backdrop (sampled #000311 at all four edges and mid-edges), so the
+      inset seam between the foreground artwork and this layer is invisible, and a circular mask
+      clips only backdrop against backdrop.
+    -->
+    <color name="ic_launcher_background">#000311</color>
+</resources>

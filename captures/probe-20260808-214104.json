@@ -1,0 +1,6 @@
+{
+ "started": "20260808-214104",
+ "port": "/dev/cu.OBDII",
+ "mode": "quick",
+ "exchanges": []
+}

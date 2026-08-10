@@ -1,0 +1,147 @@
+{
+ "started": "20260808-215057",
+ "port": "/dev/cu.OBDII",
+ "mode": "full",
+ "exchanges": [
+  {
+   "t": 4.513,
+   "header": "7E2",
+   "request": "13B0",
+   "why": "baseline: DTC count on the HV ECU",
+   "raw": "SEARCHING... 5300",
+   "hex": "5300",
+   "bytes": 2,
+   "verdict": "POSITIVE 53. 0 stored DTC(s)"
+  },
+  {
+   "t": 5.845,
+   "header": "7E3",
+   "request": "1380",
+   "why": "baseline: DTC count on the battery ECU",
+   "raw": "5300",
+   "hex": "5300",
+   "bytes": 2,
+   "verdict": "POSITIVE 53. 0 stored DTC(s)"
+  },
+  {
+   "t": 6.22,
+   "header": "7E3",
+   "request": "21CE",
+   "why": "sanity: service 21 known-good on 7E3",
+   "raw": "021 0:61CE5981D086 1:1D861D86118619 2:8613861C861386 3:188616861F8612 4:86158610862100",
+   "hex": "61CE5981D0861D861D861186198613861C861386188616861F8612861586108621",
+   "bytes": 33,
+   "verdict": "POSITIVE 61. payload 31 bytes  (layout predicts 57 \u2014 31 means a different generation/table)"
+  },
+  {
+   "t": 6.583,
+   "header": "7E2",
+   "request": "2101",
+   "why": "THE load-bearing unknown: does 7E2 answer service 21?",
+   "raw": "610100040000",
+   "hex": "610100040000",
+   "bytes": 6,
+   "verdict": "POSITIVE 61. payload 4 bytes  (layout predicts 57 \u2014 4 means a different generation/table)"
+  },
+  {
+   "t": 6.951,
+   "header": "7E2",
+   "request": "21CA",
+   "why": "detail table 5 (INF 6xx) \u2014 the headline read",
+   "raw": "032 0:61CA00000000 1:00000000000000 2:00000000000000 3:00000000000000 4:00000000000000 5:00000000000000 6:00000000000000 7:00000000000000",
+   "hex": "61CA000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+   "bytes": 50,
+   "verdict": "POSITIVE 61. payload 48 bytes  (layout predicts 57 \u2014 48 means a different generation/table); all zero (expected on a fault-free car)"
+  },
+  {
+   "t": 7.299,
+   "header": "7E2",
+   "request": "21C9",
+   "why": "detail table 4 (INF 5xx) \u2014 other half of a P0AA6 pair",
+   "raw": "032 0:61C900000000 1:00000000000000 2:00000000000000 3:00000000000000 4:00000000000000 5:00000000000000 6:00000000000000 7:00000000000000",
+   "hex": "61C9000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+   "bytes": 50,
+   "verdict": "POSITIVE 61. payload 48 bytes  (layout predicts 57 \u2014 48 means a different generation/table); all zero (expected on a fault-free car)"
+  },
+  {
+   "t": 7.625,
+   "header": "7E2",
+   "request": "21C6C7C8C9CA",
+   "why": "all five tables in one request",
+   "raw": "7F2112",
+   "hex": "7F2112",
+   "bytes": 3,
+   "verdict": "NRC 12 subFunctionNotSupported"
+  },
+  {
+   "t": 7.952,
+   "header": "7E2",
+   "request": "2105CA",
+   "why": "variant: service 21 with a two-byte identifier",
+   "raw": "034 0:610579CA0000 1:00000000000000 2:00000000000000 3:00000000000000 4:00000000000000 5:00000000000000 6:00000000000000 7:00000000000000",
+   "hex": "610579CA000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+   "bytes": 52,
+   "verdict": "POSITIVE 61. payload 50 bytes  (layout predicts 57 \u2014 50 means a different generation/table)"
+  },
+  {
+   "t": 8.277,
+   "header": "7E2",
+   "request": "2205CA",
+   "why": "control: expect 7F 22 11",
+   "raw": "7F2211",
+   "hex": "7F2211",
+   "bytes": 3,
+   "verdict": "NRC 11 serviceNotSupported"
+  },
+  {
+   "t": 8.595,
+   "header": "7E2",
+   "request": "22F186",
+   "why": "control: any UDS DID at all",
+   "raw": "7F2211",
+   "hex": "7F2211",
+   "bytes": 3,
+   "verdict": "NRC 11 serviceNotSupported"
+  },
+  {
+   "t": 9.988,
+   "header": "7E3",
+   "request": "21CA",
+   "why": "in case the tables sit on the battery ECU",
+   "raw": "NO DATA",
+   "hex": "",
+   "bytes": 0,
+   "verdict": "NO DATA / silence \u2014 discriminates nothing"
+  },
+  {
+   "t": 11.332,
+   "header": "7E3",
+   "request": "21C9",
+   "why": "likewise",
+   "raw": "NO DATA",
+   "hex": "",
+   "bytes": 0,
+   "verdict": "NO DATA / silence \u2014 discriminates nothing"
+  },
+  {
+   "t": 11.704,
+   "header": "7E2",
+   "request": "1381",
+   "why": "additional DTC status mask",
+   "raw": "7F1312",
+   "hex": "7F1312",
+   "bytes": 3,
+   "verdict": "NRC 12 subFunctionNotSupported"
+  },
+  {
+   "t": 12.027,
+   "header": "7E2",
+   "request": "1382",
+   "why": "additional DTC status mask",
+   "raw": "7F1312",
+   "hex": "7F1312",
+   "bytes": 3,
+   "verdict": "NRC 12 subFunctionNotSupported"
+  }
+ ]
+}

@@ -1,0 +1,62 @@
+[   0.0s] # read-only INF probe on /dev/cu.OBDII
+[   0.0s] >> ATZ
+[   6.0s] << 
+[   6.2s] >> ATE0
+[  12.2s] << 
+[  12.3s] >> ATL0
+[  18.3s] << 
+[  18.5s] >> ATS0
+[  24.5s] << 
+[  24.7s] >> ATH0
+[  30.7s] << 
+[  30.8s] >> ATSP0
+[  36.8s] << 
+[  37.0s] >> ATSTFF
+[  43.0s] << 
+[  43.2s] # plan: quick — 5 exchanges
+[  43.2s] [1/5] 7E3 21CE — sanity: adapter+bus alive, service 21 known-good on 7E3
+[  43.2s] >> ATSH7E3
+[  49.2s] << 
+[  49.2s] >> 21CE
+[  55.2s] << 
+[  55.2s]       => NO DATA / silence — discriminates nothing
+[  55.4s] [2/5] 7E2 13B0 — baseline: is a fault stored? changes what the rest can prove
+[  55.4s] >> ATSH7E2
+[  61.4s] << 
+[  61.4s] >> 13B0
+[  67.4s] << 
+[  67.4s]       => NO DATA / silence — discriminates nothing
+[  67.6s] [3/5] 7E2 2101 — THE unknown: does 7E2 answer service 21?
+[  67.6s] >> ATSH7E2
+[  73.6s] << 
+[  73.6s] >> 2101
+[  79.7s] << 
+[  79.7s]       => NO DATA / silence — discriminates nothing
+[  79.9s] [4/5] 7E2 21CA — detail table 5 — payload LENGTH is the falsifiable bit
+[  79.9s] >> ATSH7E2
+[  85.9s] << 
+[  85.9s] >> 21CA
+[  91.9s] << 
+[  91.9s]       => NO DATA / silence — discriminates nothing
+[  92.1s] [5/5] 7E2 2205CA — control: expect 7F 22 11
+[  92.1s] >> ATSH7E2
+[  98.1s] << 
+[  98.1s] >> 2205CA
+[ 104.1s] << 
+[ 104.1s]       => NO DATA / silence — discriminates nothing
+[ 104.3s] 
+[ 104.3s] ========================================================================
+[ 104.3s] SUMMARY
+[ 104.3s]   7E3 21CE           NO DATA / silence — discriminates nothing
+[ 104.3s]   7E2 13B0           NO DATA / silence — discriminates nothing
+[ 104.3s]   7E2 2101           NO DATA / silence — discriminates nothing
+[ 104.3s]   7E2 21CA           NO DATA / silence — discriminates nothing
+[ 104.3s]   7E2 2205CA         NO DATA / silence — discriminates nothing
+[ 104.3s] ========================================================================
+[ 104.3s] WHAT THIS MEANS
+[ 104.3s]   ! 21CE on 7E3 did not answer — adapter/bus problem, not an ECU result. Nothing below is trustworthy.
+[ 104.3s]   ? service 21 on 7E2: silence — inconclusive
+[ 104.3s]   ? table 5 (INF 6xx): silence — inconclusive
+[ 104.3s] ========================================================================
+[ 104.3s] log:  captures/probe-20260808-213420.log
+[ 104.3s] json: captures/probe-20260808-213420.json   <- bring this home for deeper analysis

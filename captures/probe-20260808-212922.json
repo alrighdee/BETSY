@@ -1,0 +1,57 @@
+{
+ "started": "20260808-212922",
+ "port": "/dev/cu.OBDII",
+ "mode": "quick",
+ "exchanges": [
+  {
+   "t": 5.167,
+   "header": "7E3",
+   "request": "21CE",
+   "why": "sanity: adapter+bus alive, service 21 known-good on 7E3",
+   "raw": "SEARCHING... 021 0:61CE5E82CE86 1:29862386208628 2:861E8625861E86 3:2386208622861D 4:8622861C862F00",
+   "hex": "61CE5E82CE8629862386208628861E8625861E862386208622861D8622861C862F00",
+   "bytes": 34,
+   "verdict": "POSITIVE 61. payload 32 bytes  (layout predicts 57 \u2014 32 means a different generation/table)"
+  },
+  {
+   "t": 5.511,
+   "header": "7E2",
+   "request": "13B0",
+   "why": "baseline: is a fault stored? changes what the rest can prove",
+   "raw": "5300",
+   "hex": "5300",
+   "bytes": 2,
+   "verdict": "POSITIVE 53. 0 stored DTC(s)"
+  },
+  {
+   "t": 5.86,
+   "header": "7E2",
+   "request": "2101",
+   "why": "THE unknown: does 7E2 answer service 21?",
+   "raw": "610100040000",
+   "hex": "610100040000",
+   "bytes": 6,
+   "verdict": "POSITIVE 61. payload 4 bytes  (layout predicts 57 \u2014 4 means a different generation/table)"
+  },
+  {
+   "t": 6.228,
+   "header": "7E2",
+   "request": "21CA",
+   "why": "detail table 5 \u2014 payload LENGTH is the falsifiable bit",
+   "raw": "032 0:61CA00000000 1:00000000000000 2:00000000000000 3:00000000000000 4:00000000000000 5:00000000000000 6:00000000000000 7:00000000000000",
+   "hex": "61CA0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+   "bytes": 55,
+   "verdict": "POSITIVE 61. payload 53 bytes  (layout predicts 57 \u2014 53 means a different generation/table); all zero (expected on a fault-free car)"
+  },
+  {
+   "t": 6.598,
+   "header": "7E2",
+   "request": "2205CA",
+   "why": "control: expect 7F 22 11",
+   "raw": "7F2211",
+   "hex": "7F2211",
+   "bytes": 3,
+   "verdict": "NRC 11 serviceNotSupported"
+  }
+ ]
+}

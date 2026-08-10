@@ -1,0 +1,36 @@
+name: release-please
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  # Keeps a release PR open against main, accumulating the changelog from Conventional Commits.
+  # Merging that PR is what cuts a release: it lands the version bump and tags it.
+  release-please:
+    runs-on: ubuntu-latest
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
+    steps:
+      - uses: googleapis/release-please-action@v4
+        id: release
+        with:
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+
+  # The tag release-please just pushed was created with GITHUB_TOKEN, and GitHub deliberately does
+  # not let such a tag trigger another workflow, a `on: push: tags` build would never fire and the
+  # release would sit there with no APK on it. So the build is called directly instead.
+  apk:
+    needs: release-please
+    if: needs.release-please.outputs.release_created == 'true'
+    uses: ./.github/workflows/release.yml
+    with:
+      tag: ${{ needs.release-please.outputs.tag_name }}
+    secrets: inherit

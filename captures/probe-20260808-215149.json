@@ -1,0 +1,6 @@
+{
+ "started": "20260808-215149",
+ "port": "/dev/cu.OBDII",
+ "mode": "sweep",
+ "exchanges": []
+}

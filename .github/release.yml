@@ -1,0 +1,25 @@
+# Categories for GitHub's own auto-generated release notes. release-please writes the changelog
+# from commit messages, so this mainly shapes the "what's changed" list GitHub appends from merged
+# PRs, label a PR and it lands in the matching section.
+changelog:
+  exclude:
+    labels:
+      - autorelease: pending
+      - autorelease: tagged
+  categories:
+    - title: Added
+      labels: [feature, enhancement]
+    - title: Fixed
+      labels: [bug, fix]
+    - title: Changed
+      labels: [change, refactor, performance]
+    - title: Removed
+      labels: [removal]
+    - title: Security
+      labels: [security]
+    - title: Documentation
+      labels: [documentation]
+    - title: Protocol and decoding
+      labels: [protocol, decode]
+    - title: Other
+      labels: ['*']

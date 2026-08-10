@@ -1,0 +1,57 @@
+{
+ "started": "20260808-213845",
+ "port": "/dev/cu.OBDII",
+ "mode": "sweep",
+ "exchanges": [
+  {
+   "t": 55.201,
+   "header": "7E2",
+   "request": "21C6",
+   "why": "identifier sweep 0xc6",
+   "raw": "",
+   "hex": "",
+   "bytes": 0,
+   "verdict": "NO DATA / silence \u2014 discriminates nothing"
+  },
+  {
+   "t": 67.427,
+   "header": "7E2",
+   "request": "21C7",
+   "why": "identifier sweep 0xc7",
+   "raw": "",
+   "hex": "",
+   "bytes": 0,
+   "verdict": "NO DATA / silence \u2014 discriminates nothing"
+  },
+  {
+   "t": 79.654,
+   "header": "7E2",
+   "request": "21C8",
+   "why": "identifier sweep 0xc8",
+   "raw": "",
+   "hex": "",
+   "bytes": 0,
+   "verdict": "NO DATA / silence \u2014 discriminates nothing"
+  },
+  {
+   "t": 91.907,
+   "header": "7E2",
+   "request": "21C9",
+   "why": "identifier sweep 0xc9",
+   "raw": "",
+   "hex": "",
+   "bytes": 0,
+   "verdict": "NO DATA / silence \u2014 discriminates nothing"
+  },
+  {
+   "t": 104.128,
+   "header": "7E2",
+   "request": "21CA",
+   "why": "identifier sweep 0xca",
+   "raw": "",
+   "hex": "",
+   "bytes": 0,
+   "verdict": "NO DATA / silence \u2014 discriminates nothing"
+  }
+ ]
+}

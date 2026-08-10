@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Adaptive launcher icon (API 26+, which is every version we support at minSdk 26).
+
+  The artwork is already composed as a rounded-square app icon, so the foreground
+  places it at exactly the 72dp viewport inside the 108dp canvas: its own corner
+  radius then lands on the launcher's squircle mask, and a circular mask clips only
+  black corners against the black background layer.
+-->
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+    <background android:drawable="@color/ic_launcher_background" />
+    <foreground android:drawable="@mipmap/ic_launcher_foreground" />
+</adaptive-icon>

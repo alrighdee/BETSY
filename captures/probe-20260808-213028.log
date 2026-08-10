@@ -1,0 +1,125 @@
+[   0.0s] # read-only INF probe on /dev/cu.OBDII
+[   0.0s] >> ATZ
+[   6.0s] << 
+[   6.2s] >> ATE0
+[  12.2s] << 
+[  12.3s] >> ATL0
+[  18.3s] << 
+[  18.5s] >> ATS0
+[  24.5s] << 
+[  24.7s] >> ATH0
+[  30.7s] << 
+[  30.8s] >> ATSP0
+[  36.8s] << 
+[  37.0s] >> ATSTFF
+[  43.0s] << 
+[  43.2s] # plan: full — 14 exchanges
+[  43.2s] [1/14] 7E2 13B0 — baseline: DTC count on the HV ECU
+[  43.2s] >> ATSH7E2
+[  49.2s] << 
+[  49.2s] >> 13B0
+[  55.2s] << 
+[  55.2s]       => NO DATA / silence — discriminates nothing
+[  55.4s] [2/14] 7E3 1380 — baseline: DTC count on the battery ECU
+[  55.4s] >> ATSH7E3
+[  61.4s] << 
+[  61.4s] >> 1380
+[  67.4s] << 
+[  67.4s]       => NO DATA / silence — discriminates nothing
+[  67.6s] [3/14] 7E3 21CE — sanity: service 21 known-good on 7E3
+[  67.6s] >> ATSH7E3
+[  73.6s] << 
+[  73.6s] >> 21CE
+[  79.6s] << 
+[  79.6s]       => NO DATA / silence — discriminates nothing
+[  79.8s] [4/14] 7E2 2101 — THE load-bearing unknown: does 7E2 answer service 21?
+[  79.8s] >> ATSH7E2
+[  85.8s] << 
+[  85.8s] >> 2101
+[  91.8s] << 
+[  91.9s]       => NO DATA / silence — discriminates nothing
+[  92.1s] [5/14] 7E2 21CA — detail table 5 (INF 6xx) — the headline read
+[  92.1s] >> ATSH7E2
+[  98.1s] << 
+[  98.1s] >> 21CA
+[ 104.1s] << 
+[ 104.1s]       => NO DATA / silence — discriminates nothing
+[ 104.3s] [6/14] 7E2 21C9 — detail table 4 (INF 5xx) — other half of a P0AA6 pair
+[ 104.3s] >> ATSH7E2
+[ 110.3s] << 
+[ 110.3s] >> 21C9
+[ 116.3s] << 
+[ 116.3s]       => NO DATA / silence — discriminates nothing
+[ 116.5s] [7/14] 7E2 21C6C7C8C9CA — all five tables in one request
+[ 116.5s] >> ATSH7E2
+[ 122.5s] << 
+[ 122.5s] >> 21C6C7C8C9CA
+[ 128.5s] << 
+[ 128.5s]       => NO DATA / silence — discriminates nothing
+[ 128.7s] [8/14] 7E2 2105CA — variant: service 21 with a two-byte identifier
+[ 128.7s] >> ATSH7E2
+[ 134.7s] << 
+[ 134.7s] >> 2105CA
+[ 140.7s] << 
+[ 140.7s]       => NO DATA / silence — discriminates nothing
+[ 140.9s] [9/14] 7E2 2205CA — control: expect 7F 22 11
+[ 140.9s] >> ATSH7E2
+[ 146.9s] << 
+[ 146.9s] >> 2205CA
+[ 152.9s] << 
+[ 152.9s]       => NO DATA / silence — discriminates nothing
+[ 153.1s] [10/14] 7E2 22F186 — control: any UDS DID at all
+[ 153.1s] >> ATSH7E2
+[ 159.2s] << 
+[ 159.2s] >> 22F186
+[ 165.2s] << 
+[ 165.2s]       => NO DATA / silence — discriminates nothing
+[ 165.4s] [11/14] 7E3 21CA — in case the tables sit on the battery ECU
+[ 165.4s] >> ATSH7E3
+[ 171.4s] << 
+[ 171.4s] >> 21CA
+[ 177.4s] << 
+[ 177.4s]       => NO DATA / silence — discriminates nothing
+[ 177.6s] [12/14] 7E3 21C9 — likewise
+[ 177.6s] >> ATSH7E3
+[ 183.6s] << 
+[ 183.6s] >> 21C9
+[ 189.6s] << 
+[ 189.6s]       => NO DATA / silence — discriminates nothing
+[ 189.8s] [13/14] 7E2 1381 — additional DTC status mask
+[ 189.8s] >> ATSH7E2
+[ 195.8s] << 
+[ 195.8s] >> 1381
+[ 201.8s] << 
+[ 201.8s]       => NO DATA / silence — discriminates nothing
+[ 202.0s] [14/14] 7E2 1382 — additional DTC status mask
+[ 202.0s] >> ATSH7E2
+[ 208.1s] << 
+[ 208.1s] >> 1382
+[ 214.1s] << 
+[ 214.1s]       => NO DATA / silence — discriminates nothing
+[ 214.3s] 
+[ 214.3s] ========================================================================
+[ 214.3s] SUMMARY
+[ 214.3s]   7E2 13B0           NO DATA / silence — discriminates nothing
+[ 214.3s]   7E3 1380           NO DATA / silence — discriminates nothing
+[ 214.3s]   7E3 21CE           NO DATA / silence — discriminates nothing
+[ 214.3s]   7E2 2101           NO DATA / silence — discriminates nothing
+[ 214.3s]   7E2 21CA           NO DATA / silence — discriminates nothing
+[ 214.3s]   7E2 21C9           NO DATA / silence — discriminates nothing
+[ 214.3s]   7E2 21C6C7C8C9CA   NO DATA / silence — discriminates nothing
+[ 214.3s]   7E2 2105CA         NO DATA / silence — discriminates nothing
+[ 214.3s]   7E2 2205CA         NO DATA / silence — discriminates nothing
+[ 214.3s]   7E2 22F186         NO DATA / silence — discriminates nothing
+[ 214.3s]   7E3 21CA           NO DATA / silence — discriminates nothing
+[ 214.3s]   7E3 21C9           NO DATA / silence — discriminates nothing
+[ 214.3s]   7E2 1381           NO DATA / silence — discriminates nothing
+[ 214.3s]   7E2 1382           NO DATA / silence — discriminates nothing
+[ 214.3s] ========================================================================
+[ 214.3s] WHAT THIS MEANS
+[ 214.3s]   ! 21CE on 7E3 did not answer — adapter/bus problem, not an ECU result. Nothing below is trustworthy.
+[ 214.3s]   ? service 21 on 7E2: silence — inconclusive
+[ 214.3s]   ? table 5 (INF 6xx): silence — inconclusive
+[ 214.3s] ========================================================================
+[ 214.3s] log:  captures/probe-20260808-213028.log
+[ 214.3s] json: captures/probe-20260808-213028.json   <- bring this home for deeper analysis

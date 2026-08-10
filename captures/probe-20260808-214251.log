@@ -1,0 +1,19 @@
+[   0.0s] # read-only INF probe on /dev/cu.OBDII
+[   0.0s] >> ATZ
+[   2.5s] << 
+[   3.5s] >> ATZ
+[   6.0s] << 
+[   7.0s] >> ATZ
+[   9.5s] << 
+[  10.5s] >> ATZ
+[  13.0s] << 
+[  14.0s] >> ATZ
+[  16.5s] << 
+[  17.5s] >> ATZ
+[  20.1s] << 
+[  21.1s] >> ATZ
+[  23.6s] << 
+[  24.6s] >> ATZ
+[  27.1s] << 
+[  28.1s]   ! adapter never answered ATZ — link is down, not an ECU result.
+[  28.1s]     unplug the dongle, wait 5s, replug, then re-run.

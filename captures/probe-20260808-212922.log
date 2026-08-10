@@ -1,0 +1,61 @@
+[   0.0s] # read-only INF probe on /dev/cu.OBDII
+[   0.0s] >> ATZ
+[   1.8s] << ATZ   ELM327 v1.5
+[   1.9s] >> ATE0
+[   2.1s] << ATE0 OK
+[   2.3s] >> ATL0
+[   2.4s] << OK
+[   2.6s] >> ATS0
+[   2.8s] << OK
+[   3.0s] >> ATH0
+[   3.2s] << OK
+[   3.4s] >> ATSP0
+[   3.6s] << OK
+[   3.7s] >> ATSTFF
+[   3.8s] << OK
+[   4.0s] # plan: quick — 5 exchanges
+[   4.0s] [1/5] 7E3 21CE — sanity: adapter+bus alive, service 21 known-good on 7E3
+[   4.0s] >> ATSH7E3
+[   4.0s] << OK
+[   4.0s] >> 21CE
+[   5.2s] << SEARCHING... 021 0:61CE5E82CE86 1:29862386208628 2:861E8625861E86 3:2386208622861D 4:8622861C862F00
+[   5.2s]       => POSITIVE 61. payload 32 bytes  (layout predicts 57 — 32 means a different generation/table)
+[   5.4s] [2/5] 7E2 13B0 — baseline: is a fault stored? changes what the rest can prove
+[   5.4s] >> ATSH7E2
+[   5.4s] << OK
+[   5.4s] >> 13B0
+[   5.5s] << 5300
+[   5.5s]       => POSITIVE 53. 0 stored DTC(s)
+[   5.7s] [3/5] 7E2 2101 — THE unknown: does 7E2 answer service 21?
+[   5.7s] >> ATSH7E2
+[   5.8s] << OK
+[   5.8s] >> 2101
+[   5.9s] << 610100040000
+[   5.9s]       => POSITIVE 61. payload 4 bytes  (layout predicts 57 — 4 means a different generation/table)
+[   6.1s] [4/5] 7E2 21CA — detail table 5 — payload LENGTH is the falsifiable bit
+[   6.1s] >> ATSH7E2
+[   6.1s] << OK
+[   6.1s] >> 21CA
+[   6.2s] << 032 0:61CA00000000 1:00000000000000 2:00000000000000 3:00000000000000 4:00000000000000 5:00000000000000 6:00000000000000 7:00000000000000
+[   6.2s]       => POSITIVE 61. payload 53 bytes  (layout predicts 57 — 53 means a different generation/table); all zero (expected on a fault-free car)
+[   6.4s] [5/5] 7E2 2205CA — control: expect 7F 22 11
+[   6.4s] >> ATSH7E2
+[   6.5s] << OK
+[   6.5s] >> 2205CA
+[   6.6s] << 7F2211
+[   6.6s]       => NRC 11 serviceNotSupported
+[   6.8s] 
+[   6.8s] ========================================================================
+[   6.8s] SUMMARY
+[   6.8s]   7E3 21CE           POSITIVE 61. payload 32 bytes  (layout predicts 57 — 32 means a different generation/table)
+[   6.8s]   7E2 13B0           POSITIVE 53. 0 stored DTC(s)
+[   6.8s]   7E2 2101           POSITIVE 61. payload 4 bytes  (layout predicts 57 — 4 means a different generation/table)
+[   6.8s]   7E2 21CA           POSITIVE 61. payload 53 bytes  (layout predicts 57 — 53 means a different generation/table); all zero (expected on a fault-free car)
+[   6.8s]   7E2 2205CA         NRC 11 serviceNotSupported
+[   6.8s] ========================================================================
+[   6.8s] WHAT THIS MEANS
+[   6.8s]   + service 21 on 7E2: ANSWERS. payload 4 bytes
+[   6.8s]   + table 5 (INF 6xx): ANSWERS. payload 53 bytes
+[   6.8s] ========================================================================
+[   6.8s] log:  captures/probe-20260808-212922.log
+[   6.8s] json: captures/probe-20260808-212922.json   <- bring this home for deeper analysis

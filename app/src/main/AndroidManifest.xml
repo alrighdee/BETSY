@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Classic Bluetooth is a normal (install-time) permission through API 30. -->
+    <uses-permission android:name="android.permission.BLUETOOTH" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" android:maxSdkVersion="30" />
+    <!-- Runtime permissions from API 31; scan is only used to reach paired SPP adapters. -->
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+    <uses-permission android:name="android.permission.BLUETOOTH_SCAN"
+        android:usesPermissionFlags="neverForLocation" />
+    <!-- Wi-Fi ELM327 adapters are plain TCP sockets (PROTOCOL.md §1). -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <application
+        android:icon="@mipmap/ic_launcher"
+        android:label="BETSY"
+        android:theme="@style/BetsyTheme">
+        <activity
+            android:name=".ui.ConnectActivity"
+            android:exported="true"
+            android:theme="@style/BetsyTheme">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".ui.SettingsActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.BatteryActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.DtcActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.DebugLogActivity"
+            android:exported="false" />
+    </application>
+</manifest>

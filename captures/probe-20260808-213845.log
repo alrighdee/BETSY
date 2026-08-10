@@ -1,0 +1,60 @@
+[   0.0s] # read-only INF probe on /dev/cu.OBDII
+[   0.0s] >> ATZ
+[   6.0s] << 
+[   6.2s] >> ATE0
+[  12.2s] << 
+[  12.3s] >> ATL0
+[  18.3s] << 
+[  18.5s] >> ATS0
+[  24.5s] << 
+[  24.7s] >> ATH0
+[  30.7s] << 
+[  30.8s] >> ATSP0
+[  36.8s] << 
+[  37.0s] >> ATSTFF
+[  43.0s] << 
+[  43.2s] # plan: sweep — 5 exchanges
+[  43.2s] [1/5] 7E2 21C6 — identifier sweep 0xc6
+[  43.2s] >> ATSH7E2
+[  49.2s] << 
+[  49.2s] >> 21C6
+[  55.2s] << 
+[  55.2s]       => NO DATA / silence — discriminates nothing
+[  55.4s] [2/5] 7E2 21C7 — identifier sweep 0xc7
+[  55.4s] >> ATSH7E2
+[  61.4s] << 
+[  61.4s] >> 21C7
+[  67.4s] << 
+[  67.4s]       => NO DATA / silence — discriminates nothing
+[  67.6s] [3/5] 7E2 21C8 — identifier sweep 0xc8
+[  67.6s] >> ATSH7E2
+[  73.6s] << 
+[  73.6s] >> 21C8
+[  79.7s] << 
+[  79.7s]       => NO DATA / silence — discriminates nothing
+[  79.9s] [4/5] 7E2 21C9 — identifier sweep 0xc9
+[  79.9s] >> ATSH7E2
+[  85.9s] << 
+[  85.9s] >> 21C9
+[  91.9s] << 
+[  91.9s]       => NO DATA / silence — discriminates nothing
+[  92.1s] [5/5] 7E2 21CA — identifier sweep 0xca
+[  92.1s] >> ATSH7E2
+[  98.1s] << 
+[  98.1s] >> 21CA
+[ 104.1s] << 
+[ 104.1s]       => NO DATA / silence — discriminates nothing
+[ 104.3s] 
+[ 104.3s] ========================================================================
+[ 104.3s] SUMMARY
+[ 104.3s]   7E2 21C6           NO DATA / silence — discriminates nothing
+[ 104.3s]   7E2 21C7           NO DATA / silence — discriminates nothing
+[ 104.3s]   7E2 21C8           NO DATA / silence — discriminates nothing
+[ 104.3s]   7E2 21C9           NO DATA / silence — discriminates nothing
+[ 104.3s]   7E2 21CA           NO DATA / silence — discriminates nothing
+[ 104.3s] ========================================================================
+[ 104.3s] WHAT THIS MEANS
+[ 104.3s]   ? table 5 (INF 6xx): silence — inconclusive
+[ 104.3s] ========================================================================
+[ 104.3s] log:  captures/probe-20260808-213845.log
+[ 104.3s] json: captures/probe-20260808-213845.json   <- bring this home for deeper analysis

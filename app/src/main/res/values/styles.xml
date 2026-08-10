@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+
+    <!--
+      B.E.T.S.Y. app theme.
+
+      The night build, so the platform parent is the dark Material variant and the status-bar
+      icons stay light. What this style adds over the bare platform theme is the surface colours:
+      window, status bar and navigation bar all take the screen ground (#0a101c) so the banner
+      runs edge to edge with no seam above it, and system-drawn surfaces, dialogs, permission
+      prompts, pick up the brand accent instead of the platform default.
+
+      windowLightNavigationBar is API 27; minSdk here is 26, hence the tools:targetApi guard.
+    -->
+    <style name="BetsyTheme" parent="@android:style/Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/betsy_page</item>
+        <item name="android:statusBarColor">@color/betsy_page</item>
+        <item name="android:navigationBarColor">@color/betsy_page</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar" tools:targetApi="27">false</item>
+        <item name="android:colorAccent">@color/betsy_brand</item>
+        <item name="android:textColorPrimary">@color/betsy_ink</item>
+        <item name="android:textColorSecondary">@color/betsy_ink_muted</item>
+    </style>
+
+</resources>

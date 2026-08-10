@@ -1,0 +1,125 @@
+[   0.0s] # read-only INF probe on /dev/cu.OBDII
+[   0.0s] >> ATZ
+[   1.0s] << ATZ   ELM327 v1.5
+[   1.0s]    adapter awake after 1 attempt(s)
+[   1.0s] >> ATE0
+[   1.1s] << ATE0 OK
+[   1.3s] >> ATL0
+[   1.3s] << OK
+[   1.5s] >> ATS0
+[   1.5s] << OK
+[   1.6s] >> ATH0
+[   1.7s] << OK
+[   1.8s] >> ATSP0
+[   1.9s] << OK
+[   2.0s] >> ATSTFF
+[   2.1s] << OK
+[   2.3s] # plan: full — 14 exchanges
+[   2.3s] [1/14] 7E2 13B0 — baseline: DTC count on the HV ECU
+[   2.3s] >> ATSH7E2
+[   2.4s] << OK
+[   2.4s] >> 13B0
+[   4.5s] << SEARCHING... 5300
+[   4.5s]       => POSITIVE 53. 0 stored DTC(s)
+[   4.7s] [2/14] 7E3 1380 — baseline: DTC count on the battery ECU
+[   4.7s] >> ATSH7E3
+[   4.8s] << OK
+[   4.8s] >> 1380
+[   5.8s] << 5300
+[   5.8s]       => POSITIVE 53. 0 stored DTC(s)
+[   6.0s] [3/14] 7E3 21CE — sanity: service 21 known-good on 7E3
+[   6.0s] >> ATSH7E3
+[   6.1s] << OK
+[   6.1s] >> 21CE
+[   6.2s] << 021 0:61CE5981D086 1:1D861D86118619 2:8613861C861386 3:188616861F8612 4:86158610862100
+[   6.2s]       => POSITIVE 61. payload 31 bytes  (layout predicts 57 — 31 means a different generation/table)
+[   6.4s] [4/14] 7E2 2101 — THE load-bearing unknown: does 7E2 answer service 21?
+[   6.4s] >> ATSH7E2
+[   6.5s] << OK
+[   6.5s] >> 2101
+[   6.6s] << 610100040000
+[   6.6s]       => POSITIVE 61. payload 4 bytes  (layout predicts 57 — 4 means a different generation/table)
+[   6.8s] [5/14] 7E2 21CA — detail table 5 (INF 6xx) — the headline read
+[   6.8s] >> ATSH7E2
+[   6.8s] << OK
+[   6.8s] >> 21CA
+[   7.0s] << 032 0:61CA00000000 1:00000000000000 2:00000000000000 3:00000000000000 4:00000000000000 5:00000000000000 6:00000000000000 7:00000000000000
+[   7.0s]       => POSITIVE 61. payload 48 bytes  (layout predicts 57 — 48 means a different generation/table); all zero (expected on a fault-free car)
+[   7.2s] [6/14] 7E2 21C9 — detail table 4 (INF 5xx) — other half of a P0AA6 pair
+[   7.2s] >> ATSH7E2
+[   7.2s] << OK
+[   7.2s] >> 21C9
+[   7.3s] << 032 0:61C900000000 1:00000000000000 2:00000000000000 3:00000000000000 4:00000000000000 5:00000000000000 6:00000000000000 7:00000000000000
+[   7.3s]       => POSITIVE 61. payload 48 bytes  (layout predicts 57 — 48 means a different generation/table); all zero (expected on a fault-free car)
+[   7.5s] [7/14] 7E2 21C6C7C8C9CA — all five tables in one request
+[   7.5s] >> ATSH7E2
+[   7.6s] << OK
+[   7.6s] >> 21C6C7C8C9CA
+[   7.6s] << 7F2112
+[   7.6s]       => NRC 12 subFunctionNotSupported
+[   7.8s] [8/14] 7E2 2105CA — variant: service 21 with a two-byte identifier
+[   7.8s] >> ATSH7E2
+[   7.9s] << OK
+[   7.9s] >> 2105CA
+[   8.0s] << 034 0:610579CA0000 1:00000000000000 2:00000000000000 3:00000000000000 4:00000000000000 5:00000000000000 6:00000000000000 7:00000000000000
+[   8.0s]       => POSITIVE 61. payload 50 bytes  (layout predicts 57 — 50 means a different generation/table)
+[   8.2s] [9/14] 7E2 2205CA — control: expect 7F 22 11
+[   8.2s] >> ATSH7E2
+[   8.2s] << OK
+[   8.2s] >> 2205CA
+[   8.3s] << 7F2211
+[   8.3s]       => NRC 11 serviceNotSupported
+[   8.5s] [10/14] 7E2 22F186 — control: any UDS DID at all
+[   8.5s] >> ATSH7E2
+[   8.5s] << OK
+[   8.5s] >> 22F186
+[   8.6s] << 7F2211
+[   8.6s]       => NRC 11 serviceNotSupported
+[   8.8s] [11/14] 7E3 21CA — in case the tables sit on the battery ECU
+[   8.8s] >> ATSH7E3
+[   8.9s] << OK
+[   8.9s] >> 21CA
+[  10.0s] << NO DATA
+[  10.0s]       => NO DATA / silence — discriminates nothing
+[  10.2s] [12/14] 7E3 21C9 — likewise
+[  10.2s] >> ATSH7E3
+[  10.2s] << OK
+[  10.2s] >> 21C9
+[  11.3s] << NO DATA
+[  11.3s]       => NO DATA / silence — discriminates nothing
+[  11.5s] [13/14] 7E2 1381 — additional DTC status mask
+[  11.5s] >> ATSH7E2
+[  11.6s] << OK
+[  11.6s] >> 1381
+[  11.7s] << 7F1312
+[  11.7s]       => NRC 12 subFunctionNotSupported
+[  11.9s] [14/14] 7E2 1382 — additional DTC status mask
+[  11.9s] >> ATSH7E2
+[  12.0s] << OK
+[  12.0s] >> 1382
+[  12.0s] << 7F1312
+[  12.0s]       => NRC 12 subFunctionNotSupported
+[  12.2s] 
+[  12.2s] ========================================================================
+[  12.2s] SUMMARY
+[  12.2s]   7E2 13B0           POSITIVE 53. 0 stored DTC(s)
+[  12.2s]   7E3 1380           POSITIVE 53. 0 stored DTC(s)
+[  12.2s]   7E3 21CE           POSITIVE 61. payload 31 bytes  (layout predicts 57 — 31 means a different generation/table)
+[  12.2s]   7E2 2101           POSITIVE 61. payload 4 bytes  (layout predicts 57 — 4 means a different generation/table)
+[  12.2s]   7E2 21CA           POSITIVE 61. payload 48 bytes  (layout predicts 57 — 48 means a different generation/table); all zero (expected on a fault-free car)
+[  12.2s]   7E2 21C9           POSITIVE 61. payload 48 bytes  (layout predicts 57 — 48 means a different generation/table); all zero (expected on a fault-free car)
+[  12.2s]   7E2 21C6C7C8C9CA   NRC 12 subFunctionNotSupported
+[  12.2s]   7E2 2105CA         POSITIVE 61. payload 50 bytes  (layout predicts 57 — 50 means a different generation/table)
+[  12.2s]   7E2 2205CA         NRC 11 serviceNotSupported
+[  12.2s]   7E2 22F186         NRC 11 serviceNotSupported
+[  12.2s]   7E3 21CA           NO DATA / silence — discriminates nothing
+[  12.2s]   7E3 21C9           NO DATA / silence — discriminates nothing
+[  12.2s]   7E2 1381           NRC 12 subFunctionNotSupported
+[  12.2s]   7E2 1382           NRC 12 subFunctionNotSupported
+[  12.2s] ========================================================================
+[  12.2s] WHAT THIS MEANS
+[  12.2s]   + service 21 on 7E2: ANSWERS. payload 4 bytes
+[  12.2s]   ? table 5 (INF 6xx): silence — inconclusive
+[  12.2s] ========================================================================
+[  12.2s] log:  captures/probe-20260808-215057.log
+[  12.2s] json: captures/probe-20260808-215057.json   <- bring this home for deeper analysis

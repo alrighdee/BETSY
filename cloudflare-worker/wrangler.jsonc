@@ -1,0 +1,25 @@
+{
+  "$schema": "https://raw.githubusercontent.com/cloudflare/workers-sdk/main/packages/wrangler/config-schema.json",
+  "name": "betsy-capture",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-08-09",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": true,
+  // Backs the per-IP hourly cap. Without this binding the worker still serves, but the rate
+  // limit silently does nothing, so treat a deploy without it as a misconfiguration.
+  //
+  // Backs the per-IP hourly cap. The id is committed deliberately: it is an identifier, not a
+  // credential, and useless without account access. Keeping it out of the file was tried and
+  // reverted, because wrangler does not expand environment variables here, so the binding
+  // resolved to a literal "$VAR" and silently failed open: a clean deploy with no rate limiting
+  // and no error. A published id is the lesser problem.
+  //
+  // Ids are account-scoped, so one from a different account binds nothing and fails the same
+  // silent way. Create one with: npx wrangler kv namespace create RATE_LIMIT
+  "kv_namespaces": [
+    {
+      "binding": "RATE_LIMIT",
+      "id": "8b6c3725faf8410882ffcd239ab5bc97"
+    }
+  ]
+}

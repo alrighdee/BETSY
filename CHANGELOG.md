@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.2](https://github.com/alrighdee/BETSY/compare/v0.0.1...v0.0.2) (2026-08-10)
+
+
+### Added
+
+* BETSY, a Toyota hybrid battery and trouble-code scanner ([9880156](https://github.com/alrighdee/BETSY/commit/98801567fa9d16a9ba1e5eebecafe4bccde66f42))
+
 ## 0.0.2 (2026-08-10)
 
 ### Added

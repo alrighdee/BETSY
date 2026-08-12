@@ -17,6 +17,7 @@ import org.betsy.capture.CaptureUploader
 import org.betsy.capture.PendingCapture
 import org.betsy.capture.UploadResult
 import org.betsy.debug.CaptureLog
+import org.betsy.decode.DtcMeaning
 import org.betsy.dtc.DtcReadResult
 import org.betsy.dtc.DtcReader
 import org.betsy.transport.awaitBlocking
@@ -213,7 +214,32 @@ class DtcActivity : Activity() {
         if (result.groups.isNotEmpty()) {
             for (group in result.groups) {
                 sb.append(group.label).append(":\n")
-                sb.append("  ").append(group.codes.joinToString(", ") { it.code }).append("\n\n")
+                for (dtc in group.codes) {
+                    // The sub-code, when the car transmitted one, is what turns a system name into
+                    // an area: P0AA6 alone is "something in the HV system leaks", P0AA6-612 is the
+                    // battery rather than the air conditioning (PROTOCOL.md 7.4.2).
+                    val sub = result.infCodes.firstOrNull()?.code
+                    val label = if (sub != null) "${dtc.code}-$sub" else dtc.code
+                    sb.append("  ").append(label).append("\n")
+
+                    // An unexplained code is shown bare rather than guessed at: someone might
+                    // replace a battery on the strength of a confident wrong sentence.
+                    DtcMeaning.forWire(dtc.raw)?.let { m ->
+                        val urgency =
+                            when (m.severity) {
+                                DtcMeaning.Severity.URGENT -> "Stop driving. "
+                                DtcMeaning.Severity.SERIOUS -> "Get this looked at soon. "
+                                DtcMeaning.Severity.MINOR -> ""
+                            }
+                        sb
+                            .append("    ")
+                            .append(urgency)
+                            .append(m.what)
+                            .append("\n")
+                        sb.append("    ").append(m.usually).append("\n")
+                    }
+                    sb.append("\n")
+                }
             }
         } else {
             sb.append("Toyota enhanced DTCs (KWP2000): none reported\n\n")

@@ -72,6 +72,35 @@ object CaptureLog {
     /** Most recent lines, newest last, for the in-app viewer. */
     fun tail(maxLines: Int): List<String> = synchronized(lock) { ring.takeLast(maxLines).toList() }
 
+    /**
+     * Lines around the last occurrence of [marker], rather than the end of the session.
+     *
+     * A tail is the wrong window for a capture. The DTC sweep runs early and then the battery
+     * poll continues for as long as the screen is open, so on a real fault capture the sweep can
+     * fall entirely outside the last N lines: in a real fault session the sweep began at
+     * line 70 of 964 and a 120-line tail preserved none of it. The raw responses survived only
+     * because they travel in their own map.
+     *
+     * So anchor on the sweep and keep [contextBefore] lines ahead of it for connection state,
+     * capping the result at [maxLines]. Falls back to [tail] when the marker is absent, which is
+     * the pre-sweep case and the only one a tail was ever right for.
+     */
+    fun window(
+        marker: String,
+        contextBefore: Int,
+        maxLines: Int,
+    ): List<String> =
+        synchronized(lock) {
+            val lines = ring.toList()
+            val at = lines.indexOfLast { it.contains(marker) }
+            if (at < 0) return lines.takeLast(maxLines)
+            val from = (at - contextBefore).coerceAtLeast(0)
+            lines.subList(from, lines.size).take(maxLines)
+        }
+
+    /** Logged once at the start of every DTC sweep; [window] anchors on it. */
+    const val SWEEP_MARKER = "sweep begin"
+
     /** Flushes and closes the capture file. */
     fun close() {
         synchronized(lock) {

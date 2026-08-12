@@ -81,6 +81,13 @@ object SimulatedCar {
             "010C0D" to "410C00000D00",
             // Liveness + generic OBD (openspec gen2-7e2-diagnostics)
             "0100" to "4100FFE0FFE0",
+            // Mode 02 freeze frame: frame 00 exists, frame 01 is declined, matching the
+            // an on-car read measurement where the car held two frames and refused the third.
+            "020000" to "4200007E1F8803",
+            "020200" to "420200 0AA6",
+            "020500" to "42050079",
+            "024200" to "4242357B",
+            "020001" to "7F0212",
             "ATH1" to "OK",
             "ATH0" to "OK",
             // Generic $03 with one stored code; $07 clean (supplemental)

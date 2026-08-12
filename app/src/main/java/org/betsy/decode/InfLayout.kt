@@ -26,28 +26,29 @@ data class InfTable(
 /**
  * The five INF detail tables on the HV ECU, `21C6`..`21CA` (PROTOCOL.md §9.4.0).
  *
- * **The field map is intentionally empty, and the bit-field model below is now known to be the
- * wrong shape for this ECU. Read PROTOCOL.md §7.4.2 before extending this.**
+ * **The field map is intentionally empty, and a faulted car has now shown that filling it is not
+ * simply a matter of obtaining the right table. Read PROTOCOL.md §7.4.2 first.**
  *
  * Established by observation: `7E2` answers these five identifiers, each with a `61 <lid>`
  * positive response carrying a 48-byte payload. BETSY reads all five and records them verbatim,
  * which is what the capture pipeline uploads, and that is what made the finding below possible.
  *
- * A Gen2 has been read with `P0571` deliberately stored on `7E2`, the first faulted HV
- * ECU this project has seen. Exactly one table changed, `21C7`, and byte 30 of its payload held
- * `0x73`, decimal **115**, which is the INF documented for that code. So the ECU writes the INF
- * **number itself as a value**; it does not set a flag bit at a per-code offset. A `(code,
- * bitStart, bitEnd)` triple cannot express that, which is why no field map was ever findable and
- * why leaving this empty was right rather than merely cautious.
+ * A Gen2 has been read with `P0571` stored on `7E2`, the first faulted HV ECU this
+ * project has seen. Exactly one table changed, `21C7`. Two things follow, and both constrain any
+ * future implementation of this type:
  *
- * One fault is not enough to ship a decoder. It cannot separate a fixed offset from a
- * coincidence, cannot tell `u8` at byte 30 from `u16` at 29..30, and does not explain what
- * selects `21C7` over the other four. A second faulted car settles all three. Until then
- * [InfDecoder.decodeActive] returns nothing and the bytes travel intact, which is the behaviour
- * that turned one afternoon's fault into a usable measurement.
+ * 1. Treating each byte as a slot and calling a slot active when non-zero reports **35
+ *    simultaneous sub-codes** for a brake-switch fault. Whatever those bytes are, that is not it.
+ * 2. `P0571` carries INF **115**, and the tables are partitioned by hundreds digit, 2xx..6xx.
+ *    There is no 1xx table, so that sub-code cannot appear in any of these five. A stored DTC
+ *    does not imply its INF is readable here.
  *
- * When that second data point arrives, replace this type rather than populating it: the
- * replacement reads a value out of a record, it does not test bits.
+ * So an empty map is not a gap waiting on data; it reflects that the payload's meaning is
+ * genuinely unresolved. What would resolve it is a car with a stored **2xx-6xx** DTC, where the
+ * sub-code is expressible and the corresponding table can be checked directly.
+ *
+ * Until then [InfDecoder.decodeActive] returns nothing and the bytes travel intact, which is the
+ * behaviour that made the measurement possible at all.
  */
 object InfLayout {
     val tables: List<InfTable> =

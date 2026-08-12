@@ -151,7 +151,6 @@ class DtcActivity : Activity() {
                 elm = SessionHolder.session().adapterBanner,
                 version = BuildConfig.VERSION_NAME,
                 build = BuildConfig.GIT_HASH,
-                logTail = CaptureLog.tail(CaptureData.LOG_TAIL_LINES),
             )
         val dialog =
             CaptureShareDialog(this, data) { ownerNotes ->

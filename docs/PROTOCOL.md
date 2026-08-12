@@ -379,10 +379,10 @@ Four consequences for any implementation, all *measured*:
 Full identifier map answering on `7E2`:
 `C0 C1 C2 C3 C4 C6 C7 C8 C9 CA CB CC D1 D3 E0 E1 E2 E3`.
 
-> **Superseded in part by §7.4.2.** A car carrying a known 7E2 fault was read and
-> the table did not behave as a bitmap at all. The identifiers, the ECU, the 48-byte shape and
-> the transport below are all still correct; the *interpretation* of the payload is not. Read
-> §7.4.2 before implementing against this section.
+> **See §7.4.2.** A car carrying a known 7E2 fault was read, the first such read
+> this project has made. Everything below stands. What it adds is that applying a slot layout to
+> that payload does not produce a credible diagnosis, so the layout question is open rather than
+> merely unfilled.
 
 **No payload layout is published here.** `InfLayout.kt` defines the shape a layout takes, a
 (code, bitStart, bitEnd) triple per slot, and ships none: no capture this project holds has ever
@@ -409,61 +409,45 @@ has been all zeros, because the test vehicle is healthy. So the read, the identi
 and the 48-byte shape are established, and *which byte carries which INF code is not*. The UI
 must qualify a decoded sub-code accordingly, and does.
 
-### 7.4.2 The INF is a value, not a bit (**measured against a real fault**)
+### 7.4.2 First read of a faulted HV ECU, and what it rules out
 
-*an on-car read. A 2009 Gen2 was made to store `P0571` on `7E2` deliberately, and read while the fault
-was live. This is the first time this project has seen a Gen2 HV ECU with a fault in it.*
+*an on-car read. `P0571` was deliberately stored on `7E2` and the car read while the fault was live.*
 
-`P0571` is documented as carrying **INF 115**. Of the five tables, **exactly one changed**:
+Before this, every table on every car had been 48 zero bytes, because no faulted HV ECU had been
+read. With the fault stored, **exactly one table changed**: `21C7` returned
 
 ```
-before   21C7 -> 61C7 + 48 zero bytes
-after    21C7 -> 61C7 808080800000049A417E00615F5B5D70820000A0AF0000000000
-                       0000010073636B4A02615F5C639E6C665D659E9A801C
-
-byte      28  29  30  31  32
-value     01  00  73  63  6B
-                  ^^ 0x73 = 115 decimal
+80 80 80 80 00 00 04 9A 41 7E 00 61 5F 5B 5D 70 82 00 00 A0 AF 00 00 00
+00 00 00 00 01 00 73 63 6B 4A 02 61 5F 5C 63 9E 6C 66 5D 65 9E 9A 80 1C
 ```
 
-**Byte 30 holds 115, the INF for the stored code.** As a 16-bit big-endian field, bytes 29–30 are
-`0073` = 115, preceded by `01` at byte 28. Re-read three times across two link rebuilds, and
-independently through the app's own capture path: byte-identical every time.
+Stable across three reads and two link rebuilds, and identical through the app's own capture
+path. `21C6`, `21C8`, `21C9`, `21CA` stayed all-zero.
 
-Three conclusions:
+**What this rules out.**
 
-1. **The table is not a bitmap, and no field map could ever have been found.** §7.4.0 assumed a
-   set bit at a known offset meant "this INF is active". The ECU instead writes the INF **number
-   itself** as a value. There was never a bit to look for. This is why every table read on a
-   healthy car was all zeros and why the empty `InfLayout` was the correct call rather than a
-   gap: the model it implements does not describe this ECU.
-2. **Tables are not partitioned by the hundreds digit of the INF code.** §7.4.0 guesses 2xx…6xx
-   across `C6`..`CA`. INF 115 is a 1xx code and it landed in `21C7`, not `21C6`. Whatever selects
-   the table, it is not that.
-3. **The payload is a snapshot record, not an index.** The rest of the 48 bytes is dense and
-   sensor-shaped (`9A 41 7E 00 61 5F 5B 5D 70 82 …`), alongside `20`-`80`-range values that move
-   like temperatures and voltages. That fits INF being carried *with* captured data rather than
-   in a standing flag table, and it reconciles the two competing accounts in §7.4.1: the INF
-   value and a frame of data arrive together.
+1. **A slot layout over these bytes does not yield a credible diagnosis.** Treating each byte as a
+   slot and "active iff non-zero" reports **35 simultaneous sub-codes** for a brake-switch fault.
+   Whatever these bytes are, that is not how to read them.
+2. **`P0571`'s sub-code cannot be in these tables at all.** The tables are partitioned by the
+   hundreds digit, 2xx through 6xx (§7.4.0). `P0571` carries **INF 115**, a 1xx code, and there is
+   no 1xx table. So a 7E2 DTC can exist whose sub-code these five identifiers cannot express.
+   Any implementation that assumes "stored DTC ⇒ its INF is in C6..CA" is wrong.
+3. **The payload looks like captured values, not flags.** Four `0x80`s, then clusters in the
+   `0x5B`-`0x65` range, then `9E 6C 66 5D 65 9E 9A`. Consistent with a snapshot taken when the DTC
+   stored, which also explains why a healthy car reads all zeros: nothing stored, nothing
+   snapshotted. They are **not** block voltages; `21CE` reported `D3 D6 BD C0 D6 DE …` at the same
+   moment.
 
-**What is still unknown**, and needs a second fault with a different INF to settle:
+**A caution learned the hard way here.** Byte 30 of that payload is `0x73`, which is 115 in
+decimal, which is exactly `P0571`'s documented INF. It is a coincidence. The hundreds-digit
+partitioning cannot place a 1xx code in `21C7`, so the match is arithmetic, not meaning. A
+single number agreeing is not evidence when the structure that would have to carry it does not
+exist.
 
-- whether the INF field is at a fixed offset or is positional within a record
-- whether it is `u8` at byte 30 or `u16` at 29–30 (both read 115 here, so this single observation
-  cannot separate them)
-- what `01` at byte 28 means; a plausible reading is a count, since exactly one INF was stored
-- what selects `21C7` over the other four tables
-- what the remaining 45 bytes are
-
-**Do not ship a decoder on one data point.** One code, one INF, one table cannot distinguish a
-fixed offset from a coincidence, and a confidently wrong sub-code names the wrong repair. The
-value is that the *shape* of the answer is now known, and a second faulted car settles the rest.
-Raw bytes continue to travel verbatim in every capture, which is what made this reading possible
-at all.
-
-**Terminology note:** captures from such a car are still flagged `decoder_miss`. That label is now
-misleading. The decoder did not miss anything; it implements a model of the payload that the ECU
-does not use.
+**What would settle it.** A car with a stored **2xx-6xx** DTC, where the sub-code is expressible
+and its table can be checked directly. Until then `InfLayout` ships empty, `decodeActive` returns
+nothing, and the raw bytes travel verbatim, which is the only reason this reading was possible.
 
 ### 7.4.1 Freeze frame, and an open question about where INF actually lives
 

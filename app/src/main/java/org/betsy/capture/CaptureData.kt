@@ -1,5 +1,6 @@
 package org.betsy.capture
 
+import org.betsy.debug.CaptureLog
 import org.betsy.detect.VehicleInfo
 import org.betsy.dtc.DtcReadResult
 import org.json.JSONArray
@@ -100,7 +101,22 @@ data class CaptureData(
             .toString()
 
     companion object {
-        /** Lines of session log carried along; enough for context, small enough for the endpoint. */
+        /**
+         * Session-log lines carried along, anchored on the sweep rather than the session end.
+         *
+         * A capture from a car with a stored fault is rare and is the whole point of the pipeline,
+         * so it gets a much larger budget: a real fault session was 964 lines, roughly
+         * 79 KB, which is nothing for a commit and everything for working out what happened.
+         */
+        const val LOG_LINES_FAULT = 700
+
+        /** A clean read needs far less; nothing happened worth reconstructing. */
+        const val LOG_LINES_CLEAN = 150
+
+        /** Lines kept from before the sweep marker, for connection and detection state. */
+        const val LOG_CONTEXT_BEFORE = 25
+
+        @Deprecated("Anchored tails lose the sweep; use LOG_LINES_FAULT / LOG_LINES_CLEAN")
         const val LOG_TAIL_LINES = 120
 
         fun from(
@@ -109,7 +125,6 @@ data class CaptureData(
             elm: String,
             version: String,
             build: String,
-            logTail: List<String>,
             ownerNotes: String = "",
         ): CaptureData =
             CaptureData(
@@ -121,7 +136,13 @@ data class CaptureData(
                 dtcs = result.groups.flatMap { g -> g.codes.map { "${g.label}: ${it.code}" } },
                 notes = result.notes,
                 codes = result.infCodes.map { InfCode(it.tableLabel, it.code) },
-                logTail = logTail.takeLast(LOG_TAIL_LINES),
+                // Anchored on the sweep, and sized by whether anything was actually found.
+                logTail =
+                    CaptureLog.window(
+                        CaptureLog.SWEEP_MARKER,
+                        LOG_CONTEXT_BEFORE,
+                        if (result.hasStoredDtcs) LOG_LINES_FAULT else LOG_LINES_CLEAN,
+                    ),
                 hasStoredDtcs = result.hasStoredDtcs,
                 ownerNotes = ownerNotes,
             )

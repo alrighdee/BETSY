@@ -92,9 +92,13 @@ class DtcReader(
         var storedGeneric: List<Dtc> = emptyList()
         var pendingGeneric: List<Dtc> = emptyList()
 
+        // Unconditional, and worded to contain CaptureLog.SWEEP_MARKER: the capture's log window
+        // anchors on it so the sweep is preserved rather than whatever the battery poll was doing
+        // when the user pressed share.
+        CaptureLog.log("DTC", "${CaptureLog.SWEEP_MARKER} ${info.model.label}")
+
         val gen2Family = info.model == VehicleModel.GEN2 || info.model == VehicleModel.GEN2_7E2
         if (gen2Family) {
-            CaptureLog.log("DTC", "sweep begin Gen2 7E2 diagnostics")
             liveness = checkLiveness(raws)
             CaptureLog.log("DTC", "liveness 7E2: responding=${liveness.responding} ${liveness.detail}")
         }
@@ -148,6 +152,8 @@ class DtcReader(
             storedGeneric = readGenericObd("7E2", "03", { DtcDecoder.decodeMode03(it) }, notes, raws)
             pendingGeneric = readGenericObd("7E2", "07", { DtcDecoder.decodeMode07(it) }, notes, raws)
         }
+
+        if (gen2Family) readFreezeFrame("7E2", notes, raws)
 
         val (inf, infResponded) = readInf(notes, raws)
         CaptureLog.log("DTC", "sweep: ${groups.joinToString { "${it.label}=${it.codes.joinToString { c -> c.code }}" }}")
@@ -327,6 +333,60 @@ class DtcReader(
         }
     }
 
+    /**
+     * SAE mode `02` freeze frame: the conditions the ECU recorded at the instant a DTC set.
+     *
+     * measured on a 2009 Gen2, with `P0571` stored on `7E2`. Frame `00` was empty
+     * and frame `01` was fully populated, with `020201` naming `0571` as the causing code and
+     * eleven parameters alongside it: coolant 81 °C, 0 rpm, stationary, module voltage 13.69 V,
+     * 38 s since start. That is "what was the car doing when this broke", which is the first
+     * question anyone asks and which no generic scan tool reads off the hybrid ECU.
+     *
+     * `0200` gives the supported-PID mask; each supported PID is then read per frame. Frame count
+     * is discovered rather than assumed: the car refused `020202` with `7F0212`, so two frames.
+     *
+     * This is **not** the Toyota INFORMATION 1-5 sub-code display (§7.4). Every PID here is a
+     * standard SAE parameter. Worth reading on its own merits; not a route to an INF.
+     */
+    private suspend fun readFreezeFrame(
+        header: String,
+        notes: MutableList<String>,
+        raws: MutableMap<String, String>,
+    ) {
+        try {
+            session.withEcu(header) {
+                for (frame in 0..MAX_FREEZE_FRAMES) {
+                    val fr = "%02X".format(frame)
+                    val mask =
+                        try {
+                            session.rawCommand("0200$fr").also { raws[rawKey(header, "0200$fr")] = it }
+                        } catch (e: Exception) {
+                            notes += "Freeze frame $fr: ${e.message ?: e.toString()}"
+                            return@withEcu
+                        }
+                    val supported = Normalize.normalize(mask)
+                    // A frame that does not exist answers 7F or nothing; stop rather than
+                    // hammering the bus for frames the ECU has already declined.
+                    if (!supported.startsWith("4200")) return@withEcu
+                    for (pid in FREEZE_FRAME_PIDS) {
+                        val cmd = "02$pid$fr"
+                        try {
+                            val raw = session.rawCommand(cmd)
+                            if (Normalize.normalize(raw).startsWith("42")) {
+                                raws[rawKey(header, cmd)] = raw
+                            }
+                        } catch (_: Exception) {
+                            // An absent PID is not a failure; the mask is advisory and cars
+                            // disagree with it. Silence here keeps notes about real problems.
+                        }
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            notes += "Freeze frame on $header: ${e.message ?: e.toString()}"
+        }
+    }
+
     /** First non-empty line containing [token] (case-insensitive), for ATH1 multi-line replies. */
     private fun rawLineContaining(
         raw: String,
@@ -443,6 +503,33 @@ class DtcReader(
     }
 
     companion object {
+        /**
+         * Frames to try. The 2009 Gen2 holds two (`00` and `01`) and refuses `02` with `7F0212`,
+         * so this is a bound on the walk, not an expectation.
+         */
+        const val MAX_FREEZE_FRAMES = 2
+
+        /**
+         * PIDs read per frame. Exactly the ones a 2009 Gen2 answered, plus `02`
+         * which names the causing DTC. Kept explicit rather than derived from the `0200` mask:
+         * the mask advertised PIDs the car then refused, so the measured list is the honest one.
+         */
+        val FREEZE_FRAME_PIDS =
+            listOf(
+                "02", // the DTC that caused this frame
+                "04", // calculated engine load
+                "05", // engine coolant temperature
+                "0C", // engine rpm
+                "0D", // vehicle speed
+                "0F", // intake air temperature
+                "11", // throttle position
+                "1F", // run time since engine start
+                "31", // distance since codes cleared
+                "42", // control module voltage
+                "46", // ambient air temperature
+                "4E", // time since DTCs cleared
+            )
+
         /** Capture/raw map key that keeps hybrid and engine `13B0` distinct. */
         fun rawKey(
             header: String,

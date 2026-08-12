@@ -201,6 +201,164 @@ object DtcMeaning {
                                 "car cannot tell the difference and will protect itself either way.",
                         severity = Severity.SERIOUS,
                     ),
+                // --- Motor and generator: temperature ---
+                0x0A2B to
+                    Meaning(
+                        what = "The drive motor is too hot.",
+                        usually =
+                            "The motor and its electronics share a coolant loop of their own, separate " +
+                                "from the engine's. Low coolant, an air lock, or a failed pump in that " +
+                                "loop, and only rarely the motor itself.",
+                        severity = Severity.SERIOUS,
+                    ),
+                0x0A2C to
+                    Meaning(
+                        what = "The drive motor's temperature reading cannot be trusted.",
+                        usually =
+                            "The sensor or its wiring rather than a hot motor. The car cannot tell the " +
+                                "difference, so it will limit power to be safe.",
+                        severity = Severity.SERIOUS,
+                    ),
+                0x0A2D to
+                    Meaning(
+                        what = "The drive motor's temperature reading cannot be trusted.",
+                        usually =
+                            "As above: the sensor or its wiring. The two codes differ in which way the " +
+                                "reading went wrong, which matters to whoever repairs it and not to you.",
+                        severity = Severity.SERIOUS,
+                    ),
+                0x0A37 to
+                    Meaning(
+                        what = "The generator is too hot.",
+                        usually =
+                            "Same cooling loop as the drive motor, so suspect coolant level, an air " +
+                                "lock, or the pump before suspecting the generator.",
+                        severity = Severity.SERIOUS,
+                    ),
+                0x0A38 to
+                    Meaning(
+                        what = "The generator's temperature reading cannot be trusted.",
+                        usually = "The sensor or its wiring rather than a hot generator.",
+                        severity = Severity.SERIOUS,
+                    ),
+                0x0A39 to
+                    Meaning(
+                        what = "The generator's temperature reading cannot be trusted.",
+                        usually =
+                            "As above. The pair of codes distinguish which direction the reading " +
+                                "failed in.",
+                        severity = Severity.SERIOUS,
+                    ),
+                // --- Motor and generator: position sensors (resolvers) ---
+                0x0A3F to
+                    Meaning(
+                        what = "The car cannot reliably tell where the drive motor is positioned.",
+                        usually =
+                            "The position sensor inside the transaxle, or its wiring and connector. " +
+                                "The car needs this to drive the motor at all, so it will refuse or " +
+                                "severely limit hybrid drive.",
+                        severity = Severity.SERIOUS,
+                    ),
+                0x0A41 to
+                    Meaning(
+                        what = "The drive motor's position sensor is giving implausible readings.",
+                        usually =
+                            "Often the connector or a damaged loom rather than the sensor itself. " +
+                                "Worth checking the wiring before anyone opens the transaxle.",
+                        severity = Severity.SERIOUS,
+                    ),
+                0x0A4B to
+                    Meaning(
+                        what = "The car cannot reliably tell where the generator is positioned.",
+                        usually =
+                            "The generator's position sensor or its wiring. The generator starts the " +
+                                "engine, so this can leave the car unable to start properly.",
+                        severity = Severity.SERIOUS,
+                    ),
+                0x0A4C to
+                    Meaning(
+                        what = "The generator's position sensor signal is wrong or missing.",
+                        usually = "Connector, wiring, or the sensor. Check the loom first.",
+                        severity = Severity.SERIOUS,
+                    ),
+                0x0A4D to
+                    Meaning(
+                        what = "The generator's position sensor signal is wrong or missing.",
+                        usually =
+                            "As above. This code and the one before it differ in how the signal " +
+                                "failed, not in what to inspect.",
+                        severity = Severity.SERIOUS,
+                    ),
+                // --- Motor and generator: phase currents ---
+                0x0A60 to
+                    Meaning(
+                        what =
+                            "One of the three power feeds to the drive motor is not carrying the " +
+                                "current it should.",
+                        usually =
+                            "The inverter, the thick cables between it and the transaxle, or a winding " +
+                                "inside the motor. This one is usually expensive.",
+                        severity = Severity.SERIOUS,
+                    ),
+                0x0A63 to
+                    Meaning(
+                        what =
+                            "One of the three power feeds to the drive motor is not carrying the " +
+                                "current it should.",
+                        usually =
+                            "As above, a different phase. Inverter, cables, or motor winding.",
+                        severity = Severity.SERIOUS,
+                    ),
+                0x0A72 to
+                    Meaning(
+                        what =
+                            "One of the three power feeds to the generator is not carrying the " +
+                                "current it should.",
+                        usually = "The inverter, the cables to the transaxle, or a generator winding.",
+                        severity = Severity.SERIOUS,
+                    ),
+                0x0A75 to
+                    Meaning(
+                        what =
+                            "One of the three power feeds to the generator is not carrying the " +
+                                "current it should.",
+                        usually = "As above, a different phase.",
+                        severity = Severity.SERIOUS,
+                    ),
+                // --- Inverter and motor performance ---
+                0x0A78 to
+                    Meaning(
+                        what = "The electronics driving the motor are not doing what they are told.",
+                        usually =
+                            "Usually the inverter assembly itself. Check its cooling first, since an " +
+                                "inverter that has been overheating often fails this way and the pump " +
+                                "is a fraction of the cost.",
+                        severity = Severity.SERIOUS,
+                    ),
+                0x0A7A to
+                    Meaning(
+                        what = "The electronics driving the generator are not doing what they are told.",
+                        usually =
+                            "The inverter assembly. As above, rule out the cooling loop before " +
+                                "condemning it.",
+                        severity = Severity.SERIOUS,
+                    ),
+                0x0A90 to
+                    Meaning(
+                        what = "The drive motor is not producing the effort the car asked for.",
+                        usually =
+                            "Can be the motor, the inverter or the high-voltage supply feeding them. " +
+                                "Expect stored codes alongside this one that narrow it down.",
+                        severity = Severity.SERIOUS,
+                    ),
+                0x0A92 to
+                    Meaning(
+                        what = "The generator is not producing the effort the car asked for.",
+                        usually =
+                            "The generator, the inverter, or the high-voltage supply. Look at what " +
+                                "else is stored before deciding.",
+                        severity = Severity.SERIOUS,
+                    ),
                 0x0560 to
                     Meaning(
                         what = "The hybrid computer lost its permanent power supply.",

@@ -20,9 +20,9 @@ data class DtcGroup(
 )
 
 /**
- * Result of a 7E2 liveness probe (`0100`). [responding] is true only when the ECU itself
- * answered: positive mode-01 (`41…`) or a negative response (`7F…`). Adapter text and
- * unexpected hex are not "alive."
+ * Result of the 7E2 liveness probe (`0100`). [responding] is true only when the ECU itself
+ * answered: positive mode-01 (`41…`) or a negative response (`7F…`). Adapter text and unexpected
+ * hex are not "alive."
  */
 data class EcuLiveness(
     val header: String,
@@ -168,21 +168,38 @@ class DtcReader(
     }
 
     /**
-     * §7.1 Gen2 7E2 liveness: `0100` under physical `ATSH7E2`. Only `41…` or `7F…` means the ECU
-     * is responding. Adapter status and unexpected hex are not alive.
+     * §7.1.1 Gen2 7E2 liveness: `0100` under physical `ATSH7E2`.
+     *
+     * measured: a 2009 Gen2 HV ECU answers `0100` with `4100981A8013`, and answers the
+     * extended masks up to `0140`. Generic mode 01 is implemented here, so one probe is enough and
+     * an earlier `21C6` fallback has been removed rather than left in as an untested hedge.
+     *
+     * Only `41…` (positive) or `7F…` (negative response) means the ECU itself answered. Adapter
+     * status text and unexpected hex are not "alive".
      */
-    private suspend fun checkLiveness(raws: MutableMap<String, String>): EcuLiveness {
-        val header = "7E2"
-        return try {
+    private suspend fun checkLiveness(raws: MutableMap<String, String>): EcuLiveness =
+        probeLiveness("7E2", "0100", raws) { it.startsWith("41") }
+
+    /**
+     * Sends one liveness request under [header] and classifies the reply. [positive] tests the
+     * normalized response for this request's expected positive tag.
+     */
+    private suspend fun probeLiveness(
+        header: String,
+        cmd: String,
+        raws: MutableMap<String, String>,
+        positive: (String) -> Boolean,
+    ): EcuLiveness =
+        try {
             val raw =
                 session.withEcu(header) {
-                    session.rawCommand("0100")
+                    session.rawCommand(cmd)
                 }
-            raws[rawKey(header, "0100")] = raw
-            classifyLiveness(header, raw)
+            raws[rawKey(header, cmd)] = raw
+            classifyLiveness(header, raw, positive)
         } catch (e: Exception) {
             val msg = e.message ?: e.toString()
-            CaptureLog.log("DTC", "liveness exception: $msg")
+            CaptureLog.log("DTC", "liveness exception ($cmd): $msg")
             val detail =
                 if (msg.contains("timeout", ignoreCase = true) ||
                     msg.contains("timed out", ignoreCase = true)
@@ -195,11 +212,11 @@ class DtcReader(
                 }
             EcuLiveness(header = header, responding = false, detail = detail)
         }
-    }
 
     private fun classifyLiveness(
         header: String,
         raw: String,
+        positive: (String) -> Boolean,
     ): EcuLiveness {
         val trimmed = raw.trim()
         if (trimmed.contains('?') ||
@@ -215,7 +232,7 @@ class DtcReader(
             return EcuLiveness(header, false, "No response (NO DATA)")
         }
         val norm = Normalize.normalize(raw)
-        if (norm.startsWith("41")) {
+        if (positive(norm)) {
             return EcuLiveness(header, true, "Responding")
         }
         if (norm.startsWith("7F")) {
@@ -235,6 +252,16 @@ class DtcReader(
      * SAE generic OBD DTC read on [header] with ATH1 so the responder CAN ID is preserved in the
      * raw capture. ATH0 is always restored. Mode $07 is supplemental: Toyota enhanced faults may
      * not appear there.
+     *
+     * **Single-frame only.** ATH1 puts the responder CAN ID on every line, and this takes the first
+     * `7EA` line and strips 3 nibbles of ID + 2 of single-frame PCI. Past about three stored DTCs
+     * the reply becomes multi-frame: the first frame's PCI is 4 nibbles, not 2, and the rest of the
+     * codes arrive on consecutive-frame lines this never reads. Such a reply is detected and
+     * reported as a note instead of being decoded, because a silently truncated DTC list reads as a
+     * cleaner car than the one in front of you.
+     *
+     * TODO: reassemble ISO-TP under ATH1 (or read with ATH0 and take the assembled reply, losing
+     * the responder ID) so more than one frame of generic DTCs can be reported.
      */
     private suspend fun readGenericObd(
         header: String,
@@ -258,6 +285,14 @@ class DtcReader(
                     var norm = Normalize.normalize(line)
                     if (norm.length < 5) {
                         notes += "Generic DTCs ($cmd): 7EA line too short"
+                        return@withEcu emptyList()
+                    }
+                    // ISO-TP PCI type is the nibble after the CAN ID: 0 = single frame, 1 = first
+                    // frame of a multi-frame reply. Only the single-frame form is assembled here.
+                    if (norm.getOrNull(3) == '1') {
+                        notes +=
+                            "Generic DTCs ($cmd): multi-frame response, not decoded " +
+                            "(raw kept; more DTCs than one frame holds)"
                         return@withEcu emptyList()
                     }
                     norm = norm.drop(5)

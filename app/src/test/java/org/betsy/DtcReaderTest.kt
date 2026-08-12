@@ -19,14 +19,23 @@ class DtcReaderTest {
     private class FakeTransport(
         private val responses: Map<String, String>,
         private val throwOn: Map<String, Exception> = emptyMap(),
+        /**
+         * Per-header overrides, `"<header>/<cmd>"` to response, consulted before [responses]. The
+         * same command means different things on different ECUs: `13B0` on 7E2 is the HV ECU's
+         * stored mask and on 7E0 the engine's, and a fake that cannot tell them apart cannot test
+         * that both are read.
+         */
+        private val byHeader: Map<String, String> = emptyMap(),
     ) : ElmTransport {
         override var readTimeoutMs: Int = 2500
         val commands = mutableListOf<String>()
+        private var header = ""
 
         override suspend fun send(cmd: String): String {
             commands += cmd
+            if (cmd.startsWith("ATSH")) header = cmd.removePrefix("ATSH")
             throwOn[cmd]?.let { throw it }
-            return responses[cmd] ?: "OK"
+            return byHeader["$header/$cmd"] ?: responses[cmd] ?: "OK"
         }
 
         override fun close() {}
@@ -122,6 +131,15 @@ class DtcReaderTest {
         assertTrue(result.liveness!!.detail.contains("7F"))
     }
 
+    /** One probe, one round trip: 21C6 is read only by the INF sweep, never as a liveness check. */
+    @Test
+    fun livenessCostsExactlyOneRequest() {
+        val t = FakeTransport(gen2Base())
+        awaitBlocking { reader(t, VehicleModel.GEN2).read() }
+        assertEquals(1, t.commands.count { it == "0100" })
+        assertEquals(1, t.commands.count { it == "21C6" })
+    }
+
     @Test
     fun livenessNoDataMeansNotResponding() {
         val t = FakeTransport(gen2Base(mapOf("0100" to "NO DATA")))
@@ -158,6 +176,15 @@ class DtcReaderTest {
         assertTrue(result.liveness!!.detail.startsWith("Unexpected response:"))
     }
 
+    /** The real car's reply, from the an on-car read on-car probe. Guards the `41` classification. */
+    @Test
+    fun livenessAcceptsTheRealGen2Mode01Reply() {
+        val t = FakeTransport(gen2Base(mapOf("0100" to "4100981A8013")))
+        val result = awaitBlocking { reader(t, VehicleModel.GEN2).read() }
+        assertTrue(result.liveness!!.responding)
+        assertEquals("Responding", result.liveness!!.detail)
+    }
+
     @Test
     fun generic03StoresP0aa6From7eaLine() {
         val t =
@@ -174,6 +201,28 @@ class DtcReaderTest {
         assertTrue(result.rawResponses.getValue("7E2/03").contains("7EA"))
         // R3: generic alone does not set hasStoredDtcs
         assertFalse(result.hasStoredDtcs)
+    }
+
+    /**
+     * A multi-frame `$03` reply carries a 4-nibble first-frame PCI and continues on lines this
+     * reader never reads. Decoding the first frame alone would report 2 of 6 stored DTCs as if
+     * that were the whole list, so it declines and says so.
+     */
+    @Test
+    fun generic03MultiFrameIsReportedNotTruncated() {
+        val t =
+            FakeTransport(
+                gen2Base(
+                    mapOf(
+                        "03" to "7EA 10 14 43 06 01 0A A6 \r7EA 21 01 33 02 34 03 35 ",
+                    ),
+                ),
+            )
+        val result = awaitBlocking { reader(t, VehicleModel.GEN2).read() }
+        assertEquals(emptyList<String>(), result.storedGenericDtcs.map { it.code })
+        assertTrue(result.notes.any { it.contains("multi-frame") })
+        // The bytes still travel, so the reply can be re-read once reassembly exists.
+        assertTrue(result.rawResponses.getValue("7E2/03").contains("7EA"))
     }
 
     @Test
@@ -242,6 +291,31 @@ class DtcReaderTest {
         assertTrue(result.hasStoredDtcs)
         assertEquals(listOf("P0A80"), result.groups.flatMap { g -> g.codes.map { it.code } }.distinct())
         assertEquals(emptyList<String>(), result.storedGenericDtcs.map { it.code })
+    }
+
+    /**
+     * Regression: a U-class communication code stored on the ECM while 7E2 itself is clean.
+     *
+     * This is the shape of the HEV-fuse experiment, where silencing the HV ECU made the ECM log
+     * U0293 in 0.68 s and 7E2 had nothing. An earlier build read only the HV ECU and reported "no
+     * DTCs" for a car that had one, which is the worst possible answer: an empty result that looks
+     * like a finding. The engine read is unconditional for exactly this reason.
+     */
+    @Test
+    fun ecmOnlyCommunicationCodeIsReportedWhenHvEcuIsClean() {
+        val t =
+            FakeTransport(
+                gen2Base(),
+                byHeader = mapOf("7E0/13B0" to "5301C293"),
+            )
+        val result = awaitBlocking { reader(t, VehicleModel.GEN2).read() }
+        assertEquals(listOf("Engine ECU (7E0)"), result.groups.map { it.label })
+        val ecm = result.groups.single()
+        assertEquals(listOf("U0293"), ecm.codes.map { it.code })
+        assertEquals("5301C293", result.rawResponses.getValue("7E0/13B0"))
+        // The HV ECU is genuinely clean, and an ECM code must not be attributed to it.
+        assertEquals("5300", result.rawResponses.getValue("7E2/13B0"))
+        assertTrue(result.hasStoredDtcs)
     }
 
     @Test

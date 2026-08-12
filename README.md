@@ -161,6 +161,7 @@ Yes. The protocol notes, the decoder and the capture pipeline all take review, a
 
 | Document | What's in it |
 |---|---|
+| [Glossary](docs/GLOSSARY.md) | What a DTC, INF sub-code, freeze frame and ECU actually are. Start here if the rest reads like alphabet soup |
 | [Developing](docs/DEVELOPING.md) | Building from source, project layout, notes on adapters |
 | [Protocol](docs/PROTOCOL.md) | The wire spec. Read it before touching a decoder, the code cites its section numbers |
 | [Contributing](CONTRIBUTING.md) | Commit conventions, how releases are cut, what is in scope |

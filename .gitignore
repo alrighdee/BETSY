@@ -23,3 +23,6 @@ scratch/
 # probe tools, and harvest-live/svc12-sweep are fixed names that get overwritten on each
 # run rather than timestamped. The timestamped captures are the record worth keeping.
 captures/*.console
+
+# Internal agent instructions. Local only: not part of the published project.
+AGENTS.md

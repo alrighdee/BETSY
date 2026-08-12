@@ -9,11 +9,14 @@ import org.json.JSONObject
  * One shareable capture: the bytes a car answered with, plus enough context to interpret them.
  *
  * **No vehicle identifier may be added to this type.** A capture is uploaded to a public
- * repository, and a VIN identifies the car and frequently its owner. The HV ECU does answer SAE
- * mode 09 (`0902` returns the VIN, verified on a 2009 Gen2), so this is a live hazard rather than
- * a theoretical one: nothing in the sweep requests it, and [raw] must never be widened to carry a
- * response that contains one. If a future read needs mode 09 for some other PID, redact the VIN
- * before it reaches [CaptureData], not afterwards.
+ * repository, and a VIN identifies the car and frequently its owner. Someone sharing a battery
+ * scan is offering their fault data, not their registration details. The HV ECU does answer SAE
+ * mode 09 (`0902` returns the VIN, measured on a 2009 Gen2), so the hazard is real rather than
+ * hypothetical, even though nothing in the sweep requests it today.
+ *
+ * [toJson] runs [Redact.vin] over [raw] and [logTail] on the way out as a backstop. Do not treat
+ * that as licence to put an identifier in here: it removes one known shape of one known field,
+ * and it is the last line of defence, not the first.
  *
  * The split between [raw] and [codes] is the whole point of this type. `InfLayout`'s bit mapping
  * has never been checked against a car with a real fault (§9.4.0), so [codes] is a hypothesis,
@@ -61,21 +64,33 @@ data class CaptureData(
      */
     val ownerNotes: String = "",
 ) {
+    /**
+     * Serialize for upload.
+     *
+     * [Redact.vin] runs here, at the single point where a capture actually leaves the device,
+     * rather than in the factory below. A redaction placed on one construction path protects only
+     * that path, and the next person to build a [CaptureData] some other way would silently
+     * bypass it. Applied to every capture unconditionally, including ones that cannot contain a
+     * VIN, because a redaction that runs only when someone remembered to expect a VIN is not a
+     * protection.
+     */
     fun toJson(): String =
         JSONObject()
             .put("version", version)
             .put("build", build)
             .put("car", car)
             .put("elm", elm)
-            .put("raw", JSONObject().also { o -> raw.forEach { (k, v) -> o.put(k, v) } })
-            .put("dtcs", JSONArray(dtcs))
+            .put(
+                "raw",
+                JSONObject().also { o -> Redact.vin(raw).forEach { (k, v) -> o.put(k, v) } },
+            ).put("dtcs", JSONArray(dtcs))
             .put("notes", JSONArray(notes))
             .put(
                 "codes",
                 JSONArray().also { arr ->
                     codes.forEach { arr.put(JSONObject().put("table", it.table).put("code", it.code)) }
                 },
-            ).put("logTail", JSONArray(logTail))
+            ).put("logTail", JSONArray(Redact.vin(logTail)))
             .put("hasStoredDtcs", hasStoredDtcs)
             .put("ownerNotes", ownerNotes)
             // Always false: anything the app sends came off a car. The flag exists so test

@@ -133,6 +133,11 @@ android {
 
 dependencies {
     testImplementation("junit:junit:4.13.2")
+    // android.jar's org.json is a stub that throws "not mocked" under plain JVM unit tests, so
+    // anything calling JSONObject is untestable without the real implementation on the test
+    // classpath. CaptureData.toJson is the single point where a capture leaves the device and
+    // where VIN redaction runs, which is precisely the code that must be covered.
+    testImplementation("org.json:json:20240303")
 }
 
 tasks.named("check") {

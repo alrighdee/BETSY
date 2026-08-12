@@ -150,6 +150,7 @@ class DtcActivity : Activity() {
                 info = SessionHolder.info(),
                 elm = SessionHolder.session().adapterBanner,
                 version = BuildConfig.VERSION_NAME,
+                build = BuildConfig.GIT_HASH,
                 logTail = CaptureLog.tail(CaptureData.LOG_TAIL_LINES),
             )
         val dialog =

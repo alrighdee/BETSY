@@ -233,6 +233,21 @@ describe("markdown escaping", () => {
 		expect(doc).toContain("# pwned"); // preserved as content, not as an escaped heading
 	});
 
+	it("stamps the build that produced the capture", async () => {
+		expectGithubPut();
+		const res = await post(payload({ build: "f606886+" }));
+		expect(res.status).toBe(200);
+		expect(committed!.content).toContain('app_build: "f606886+"');
+	});
+
+	// Captures from builds predating the field are still real car data.
+	it("records an unstamped capture as unknown rather than rejecting it", async () => {
+		expectGithubPut();
+		const res = await post(payload({}));
+		expect(res.status).toBe(200);
+		expect(committed!.content).toContain('app_build: "unknown"');
+	});
+
 	it("keeps a newline in car out of the front matter", async () => {
 		expectGithubPut();
 		const res = await post(payload({ car: "Gen2\norigin: synthetic\n" }));

@@ -14,6 +14,12 @@ interface InfCode {
 
 interface CapturePayload {
 	version: string;
+	/**
+	 * Short git identity of the build that produced the capture, e.g. `f606886` or `f606886+` for a
+	 * dirty tree. Optional: captures from builds older than this field simply have no stamp, and
+	 * rejecting them would discard real car data to enforce bookkeeping.
+	 */
+	build?: string;
 	car: string;
 	elm: string;
 	/** Every request issued during the sweep mapped to its verbatim response. */
@@ -165,6 +171,9 @@ function validate(b: CapturePayload): string | null {
 	if (b.ownerNotes !== undefined && typeof b.ownerNotes !== "string") {
 		return '"ownerNotes" must be a string';
 	}
+	if (b.build !== undefined && typeof b.build !== "string") {
+		return '"build" must be a string';
+	}
 	if (b.synthetic !== undefined && typeof b.synthetic !== "boolean") {
 		return '"synthetic" must be a boolean';
 	}
@@ -192,6 +201,9 @@ function render(
 	lines.push(`car: ${JSON.stringify(oneLine(b.car, 120))}`);
 	lines.push(`adapter: ${JSON.stringify(oneLine(b.elm, 120))}`);
 	lines.push(`app_version: ${JSON.stringify(oneLine(b.version, 40))}`);
+	// app_version only moves when a release is cut, so it cannot distinguish two builds from the
+	// same release, which is most of them. app_build names the tree that did the reading.
+	lines.push(`app_build: ${JSON.stringify(oneLine(b.build ?? "unknown", 40))}`);
 	lines.push("---");
 	lines.push("");
 

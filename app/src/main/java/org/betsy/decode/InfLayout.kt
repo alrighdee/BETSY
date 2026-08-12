@@ -26,29 +26,31 @@ data class InfTable(
 /**
  * The five INF detail tables on the HV ECU, `21C6`..`21CA` (PROTOCOL.md §9.4.0).
  *
- * **The field map is intentionally empty, and a faulted car has now shown that filling it is not
- * simply a matter of obtaining the right table. Read PROTOCOL.md §7.4.2 first.**
+ * **The sub-code is read as a value, not looked up in this map. See PROTOCOL.md §7.4.2.**
  *
- * Established by observation: `7E2` answers these five identifiers, each with a `61 <lid>`
- * positive response carrying a 48-byte payload. BETSY reads all five and records them verbatim,
- * which is what the capture pipeline uploads, and that is what made the finding below possible.
+ * `21C6`..`21CA` are per-DTC freeze pages, not flag tables. When the ECU stores a DTC it writes
+ * one page, and the page carries the sub-code as a `u16` big-endian at **bytes 29-30**, alongside
+ * a frame of analog snapshot values. Reading it needs no field map at all:
  *
- * A Gen2 has been read with `P0571` stored on `7E2`, the first faulted HV ECU this
- * project has seen. Exactly one table changed, `21C7`. Two things follow, and both constrain any
- * future implementation of this type:
+ * ```
+ * a page that is not all zero  ->  sub-code = u16BE(payload[29], payload[30])
+ * ```
  *
- * 1. Treating each byte as a slot and calling a slot active when non-zero reports **35
- *    simultaneous sub-codes** for a brake-switch fault. Whatever those bytes are, that is not it.
- * 2. `P0571` carries INF **115**, and the tables are partitioned by hundreds digit, 2xx..6xx.
- *    There is no 1xx table, so that sub-code cannot appear in any of these five. A stored DTC
- *    does not imply its INF is readable here.
+ * Measured on a 2009 Gen2 with `P0571` stored: bytes 29-30 read `0x0073`, 115, which is that
+ * code's documented sub-code. Read again seventeen hours and an ignition cycle later, byte for
+ * byte identical, so a page is a stored snapshot rather than live data.
  *
- * So an empty map is not a gap waiting on data; it reflects that the payload's meaning is
- * genuinely unresolved. What would resolve it is a car with a stored **2xx-6xx** DTC, where the
- * sub-code is expressible and the corresponding table can be checked directly.
+ * **This type was built for a model that does not describe this ECU.** A `(code, bitStart,
+ * bitEnd)` triple answers "which flag is set", and there are no flags. Treating a page's non-zero
+ * bytes as active slots reported 35 simultaneous sub-codes on a car whose only fault was a brake
+ * switch; those 35 were analog readings, offset-binary, which is why a car at rest shows a run of
+ * `0x80` midpoints.
  *
- * Until then [InfDecoder.decodeActive] returns nothing and the bytes travel intact, which is the
- * behaviour that made the measurement possible at all.
+ * **What the layout is still good for** is the other 62 fields in each page: naming and scaling
+ * the analog snapshot items, currents, temperatures and voltages captured when the fault set. That
+ * is a second and richer freeze frame than the generic mode 02 one, and it is worth having. If
+ * this type is populated for that purpose, note that the field at bits 232-247 is 16 bits wide and
+ * is the sub-code carrier, not an analog item.
  */
 object InfLayout {
     val tables: List<InfTable> =

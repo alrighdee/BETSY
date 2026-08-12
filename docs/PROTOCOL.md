@@ -409,45 +409,53 @@ has been all zeros, because the test vehicle is healthy. So the read, the identi
 and the 48-byte shape are established, and *which byte carries which INF code is not*. The UI
 must qualify a decoded sub-code accordingly, and does.
 
-### 7.4.2 First read of a faulted HV ECU, and what it rules out
+### 7.4.2 The sub-code is transmitted, not derived (**measured**)
 
-*an on-car read. `P0571` was deliberately stored on `7E2` and the car read while the fault was live.*
+*Measured on a 2009 Gen2 read with `P0571` deliberately stored on `7E2`.*
 
-Before this, every table on every car had been 48 zero bytes, because no faulted HV ECU had been
-read. With the fault stored, **exactly one table changed**: `21C7` returned
+`21C6`..`21CA` are **not** flag tables. They are per-DTC **freeze pages**: when the ECU stores a
+DTC it writes one page, and the page carries the sub-code as a value alongside a frame of analog
+snapshot data.
 
 ```
+21C7 with P0571 stored, all 48 payload bytes:
+
 80 80 80 80 00 00 04 9A 41 7E 00 61 5F 5B 5D 70 82 00 00 A0 AF 00 00 00
 00 00 00 00 01 00 73 63 6B 4A 02 61 5F 5C 63 9E 6C 66 5D 65 9E 9A 80 1C
+                    ^^^^^
+              bytes 29-30 = 0x0073 = 115 = P0571's sub-code
 ```
 
-Stable across three reads and two link rebuilds, and identical through the app's own capture
-path. `21C6`, `21C8`, `21C9`, `21CA` stayed all-zero.
+`21C6`, `21C8`, `21C9`, `21CA` all zero at the same moment.
 
-**What this rules out.**
+**Reading the sub-code.** One field, `u16` big-endian at bytes **29-30** of a page's payload. It
+is the only 16-bit field in a page; every other field is 8 or 1 bit, and a three-digit code cannot
+fit in 8 bits. A page that is entirely zero holds nothing.
 
-1. **A slot layout over these bytes does not yield a credible diagnosis.** Treating each byte as a
-   slot and "active iff non-zero" reports **35 simultaneous sub-codes** for a brake-switch fault.
-   Whatever these bytes are, that is not how to read them.
-2. **`P0571`'s sub-code cannot be in these tables at all.** The tables are partitioned by the
-   hundreds digit, 2xx through 6xx (§7.4.0). `P0571` carries **INF 115**, a 1xx code, and there is
-   no 1xx table. So a 7E2 DTC can exist whose sub-code these five identifiers cannot express.
-   Any implementation that assumes "stored DTC ⇒ its INF is in C6..CA" is wrong.
-3. **The payload looks like captured values, not flags.** Four `0x80`s, then clusters in the
-   `0x5B`-`0x65` range, then `9E 6C 66 5D 65 9E 9A`. Consistent with a snapshot taken when the DTC
-   stored, which also explains why a healthy car reads all zeros: nothing stored, nothing
-   snapshotted. They are **not** block voltages; `21CE` reported `D3 D6 BD C0 D6 DE …` at the same
-   moment.
+**A page is a stored snapshot, not live data.** The 48 bytes above were read twice, seventeen hours
+and an ignition cycle apart, and were byte-for-byte identical. Live values would have drifted. So a
+page is written once, when the DTC sets, and then left alone. The remaining bytes are analog
+readings, offset-binary, which is why a car at rest shows `80 80 80 80`: those are midpoints, not
+flags.
 
-**A caution learned the hard way here.** Byte 30 of that payload is `0x73`, which is 115 in
-decimal, which is exactly `P0571`'s documented INF. It is a coincidence. The hundreds-digit
-partitioning cannot place a 1xx code in `21C7`, so the match is arithmetic, not meaning. A
-single number agreeing is not evidence when the structure that would have to carry it does not
-exist.
+**Three things this rules out**, all measured:
 
-**What would settle it.** A car with a stored **2xx-6xx** DTC, where the sub-code is expressible
-and its table can be checked directly. Until then `InfLayout` ships empty, `decodeActive` returns
-nothing, and the raw bytes travel verbatim, which is the only reason this reading was possible.
+1. **The sub-code is not in the mode 13 response.** `13B0` returns exactly one two-byte record per
+   DTC (`53 01 0571`) with no status or detail byte.
+2. **There are no hidden DTC classes.** Masks `81` and `82` are refused with `7F 13 12`.
+3. **Page 1 is not where a single DTC lands.** The only stored DTC owned page 2, `21C7`. So pages
+   are not simply filled in order from `21C6`.
+
+**Still open.** How pages are assigned when several DTCs are stored, and confirmation against a
+second, different DTC. Both need a differently-faulted car; nothing further is extractable from
+one.
+
+**Correction to earlier revisions of this document.** Two claims here were wrong and are withdrawn.
+There is no "coverage ceiling" restricting readable sub-codes to 201-663: that followed from
+treating the payload as slot-numbered, and since the code is a transmitted value, any sub-code can
+appear, including 1xx. And byte 30 reading `0x73` was previously called a coincidence and warned
+against; it was the answer, misread. Slot numbers cannot be 1xx, but a field's value can be
+anything, and conflating the two cost a day.
 
 ### 7.4.1 Freeze frame, and an open question about where INF actually lives
 

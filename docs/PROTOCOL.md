@@ -278,7 +278,19 @@ are not contradictory; they are different ECUs answering different questions.
 Capture raw keys are `"<header>/<cmd>"` (e.g. `7E2/13B0` vs `7E0/13B0`) so the same command on
 two ECUs stays distinct.
 
-#### 7.1.1 Gen2 7E2 liveness probe (*inferred* until STOP-fuse confirms)
+#### 7.1.1 Gen2 7E2 liveness probe (**confirmed on-car**)
+
+`0100` was inferred rather than measured until an on-car read, when a 2009 Gen2 answered it directly:
+
+```
+7E2 0100 -> 4100981A8013     7E2 0120 -> 412080018001
+7E2 0140 -> 4140C4CC0000     7E2 0160 -> no response
+```
+
+So the HV ECU **does** implement SAE generic mode 01, and exposes PIDs up to 0x5F. `0100` is a
+sound liveness probe on this generation and needs no fallback. (`0902` also answers, but mode 09
+PID 02 returns the VIN, so nothing in this project requests it: a capture is uploaded to a public
+repository and a VIN identifies the vehicle and often its owner.)
 
 Before Gen2 / Gen2-on-7E2 DTC or INF reads, the app sends `ATSH7E2` then `0100` and classifies:
 
@@ -367,6 +379,11 @@ Four consequences for any implementation, all *measured*:
 Full identifier map answering on `7E2`:
 `C0 C1 C2 C3 C4 C6 C7 C8 C9 CA CB CC D1 D3 E0 E1 E2 E3`.
 
+> **Superseded in part by §7.4.2.** A car carrying a known 7E2 fault was read and
+> the table did not behave as a bitmap at all. The identifiers, the ECU, the 48-byte shape and
+> the transport below are all still correct; the *interpretation* of the payload is not. Read
+> §7.4.2 before implementing against this section.
+
 **No payload layout is published here.** `InfLayout.kt` defines the shape a layout takes, a
 (code, bitStart, bitEnd) triple per slot, and ships none: no capture this project holds has ever
 had a bit set, so nothing in the collected data supports a mapping, and asserting one would claim
@@ -391,6 +408,105 @@ A slot is active iff its extracted value is non-zero.
 has been all zeros, because the test vehicle is healthy. So the read, the identifiers, the ECU
 and the 48-byte shape are established, and *which byte carries which INF code is not*. The UI
 must qualify a decoded sub-code accordingly, and does.
+
+### 7.4.2 The INF is a value, not a bit (**measured against a real fault**)
+
+*an on-car read. A 2009 Gen2 was made to store `P0571` on `7E2` deliberately, and read while the fault
+was live. This is the first time this project has seen a Gen2 HV ECU with a fault in it.*
+
+`P0571` is documented as carrying **INF 115**. Of the five tables, **exactly one changed**:
+
+```
+before   21C7 -> 61C7 + 48 zero bytes
+after    21C7 -> 61C7 808080800000049A417E00615F5B5D70820000A0AF0000000000
+                       0000010073636B4A02615F5C639E6C665D659E9A801C
+
+byte      28  29  30  31  32
+value     01  00  73  63  6B
+                  ^^ 0x73 = 115 decimal
+```
+
+**Byte 30 holds 115, the INF for the stored code.** As a 16-bit big-endian field, bytes 29–30 are
+`0073` = 115, preceded by `01` at byte 28. Re-read three times across two link rebuilds, and
+independently through the app's own capture path: byte-identical every time.
+
+Three conclusions:
+
+1. **The table is not a bitmap, and no field map could ever have been found.** §7.4.0 assumed a
+   set bit at a known offset meant "this INF is active". The ECU instead writes the INF **number
+   itself** as a value. There was never a bit to look for. This is why every table read on a
+   healthy car was all zeros and why the empty `InfLayout` was the correct call rather than a
+   gap: the model it implements does not describe this ECU.
+2. **Tables are not partitioned by the hundreds digit of the INF code.** §7.4.0 guesses 2xx…6xx
+   across `C6`..`CA`. INF 115 is a 1xx code and it landed in `21C7`, not `21C6`. Whatever selects
+   the table, it is not that.
+3. **The payload is a snapshot record, not an index.** The rest of the 48 bytes is dense and
+   sensor-shaped (`9A 41 7E 00 61 5F 5B 5D 70 82 …`), alongside `20`-`80`-range values that move
+   like temperatures and voltages. That fits INF being carried *with* captured data rather than
+   in a standing flag table, and it reconciles the two competing accounts in §7.4.1: the INF
+   value and a frame of data arrive together.
+
+**What is still unknown**, and needs a second fault with a different INF to settle:
+
+- whether the INF field is at a fixed offset or is positional within a record
+- whether it is `u8` at byte 30 or `u16` at 29–30 (both read 115 here, so this single observation
+  cannot separate them)
+- what `01` at byte 28 means; a plausible reading is a count, since exactly one INF was stored
+- what selects `21C7` over the other four tables
+- what the remaining 45 bytes are
+
+**Do not ship a decoder on one data point.** One code, one INF, one table cannot distinguish a
+fixed offset from a coincidence, and a confidently wrong sub-code names the wrong repair. The
+value is that the *shape* of the answer is now known, and a second faulted car settles the rest.
+Raw bytes continue to travel verbatim in every capture, which is what made this reading possible
+at all.
+
+**Terminology note:** captures from such a car are still flagged `decoder_miss`. That label is now
+misleading. The decoder did not miss anything; it implements a model of the payload that the ECU
+does not use.
+
+### 7.4.1 Freeze frame, and an open question about where INF actually lives
+
+*measured, on a 2009 Gen2 with `U0293` stored on the ECM and nothing on the HV ECU.*
+
+There is a competing account of where INF sub-codes live. §7.4.0 reads them as five bitmap tables
+at `21C6`..`21CA`. The alternative is that an INF is **freeze-frame data attached to a stored
+DTC**, carried in five fields alongside the frame rather than in a standing table. The two are
+not compatible, and no capture yet distinguishes them, because every table observed has been all
+zeros on a car whose HV ECU had no fault to report.
+
+What the car does answer:
+
+| Request | `7E0` (has a stored DTC) | `7E2` (clean) |
+|---|---|---|
+| `020000` mode 02 supported PIDs | `4200007E1F8803` | — |
+| `020200` DTC that caused the frame | `420200C293` (= U0293) | `4202000000` |
+| `020201` second frame | `420201C293` | — |
+| `020202` third frame | `7F0212` | — |
+| `12…` KWP readFreezeFrameData | `7F1212` | `7F1212` |
+| `17`, `18`, `19` | `7F..11` | `7F..11` |
+
+Four things follow, and the distinction between the two negative-response codes carries all of
+them:
+
+1. **Generic mode 02 freeze frame works, and is richly populated.** On the ECU holding a DTC,
+   15 PIDs returned data captured at the moment the fault set, and `020200` correctly names the
+   causing DTC. Two frames are retained; a third is refused.
+2. **`7E2` implements mode 02 too**, answering `4202000000`: a well-formed empty frame, which is
+   what a clean ECU should say. The path is open, there is simply nothing in it yet.
+3. **KWP `0x12` exists but no call form has been found.** All 256 single-byte subfunctions were
+   swept, plus 22 multi-byte forms, on both ECUs. Every one returned NRC `0x12`
+   *subFunctionNotSupported*. Compare services `17`, `18` and `19`, which return NRC `0x11`
+   *serviceNotSupported*: the ECU distinguishes "no such service" from "not that argument", so
+   `0x12` is recognised and merely never satisfied. Remaining possibilities are a multi-byte
+   argument outside the forms tried, or a non-default diagnostic session. Session control
+   (`0x10`) is deliberately never sent, see §7.5.
+4. **UDS `readDTCInformation` is absent.** This is a KWP2000 car; `19xx` recipes do not apply.
+
+**What this means for the INF question.** It is now testable rather than merely arguable. When a
+DTC is finally stored on `7E2`, reading `21C6`..`21CA` *and* mode 02 in the same session
+discriminates all three cases: a value or bit appears in the tables, or the frame carries the
+sub-code, or neither does. Until then both accounts remain live, and §7.4.0's caution stands.
 
 ### 7.5 Clearing
 

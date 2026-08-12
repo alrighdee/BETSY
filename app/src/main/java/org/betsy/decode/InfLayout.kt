@@ -26,23 +26,28 @@ data class InfTable(
 /**
  * The five INF detail tables on the HV ECU, `21C6`..`21CA` (PROTOCOL.md §9.4.0).
  *
- * **The field map is intentionally empty in this repository.**
+ * **The field map is intentionally empty, and the bit-field model below is now known to be the
+ * wrong shape for this ECU. Read PROTOCOL.md §7.4.2 before extending this.**
  *
- * What is established by observation, and is what this object provides, is the read itself: `7E2`
- * answers these five identifiers, each with a `61 <lid>` positive response carrying a 48-byte
- * payload. That is enough for BETSY to read every table and record it verbatim, which is what the
- * capture pipeline uploads.
+ * Established by observation: `7E2` answers these five identifiers, each with a `61 <lid>`
+ * positive response carrying a 48-byte payload. BETSY reads all five and records them verbatim,
+ * which is what the capture pipeline uploads, and that is what made the finding below possible.
  *
- * What is *not* established is which bit of that payload means which 3-digit INF code. No car
- * BETSY has read has ever had a bit set, so nothing in the collected data supports a mapping.
- * Publishing one here would assert a correspondence the project cannot currently demonstrate.
+ * A Gen2 has been read with `P0571` deliberately stored on `7E2`, the first faulted HV
+ * ECU this project has seen. Exactly one table changed, `21C7`, and byte 30 of its payload held
+ * `0x73`, decimal **115**, which is the INF documented for that code. So the ECU writes the INF
+ * **number itself as a value**; it does not set a flag bit at a per-code offset. A `(code,
+ * bitStart, bitEnd)` triple cannot express that, which is why no field map was ever findable and
+ * why leaving this empty was right rather than merely cautious.
  *
- * The consequence is deliberate: [InfDecoder.decodeActive] returns nothing, every capture from a
- * car with a fault is flagged `decoder_miss`, and the raw bytes travel intact for analysis. That
- * is the honest state of the work, and those captures are the route to a field map this project
- * can stand behind.
+ * One fault is not enough to ship a decoder. It cannot separate a fixed offset from a
+ * coincidence, cannot tell `u8` at byte 30 from `u16` at 29..30, and does not explain what
+ * selects `21C7` over the other four. A second faulted car settles all three. Until then
+ * [InfDecoder.decodeActive] returns nothing and the bytes travel intact, which is the behaviour
+ * that turned one afternoon's fault into a usable measurement.
  *
- * Supplying a populated `fields` list here is all that is needed to enable decoding.
+ * When that second data point arrives, replace this type rather than populating it: the
+ * replacement reads a value out of a record, it does not test bits.
  */
 object InfLayout {
     val tables: List<InfTable> =

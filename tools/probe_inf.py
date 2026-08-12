@@ -26,6 +26,11 @@ import time
 
 PROMPT = b">"
 
+# Payload size of one INF detail table (21C6..21CA) as measured on a 2009 Gen2: a 61<lid> tag
+# followed by 48 bytes. Other generations may return a different length, which is why a mismatch
+# is reported rather than treated as an error.
+INF_PAYLOAD_BYTES = 48
+
 
 class Elm:
     def __init__(self, port: str, log, timeout: float = 6.0):
@@ -167,10 +172,13 @@ def interpret(req: str, hexs: str) -> str:
             body = payload[2:] if len(payload) >= 2 else ""
             n = len(body) // 2
             note = f"POSITIVE {pos}. payload {n} bytes"
-            if n == 57:
-                note += "  *** 57 BYTES, MATCHES THE LAYOUT ***"
+            if n == INF_PAYLOAD_BYTES:
+                note += f"  *** {INF_PAYLOAD_BYTES} BYTES, MATCHES THE OBSERVED TABLE ***"
             elif n:
-                note += f"  (layout predicts 57, {n} means a different generation/table)"
+                note += (
+                    f"  (observed on a 2009 Gen2: {INF_PAYLOAD_BYTES}; "
+                    f"{n} means a different generation/table)"
+                )
             if body and set(body) == {"0"}:
                 note += "; all zero (expected on a fault-free car)"
             return note
@@ -318,7 +326,8 @@ def main() -> int:
             if h.startswith("61"):
                 nbytes = (len(h) - 4) // 2
                 log(f"  + {label}: ANSWERS. payload {nbytes} bytes"
-                    + ("  -> layout shape CONFIRMED on-car" if nbytes == 57 else ""), "ok")
+                    + ("  -> matches the observed table shape"
+                       if nbytes == INF_PAYLOAD_BYTES else ""), "ok")
             elif h.startswith("7F") and h[4:6] == "31":
                 log(f"  ~ {label}: service 21 accepted, identifier rejected "
                     f"-> run  --sweep {by[req][0]}", "warn")

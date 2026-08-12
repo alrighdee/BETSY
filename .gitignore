@@ -18,3 +18,8 @@ keystore.properties
 
 # Local scratch, not part of the project
 scratch/
+
+# Live probe scratch: the *.console files are duplicates of the *.log written by the
+# probe tools, and harvest-live/svc12-sweep are fixed names that get overwritten on each
+# run rather than timestamped. The timestamped captures are the record worth keeping.
+captures/*.console

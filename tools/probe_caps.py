@@ -128,6 +128,10 @@ def i_mode01(raw, h):
     return "WARN", f"unexpected {h}"
 
 
+# `0902` returns the VIN. The probe below asks `0902` deliberately, because whether the HV ECU
+# answers mode 09 at all is a real question about the ECU. The answer is therefore PII and the
+# written log must be scrubbed before it is committed: see the redaction in probe_harvest.scrub
+# and the note in CaptureData. Never widen this to print the payload.
 def i_mode09(raw, h):
     if not h:
         return "NO", "silent. Mode 09 is not a usable liveness probe on 7E2 either."

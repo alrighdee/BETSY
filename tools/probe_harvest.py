@@ -43,13 +43,23 @@ FORBIDDEN = {
     "3B": "write by local id", "10": "session control", "85": "control DTC setting",
 }
 
-# Mode 09 PID 02 returns the VIN, which identifies the vehicle and often the owner, and these
-# files live in a repo with a public remote. Never ask for it, and scrub it if it turns up.
-VIN_RE = re.compile(r"(4902 ?01)((?:[0-9A-F]{2}){17})", re.I)
+# Mode 09 PID 02 returns the VIN, which identifies the vehicle and often its owner, and these
+# files are committed to a repository with a public remote. `check_safe` refuses to send `0902`
+# at all; `scrub` is the second line of defence for a VIN arriving some other way.
+#
+# CARE: the single-frame pattern below is NOT sufficient on its own. An ELM327 returns a long
+# reply split across "N:" line indices, e.g. `014 0:490201<6 bytes> 1:<7 bytes> 2:<7 bytes>`, so
+# a regex anchored on `490201` matches only the first frame and silently leaves the rest of the
+# VIN in the file. That mistake was made once here and caught only by re-checking the written
+# output, with the last seven characters, the serial portion, still present. Redact whole lines,
+# and verify by grepping the file afterwards rather than trusting the substitution.
+VIN_RE = re.compile(r"(4902 ?01)((?:[0-9A-F]{2}){6,})", re.I)
+VIN_FRAMES_RE = re.compile(r"(4902 ?01).*$", re.I | re.M)
 
 
 def scrub(s):
-    return VIN_RE.sub(r"\1<VIN-REDACTED>", s)
+    """Remove any mode-09 VIN payload, including its continuation frames."""
+    return VIN_FRAMES_RE.sub(r"\1<VIN-REDACTED>", VIN_RE.sub(r"\1<VIN-REDACTED>", s))
 
 
 def plan():

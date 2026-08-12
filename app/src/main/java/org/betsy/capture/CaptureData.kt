@@ -8,6 +8,13 @@ import org.json.JSONObject
 /**
  * One shareable capture: the bytes a car answered with, plus enough context to interpret them.
  *
+ * **No vehicle identifier may be added to this type.** A capture is uploaded to a public
+ * repository, and a VIN identifies the car and frequently its owner. The HV ECU does answer SAE
+ * mode 09 (`0902` returns the VIN, verified on a 2009 Gen2), so this is a live hazard rather than
+ * a theoretical one: nothing in the sweep requests it, and [raw] must never be widened to carry a
+ * response that contains one. If a future read needs mode 09 for some other PID, redact the VIN
+ * before it reaches [CaptureData], not afterwards.
+ *
  * The split between [raw] and [codes] is the whole point of this type. `InfLayout`'s bit mapping
  * has never been checked against a car with a real fault (§9.4.0), so [codes] is a hypothesis,
  * not a finding. It travels beside the bytes and never in place of them, and nothing downstream
@@ -17,6 +24,17 @@ import org.json.JSONObject
 data class CaptureData(
     /** App version, from BuildConfig. */
     val version: String,
+    /**
+     * Short git identity of the tree this APK was built from, from `BuildConfig.GIT_HASH`, with a
+     * trailing `+` when the tree was dirty.
+     *
+     * [version] alone cannot identify the code that produced a capture: it only moves when a
+     * release is cut, so every unreleased commit shares one number and a capture can name a version
+     * the phone was not running. The read path changes between captures — a probe added, a decoder
+     * corrected — and a capture that cannot be tied to the build that made it cannot be re-read
+     * later against what that build actually did.
+     */
+    val build: String,
     /** Detected generation and pack shape, e.g. "Gen2 (2004-2009) 14 blocks / 28 cells". */
     val car: String,
     /** Adapter identity from the ELM327 banner. */
@@ -46,6 +64,7 @@ data class CaptureData(
     fun toJson(): String =
         JSONObject()
             .put("version", version)
+            .put("build", build)
             .put("car", car)
             .put("elm", elm)
             .put("raw", JSONObject().also { o -> raw.forEach { (k, v) -> o.put(k, v) } })
@@ -74,11 +93,13 @@ data class CaptureData(
             info: VehicleInfo,
             elm: String,
             version: String,
+            build: String,
             logTail: List<String>,
             ownerNotes: String = "",
         ): CaptureData =
             CaptureData(
                 version = version,
+                build = build,
                 car = "${info.model.label} ${info.blockCount} blocks / ${info.cellCount} cells",
                 elm = elm.ifBlank { "unknown" },
                 raw = result.rawResponses,

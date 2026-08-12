@@ -98,8 +98,8 @@ export default {
 		const hasFault = body.hasStoredDtcs === true;
 
 		// Still never keyed on `codes`. The decoder is the thing this pipeline exists to verify,
-		// so letting its output classify captures would let a wrong bit mapping bury the very
-		// evidence that proves it wrong.
+		// so letting its output classify captures would let a decoding error bury the very
+		// evidence that proves it wrong. The model has already been wrong once.
 		const decoderMiss = hasFault && body.codes.length === 0;
 
 		const ts = new Date().toISOString().replace(/[:.]/g, "-");
@@ -218,15 +218,19 @@ function render(
 	}
 	if (meta.decoderMiss) {
 		lines.push(
-			"> **Decoder miss.** The car reported stored DTCs and the INF decoder produced nothing.",
+			"> **No sub-code.** The car reported stored DTCs and no freeze page carried a sub-code.",
 		);
-		lines.push("> This is direct evidence the bit mapping needs work. See PROTOCOL.md §9.4.0.");
+		lines.push(
+			"> Expected for some codes: a page is written per DTC and not every DTC has one.",
+		);
+		lines.push("> Unexpected in bulk, which is what makes these captures worth having.");
+		lines.push("> See PROTOCOL.md 7.4.2.");
 		lines.push("");
 	} else if (!meta.hasFault && !meta.synthetic) {
 		lines.push(
 			"> No stored DTCs. A healthy-car baseline: proof the read path works on this adapter,",
 		);
-		lines.push("> and the control against which a faulty car's all-zero tables are judged.");
+		lines.push("> and the control against which a faulty car's populated pages are judged.");
 		lines.push("");
 	}
 
@@ -234,7 +238,7 @@ function render(
 	lines.push(b.dtcs.length ? b.dtcs.map((d) => `- ${oneLine(d, 200)}`).join("\n") : "_none_");
 	lines.push("");
 
-	lines.push("## Decoded INF codes (advisory, mapping unverified)");
+	lines.push("## INF sub-codes");
 	lines.push(
 		b.codes.length
 			? b.codes.map((c) => `- ${oneLine(c.table, 60)}: ${Number(c.code)}`).join("\n")

@@ -1,6 +1,12 @@
 {
   "$schema": "https://raw.githubusercontent.com/cloudflare/workers-sdk/main/packages/wrangler/config-schema.json",
   "name": "betsy-capture",
+  // Pinned deliberately. Without it wrangler deploys to whichever account the current login
+  // happens to hold, and this project has two: the BETSY account and a personal one. On
+  // 2026-08-12 the login had silently changed between deploys, which would have created a
+  // duplicate worker elsewhere while leaving the live one, the endpoint the app posts to,
+  // untouched. Pinned, a wrong login fails loudly instead.
+  "account_id": "81aebb6c11e16bdd2226ede6cb40a32e",
   "main": "src/index.ts",
   "compatibility_date": "2026-08-09",
   "compatibility_flags": ["nodejs_compat"],

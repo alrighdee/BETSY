@@ -5,103 +5,67 @@ import org.betsy.elm.Normalize
 import org.betsy.model.InfDetail
 
 /**
- * PROTOCOL.md §9.4.0, the INF detail-code read: KWP2000 service `0x21` with a single-byte
- * local identifier, `21C6`..`21CA` on the HV ECU (`7E2`). Response is `61 <lid>` followed by
- * the table payload.
+ * PROTOCOL.md §7.4.2, reading the INF sub-code out of a freeze page.
  *
- * - bit offsets are **MSB-first** within each byte, so "bit 0" is `0x80`;
- * - a code is **active iff its extracted value is nonzero**, the reference normalises the
- *   extraction to 0/1 and discards the magnitude, so [InfDetail.value] is informational only;
- * - a field whose range falls past the end of the response is **absent**, not an error. One
- *   layout is applied to whatever length the ECU returns. A 2009 Gen2 returns 48 bytes and so
- *   never reports the last 9 ordinals; another generation may return more.
+ * `21C6`..`21CA` on `7E2` are **per-DTC freeze pages**, not flag tables. When the ECU stores a DTC
+ * it writes one page, and the page carries the sub-code as a `u16` big-endian at **bytes 29-30**
+ * of the payload, alongside a frame of analog snapshot values.
  *
- * The payload length is therefore never assumed. Only a completely empty payload is an error.
+ * So decoding is a field read, not a search:
+ *
+ * ```
+ * page not all zero  ->  sub-code = u16BE(payload[29], payload[30])
+ * ```
+ *
+ * Measured on a 2009 Gen2 with `P0571` stored: bytes 29-30 read `0x0073`, decimal 115, which is
+ * that code's documented sub-code. Read again seventeen hours and an ignition cycle later, all 48
+ * bytes identical, so a page is a snapshot written when the fault sets rather than live data.
+ *
+ * **Why there is no bit map here.** An earlier model treated each page as a table of flags and
+ * called a slot active when non-zero. On a car whose only fault was a brake switch that reported
+ * **35 simultaneous sub-codes**: those bytes are analog readings in offset binary, which is why a
+ * car at rest shows a run of `0x80` midpoints. `InfLayout` still describes those 62 analog items
+ * for naming and scaling, but it plays no part in reading the sub-code.
  */
 object InfDecoder {
-    /**
-     * Return bits [bitStart, bitEnd] of [data] as a dword, MSB-first, [bitEnd] being the
-     * lowest-order bit of the range.
-     *
-     * Note the bottom-byte step truncates to 8 bits before
-     * being shifted into place, bits above [bitStart] are **discarded**, not carried. Doing
-     * this in 32 bits would leak spurious high bits for any multi-bit field that is not
-     * byte-aligned (§9.4.0).
-     */
-    fun extract(
-        data: ByteArray,
-        bitStart: Int,
-        bitEnd: Int,
-    ): Int {
-        val endByte = bitEnd shr 3
-        val startByte = bitStart shr 3
-        val byteSpan = endByte - startByte
-        val shiftTop = 7 - (bitEnd and 7)
+    /** Byte offset of the sub-code field within a page payload; 16 bits, big-endian. */
+    const val CODE_BYTE = 29
 
-        var value = (data[endByte].toInt() and 0xFF) ushr shiftTop
-        if (byteSpan > 1) {
-            var shift = 8 - shiftTop
-            for (i in endByte - 1 downTo startByte + 1) {
-                value = value or ((data[i].toInt() and 0xFF) shl shift)
-                shift += 8
-            }
-        }
-        if (byteSpan > 0) {
-            val truncated = ((data[startByte].toInt() and 0xFF) shl (bitStart and 7)) and 0xFF
-            value = value or (truncated shl (bitEnd - bitStart - 7))
-        } else {
-            value = value and ((1 shl (bitEnd - bitStart + 1)) - 1)
-        }
-        return value
-    }
+    /** Sub-codes are three digits. Anything outside this is not one, and is not reported. */
+    private val PLAUSIBLE = 100..999
 
     /**
-     * Decode one table's response into its active INF codes.
+     * The sub-code carried by one page, or null when the page carries none.
      *
-     * [r] is the normalized response to [table]'s request; a missing `61 <lid>` tag raises
-     * rather than yielding a silent empty list (§2.2). Fields beyond the payload are skipped,
-     * which is how a shorter-than-reference table reports itself.
+     * Null covers three distinct cases, all of them normal: the page is all zero because no DTC
+     * wrote it, the payload is too short to reach the field, or the field holds something outside
+     * the three-digit range. None is an error, so none throws. A missing `61 <lid>` tag does
+     * throw, because that means the read itself failed (§2.2).
      */
     fun decodeActive(
         r: String,
         table: InfTable,
     ): List<InfDetail> {
         val i = Normalize.requireTag(r, table.tag)
-        var payloadBytes = (r.length - (i + 4)) / 2
+        var bytes = (r.length - (i + 4)) / 2
 
-        // A multi-frame response carries its ISO-TP length ahead of the tag, and the frames are
-        // padded out to an 8-byte boundary, so the tail of the string is filler rather than table
-        // data. A real 2009 Gen2 declares 0x032 = 50 bytes (2 tag + 48 payload) and then hands
-        // over 53 bytes, the last 5 being pad.
-        //
-        // Believing the string length would decode the final ordinals out of that padding. It is
-        // harmless while an ECU pads with 0x00, and becomes a false active INF code on any ECU
-        // that pads with 0xAA or 0x55. Only ever shrinks: an absent or unparseable prefix leaves
-        // the length alone rather than risking truncation of real data.
+        // A multi-frame reply declares its length ahead of the tag and pads the final frame, so
+        // the tail of the string is filler. Believing the string length would read padding as
+        // data. Only ever shrinks.
         if (i > 0) {
             val declared = r.substring(0, i).toIntOrNull(16)
-            if (declared != null && declared > 2) {
-                payloadBytes = minOf(payloadBytes, declared - 2)
-            }
+            if (declared != null && declared > 2) bytes = minOf(bytes, declared - 2)
         }
+        if (bytes <= 0) throw NoDataException("${table.request}: no payload after ${table.tag}")
+        if (bytes <= CODE_BYTE + 1) return emptyList()
 
-        if (payloadBytes <= 0) throw NoDataException("${table.request}: no payload after ${table.tag}")
-        val payload = Normalize.bytes(r, i + 4, payloadBytes)
-        val availableBits = payloadBytes * 8
+        val payload = Normalize.bytes(r, i + 4, bytes)
+        if (payload.all { it.toInt() == 0 }) return emptyList()
 
-        val active = mutableListOf<InfDetail>()
-        for (field in table.fields) {
-            // out of range for this car's table -> absent, exactly as the reference reports it
-            if (field.bitEnd >= availableBits) continue
-            val value = extract(payload, field.bitStart, field.bitEnd)
-            if (value > 0) active += InfDetail(table.lid, field.code, value)
-        }
-        return active
+        val code =
+            ((payload[CODE_BYTE].toInt() and 0xFF) shl 8) or
+                (payload[CODE_BYTE + 1].toInt() and 0xFF)
+        if (code !in PLAUSIBLE) return emptyList()
+        return listOf(InfDetail(table = table.lid, code = code))
     }
-
-    /** How many of [table]'s fields a payload of [payloadBytes] can actually report. */
-    fun reportableFields(
-        table: InfTable,
-        payloadBytes: Int,
-    ): Int = table.fields.count { it.bitEnd < payloadBytes * 8 }
 }

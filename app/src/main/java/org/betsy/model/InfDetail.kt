@@ -1,26 +1,19 @@
 package org.betsy.model
 
 /**
- * One active INF detail code decoded from a `61 <lid>` table response (PROTOCOL.md §9.4.0).
+ * One INF sub-code read from a freeze page (PROTOCOL.md §7.4.2).
  *
- * A fault reports a code from more than one table, so [table] matters: it says which of the five
- * detail tables this code came from, and pairing across tables is what names the failed
- * component. A code without its table is ambiguous.
- *
- * 0/1 and discards the magnitude (§9.4.0), so treat [value] as diagnostic detail rather than
- * as a number with meaning; presence is the signal.
+ * The ECU writes one page per stored DTC and transmits the sub-code inside it as a value, so this
+ * is a number the car reported rather than a slot the app decided was set. [table] records which
+ * of the five pages carried it, which matters while page-to-DTC assignment is unresolved for cars
+ * with several stored faults.
  */
 data class InfDetail(
-    /** Local identifier of the table this came from, 0xC6..0xCA. */
+    /** Local identifier of the page this came from, 0xC6..0xCA. */
     val table: Int,
-    /** The 3-digit INF code, e.g. 526 or 611. */
+    /** The 3-digit sub-code the car transmitted, e.g. 115 or 612. */
     val code: Int,
-    /** Raw extracted bit range; nonzero means active. */
-    val value: Int,
 ) {
-    val active: Boolean
-        get() = value > 0
-
     /** "Detail Code 1".."Detail Code 5", the labelling dealer tooling uses. */
     val tableLabel: String
         get() = "Detail Code ${table - 0xC5}"

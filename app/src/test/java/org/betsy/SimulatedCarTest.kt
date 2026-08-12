@@ -38,15 +38,18 @@ class SimulatedCarTest {
     fun aStoredFaultIsReadAndItsTablesCapturedVerbatim() {
         val (_, result) = read(SimulatedCar.gen2WithStoredFault)
 
-        // ReplayTransport answers the same 13B0 for HV and engine, so both groups see P0AA6.
-        assertEquals(listOf("P0AA6", "P0AA6"), result.groups.flatMap { g -> g.codes.map { it.code } })
+        // ReplayTransport answers the same 13B0 for HV and engine, so both groups see P0571.
+        assertEquals(listOf("P0571", "P0571"), result.groups.flatMap { g -> g.codes.map { it.code } })
         assertTrue(result.hasStoredDtcs)
 
-        // Set bits in the C9 and CA tables reach the capture untouched. Naming them is what
-        // InfLayout deliberately does not do, so nothing decodes and the capture is flagged a
-        // decoder miss: the raw bytes are the deliverable, the interpretation is not.
-        assertEquals(emptyList<Int>(), result.infCodes.map { it.code })
-        assertTrue(result.rawResponses.getValue("7E2/21C9").contains("61C9"))
+        // The payoff, on bytes a real car transmitted: one populated page, one sub-code, and it
+        // is P0571's documented 115. Not a constant in the fixture; decoded out of the page.
+        assertEquals(listOf(115), result.infCodes.map { it.code })
+        assertEquals("Detail Code 2", result.infCodes.single().tableLabel)
+
+        // And the bytes still travel beside the interpretation, which is what let this decode be
+        // worked out a day after the capture was taken.
+        assertTrue(result.rawResponses.getValue("7E2/21C7").contains("61C7"))
         assertTrue(result.rawResponses.getValue("7E2/21CA").contains("61CA"))
         assertTrue(
             result.rawResponses
@@ -126,7 +129,7 @@ class SimulatedCarTest {
     @Test
     fun storedFaultAlsoExposesGenericStoredCodeSeparately() {
         val (_, result) = read(SimulatedCar.gen2WithStoredFault)
-        // KWP path still reports P0AA6; generic $03 also has P0AA6; they stay separate fields.
+        // KWP path reports P0571; generic $03 is a separate observation and stays separate.
         assertTrue(result.hasStoredDtcs)
         assertEquals(listOf("P0AA6"), result.storedGenericDtcs.map { it.code })
         assertEquals(5, result.infTablesResponded)
@@ -178,21 +181,26 @@ class SimulatedCarTest {
             ),
             result.rawResponses.keys.toList(),
         )
-        assertTrue(result.rawResponses.getValue("7E2/21CA").startsWith("61CA"))
-        assertEquals("53010AA6", result.rawResponses.getValue("7E2/13B0"))
+        // A real multi-frame reply carries its ISO-TP length ahead of the tag, so the raw is
+        // "03261CA...", not "61CA...". The fixture speaks the car's framing, not a tidied form.
+        assertTrue(result.rawResponses.getValue("7E2/21CA").contains("61CA"))
+        assertEquals("53010571", result.rawResponses.getValue("7E2/13B0"))
         assertTrue(result.hasStoredDtcs)
     }
 
     @Test
     fun aStoredDtcIsReportedEvenWhenNoSubCodeDecodes() {
-        // The capture worth building the pipeline for: the ECU has a fault, the mapping yields
-        // nothing. hasStoredDtcs must stay true so this is filed as real rather than as noise.
-        val blind = SimulatedCar.gen2WithStoredFault + mapOf("21C9" to "61C9", "21CA" to "61CA")
+        // A fault whose pages carry no sub-code. Expected for some codes, since a page is written
+        // per DTC and not every DTC has one. hasStoredDtcs must stay true so this is filed as a
+        // real capture rather than as noise: routing never keys on the decoder.
+        val blind =
+            SimulatedCar.gen2WithStoredFault +
+                mapOf("21C7" to "03261C7" + "0".repeat(97))
         val (_, result) = read(blind)
 
         assertTrue(result.hasStoredDtcs)
         assertEquals(emptyList<Int>(), result.infCodes.map { it.code })
-        assertEquals(listOf("P0AA6", "P0AA6"), result.groups.flatMap { g -> g.codes.map { it.code } })
+        assertEquals(listOf("P0571", "P0571"), result.groups.flatMap { g -> g.codes.map { it.code } })
     }
 
     /**

@@ -504,10 +504,11 @@ class DtcReader(
 
     companion object {
         /**
-         * Frames to try. The 2009 Gen2 holds two (`00` and `01`) and refuses `02` with `7F0212`,
-         * so this is a bound on the walk, not an expectation.
+         * Frames to try. Inferred as 2 from one early refusal, then corrected: a an on-car read read
+         * of the same car answered `020202`, so it holds at least three. The walk stops when the
+         * ECU declines a frame, so this is only an upper bound and costs nothing if unused.
          */
-        const val MAX_FREEZE_FRAMES = 2
+        const val MAX_FREEZE_FRAMES = 4
 
         /**
          * PIDs read per frame. Exactly the ones a 2009 Gen2 answered, plus `02`

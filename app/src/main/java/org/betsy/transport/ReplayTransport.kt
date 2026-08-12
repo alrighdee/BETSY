@@ -57,6 +57,33 @@ object SimulatedCar {
         return "61%02X".format(lid) + b.joinToString("") { "%02X".format(it.toInt() and 0xFF) }
     }
 
+    /**
+     * `21C7` exactly as a 2009 Gen2 returned it with `P0571` stored, all 48 payload bytes.
+     *
+     * Read three times across seventeen hours and an ignition cycle, byte for byte identical, so a
+     * page is a snapshot written when the fault sets rather than live data. Bytes 29-30 are
+     * `00 73`, decimal 115, which is `P0571`'s documented sub-code. The run of `0x80` at the start
+     * is offset-binary midpoints, a car at rest; treating those as flags is what produced 35
+     * phantom sub-codes under the old model.
+     */
+    private const val REAL_PAGE_C7_P0571 =
+        "03261C7808080800000049A417E00615F5B5D70820000A0AF00000000000000" +
+            "010073636B4A02615F5C639E6C665D659E9A801C0000000000"
+
+    /** The four pages no DTC wrote, exactly as the same car returned them. */
+    private const val EMPTY_PAGE_C7 =
+        "03261C7" +
+            "000000000000000000000000000000000000000000000000" +
+            "0000000000000000000000000000000000000000000000000"
+    private const val EMPTY_PAGE_C6 =
+        "03261C6" + "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+    private const val EMPTY_PAGE_C8 =
+        "03261C8" + "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+    private const val EMPTY_PAGE_C9 =
+        "03261C9" + "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+    private const val EMPTY_PAGE_CA =
+        "03261CA" + "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+
     /** Captured from a real 2009 Gen2, parked and charging (PROTOCOL.md §5.2 worked example). */
     private const val CE_D0_CF =
         "61CE6D810B85ED85EB85E285DF85F085F685F185F385F485F385EB85E585E485E1" +
@@ -64,12 +91,17 @@ object SimulatedCar {
             "CF8CD180C54EAA000900008C498C1B8C54"
 
     /**
-     * Gen2 with a stored fault.
+     * Gen2 with a stored fault. **Every response below was measured on a real car.**
      *
-     * `13B0` reports one code, `0x0AA6` → `P0AA6`, and two detail tables come back with a byte
-     * set rather than all-zero. The offsets are arbitrary: what the fixture exercises is that a
-     * non-zero table is read and carried through to the capture intact. Naming which slot means
-     * what is not something this project can currently demonstrate (§9.4.0).
+     * Recorded from a 2009 Gen2, twice across an ignition cycle, with `P0571` deliberately stored
+     * on `7E2`, framed exactly as the car speaks it. The five freeze pages are the real ones: page
+     * 2 populated, the other four all zero. Its sub-code, 115, is not written here as a constant;
+     * it is carried inside the page bytes at 29-30 and has to be decoded to be seen, which is the
+     * point of the fixture.
+     *
+     * This replaced a synthetic fixture that had bytes set at arbitrary offsets to exercise "a
+     * non-zero table is carried through". That fixture could not have caught the decoder being
+     * wrong, because it did not encode anything true. Measured bytes can.
      */
     val gen2WithStoredFault: Map<String, String> =
         mapOf(
@@ -84,7 +116,8 @@ object SimulatedCar {
             // Mode 02 freeze frame: frame 00 exists, frame 01 is declined, matching the
             // an on-car read measurement where the car held two frames and refused the third.
             "020000" to "4200007E1F8803",
-            "020200" to "420200 0AA6",
+            "020200" to "4202000000",
+            "020201" to "4202010571",
             "020500" to "42050079",
             "024200" to "4242357B",
             "020001" to "7F0212",
@@ -96,14 +129,15 @@ object SimulatedCar {
             // DTC read (§7.1): one stored code on the HV ECU; battery and engine clean
             // (engine uses the same 13B0 command on 7E0; ReplayTransport is not call-order
             // aware, so both ECUs see P0AA6 unless overridden. Healthy fixture zeros 13B0.)
-            "13B0" to "53010AA6",
+            "13B0" to "53010571",
             "1380" to "5300",
-            // INF detail tables (§7.4)
-            "21C6" to table(0xC6),
-            "21C7" to table(0xC7),
-            "21C8" to table(0xC8),
-            "21C9" to table(0xC9, 7 to 0x01),
-            "21CA" to table(0xCA, 11 to 0x01),
+            // Freeze pages, verbatim from the car (§7.4.2). Page 2 carries the sub-code at
+            // bytes 29-30; the rest are untouched because only one DTC is stored.
+            "21C6" to EMPTY_PAGE_C6,
+            "21C7" to REAL_PAGE_C7_P0571,
+            "21C8" to EMPTY_PAGE_C8,
+            "21C9" to EMPTY_PAGE_C9,
+            "21CA" to EMPTY_PAGE_CA,
         )
 
     /** A healthy Gen2, every table reads zero, as the real test car does. */
@@ -113,7 +147,13 @@ object SimulatedCar {
                 "13B0" to "5300",
                 "03" to "7EA 02 43 00 ",
                 "07" to "7EA 02 47 00 ",
-                "21C9" to table(0xC9),
-                "21CA" to table(0xCA),
+                // Every page zero. Must be spelled out: this map is built from the faulted one,
+                // so a page left unmentioned would inherit that car's populated C7 and make a
+                // "healthy" fixture report a sub-code.
+                "21C6" to EMPTY_PAGE_C6,
+                "21C7" to EMPTY_PAGE_C7,
+                "21C8" to EMPTY_PAGE_C8,
+                "21C9" to EMPTY_PAGE_C9,
+                "21CA" to EMPTY_PAGE_CA,
             )
 }

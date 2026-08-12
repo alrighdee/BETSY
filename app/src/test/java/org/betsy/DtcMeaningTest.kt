@@ -63,8 +63,29 @@ class DtcMeaningTest {
         }
     }
 
+    /**
+     * The family this app exists for. A weak block is the repairable case, so the text must not
+     * read like a dead battery, and it must point at the specific module.
+     */
+    @Test
+    fun everyBatteryBlockOnAGen2IsExplainedAndNamesItsBlock() {
+        for (block in 1..14) {
+            val m = DtcMeaning.forWire(0x3010 + block)
+            assertNotNull("block $block", m)
+            assertTrue("block $block names itself", m!!.what.contains("block $block"))
+            assertTrue("block $block avoids implying a dead pack", m.usually.contains("module"))
+        }
+    }
+
+    /** A blocked cooling fan actively destroys a battery, so it must not read as trivial. */
+    @Test
+    fun theCoolingFanFaultIsNotMarkedMinor() {
+        val m = DtcMeaning.forWire(0x0A82)!!
+        assertTrue(m.severity != DtcMeaning.Severity.MINOR)
+    }
+
     @Test
     fun everyExplanationIsActuallyWritten() {
-        assertTrue(DtcMeaning.explainedCount >= 10)
+        assertTrue(DtcMeaning.explainedCount >= 30)
     }
 }

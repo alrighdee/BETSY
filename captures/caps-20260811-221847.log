@@ -1,0 +1,62 @@
+[   0.0s] BETSY capability probe. READ-ONLY. 9 steps.
+[   0.0s] budget 300s, per-command deadline 4.0s
+[   0.0s] worst case if the car is asleep: aborts after step 1, about 24s
+[   0.0s] 
+[   1.1s] adapter awake on link attempt 1
+[   1.4s] initialised (6 AT commands)
+[   1.4s] 
+[   1.4s] [1/9] 7E2 13B0 - GATE: bus alive, and is 7E2 clean?
+[   1.9s]         raw: SEARCHING... 5300
+[   1.9s]         => OK: positive 53, 0 stored DTC(s) on 7E2. Bus alive.  [0.5s]
+[   1.9s] 
+[   1.9s] [2/9] 7E2 0100 - does 7E2 answer generic mode 01?  eta ~4s
+[   2.2s]         raw: 4100981A8013
+[   2.2s]         => YES: positive 41, supported-PID mask 981A8013. 7E2 DOES answer generic mode 01. The 21C6 fallback can be deleted.  [0.3s]
+[   2.2s] 
+[   2.2s] [3/9] 7E2 0902 - does 7E2 answer generic mode 09 (VIN)?  eta ~4s
+[   2.4s]         raw: 014 0:490201<VIN-REDACTED>
+[   2.4s]         => YES: positive 49. Mode 09 works on 7E2: 490201<VIN-REDACTED>
+[   2.4s] 
+[   2.4s] [4/9] 7E2 1200 - KWP readFreezeFrameData: does the service exist?  eta ~2s
+[   2.6s]         raw: 7F1212
+[   2.6s]         => YES: negative response, NRC 12: subfunction not supported -> service 12 EXISTS, wrong parameters  [0.2s]
+[   2.6s] 
+[   2.6s] [5/9] 7E2 12 - same, bare form, in case 1200 was a parameter error  eta ~2s
+[   2.7s]         raw: 7F1212
+[   2.7s]         => YES: negative response, NRC 12: subfunction not supported -> service 12 EXISTS, wrong parameters  [0.2s]
+[   2.7s] 
+[   2.7s] [6/9] 7E2 020200 - generic mode 02 freeze frame, PID 02 frame 0  eta ~1s
+[   2.9s]         raw: 4202000000
+[   2.9s]         => YES: POSITIVE 42, generic freeze frame exists: 4202000000  [0.2s]
+[   2.9s] 
+[   2.9s] [7/9] 7E0 13B0 - is U0293 still stored on the ECM?  eta ~1s
+[   3.0s]         raw: 5301C293
+[   3.0s]         => STORED: positive 53, 1 stored DTC(s), raw ['C293']. A real DTC to probe against.  [0.1s]
+[   3.0s] 
+[   3.0s] [8/9] 7E0 03 - generic stored DTCs on the ECM  eta ~0s
+[   3.3s]         raw: 4301C293
+[   3.3s]         => OK: positive 43: 4301C293  [0.2s]
+[   3.3s] 
+[   3.3s] [9/9] 7E0 020200 - freeze frame on the ECM, against a real DTC if one is stored  eta ~0s
+[   3.4s]         raw: 420200C293
+[   3.4s]         => YES: POSITIVE 42, generic freeze frame exists: 420200C293  [0.1s]
+[   3.4s] 
+[   3.4s] ======================================================================
+[   3.4s] SUMMARY
+[   3.4s]   1. 7E2 13B0     OK      positive 53, 0 stored DTC(s) on 7E2. Bus alive.
+[   3.4s]   2. 7E2 0100     YES     positive 41, supported-PID mask 981A8013. 7E2 DOES answer generic mode
+[   3.4s]   3. 7E2 0902     YES     positive 49. Mode 09 works on 7E2: 490201<VIN-REDACTED>
+[   3.4s]   4. 7E2 1200     YES     negative response, NRC 12: subfunction not supported -> service 12 EXI
+[   3.4s]   5. 7E2 12       YES     negative response, NRC 12: subfunction not supported -> service 12 EXI
+[   3.4s]   6. 7E2 020200   YES     POSITIVE 42, generic freeze frame exists: 4202000000
+[   3.4s]   7. 7E0 13B0     STORED  positive 53, 1 stored DTC(s), raw ['C293']. A real DTC to probe agains
+[   3.4s]   8. 7E0 03       OK      positive 43: 4301C293
+[   3.4s]   9. 7E0 020200   YES     POSITIVE 42, generic freeze frame exists: 420200C293
+[   3.4s] ======================================================================
+[   3.4s] WHAT THIS SETTLES
+[   3.4s]   + 7E2 answers 0100. DELETE the 21C6 liveness fallback in DtcReader.
+[   3.4s]   + a freeze-frame service EXISTS on this car. Worth building the read.
+[   3.4s]   + ECM (7E0): positive 53, 1 stored DTC(s), raw ['C293']. A real DTC to probe agains
+[   3.4s]   + freeze frame READ BACK against a real stored DTC. The mechanism works.
+[   3.4s] ======================================================================
+[   3.4s] RUN COMPLETE in 3s

@@ -1,0 +1,100 @@
+{"n": 1, "priority": 1, "header": "7E0", "cmd": "12", "why": "freeze-frame format hunt against a REAL stored DTC", "raw": "SEARCHING... 7F1212", "hex": "7F1212", "flag": "bad subfunction", "seconds": 0.49}
+{"n": 2, "priority": 1, "header": "7E0", "cmd": "1200", "why": "freeze-frame format hunt against a REAL stored DTC", "raw": "7F1212", "hex": "7F1212", "flag": "bad subfunction", "seconds": 0.36}
+{"n": 3, "priority": 1, "header": "7E0", "cmd": "1201", "why": "freeze-frame format hunt against a REAL stored DTC", "raw": "7F1212", "hex": "7F1212", "flag": "bad subfunction", "seconds": 0.28}
+{"n": 4, "priority": 1, "header": "7E0", "cmd": "1202", "why": "freeze-frame format hunt against a REAL stored DTC", "raw": "7F1212", "hex": "7F1212", "flag": "bad subfunction", "seconds": 0.31}
+{"n": 5, "priority": 1, "header": "7E0", "cmd": "1203", "why": "freeze-frame format hunt against a REAL stored DTC", "raw": "7F1212", "hex": "7F1212", "flag": "bad subfunction", "seconds": 0.15}
+{"n": 6, "priority": 1, "header": "7E0", "cmd": "1204", "why": "freeze-frame format hunt against a REAL stored DTC", "raw": "7F1212", "hex": "7F1212", "flag": "bad subfunction", "seconds": 0.16}
+{"n": 7, "priority": 1, "header": "7E0", "cmd": "1205", "why": "freeze-frame format hunt against a REAL stored DTC", "raw": "7F1212", "hex": "7F1212", "flag": "bad subfunction", "seconds": 0.14}
+{"n": 8, "priority": 1, "header": "7E0", "cmd": "12C293", "why": "freeze-frame format hunt against a REAL stored DTC", "raw": "7F1212", "hex": "7F1212", "flag": "bad subfunction", "seconds": 0.15}
+{"n": 9, "priority": 1, "header": "7E0", "cmd": "12C29300", "why": "freeze-frame format hunt against a REAL stored DTC", "raw": "7F1212", "hex": "7F1212", "flag": "bad subfunction", "seconds": 0.16}
+{"n": 10, "priority": 1, "header": "7E0", "cmd": "12C29301", "why": "freeze-frame format hunt against a REAL stored DTC", "raw": "7F1212", "hex": "7F1212", "flag": "bad subfunction", "seconds": 0.16}
+{"n": 11, "priority": 1, "header": "7E0", "cmd": "120000", "why": "freeze-frame format hunt against a REAL stored DTC", "raw": "7F1212", "hex": "7F1212", "flag": "bad subfunction", "seconds": 0.16}
+{"n": 12, "priority": 1, "header": "7E0", "cmd": "1280", "why": "freeze-frame format hunt against a REAL stored DTC", "raw": "7F1212", "hex": "7F1212", "flag": "bad subfunction", "seconds": 0.14}
+{"n": 13, "priority": 1, "header": "7E0", "cmd": "12FF", "why": "freeze-frame format hunt against a REAL stored DTC", "raw": "7F1212", "hex": "7F1212", "flag": "bad subfunction", "seconds": 0.14}
+{"n": 14, "priority": 1, "header": "7E0", "cmd": "12FFFF00", "why": "freeze-frame format hunt against a REAL stored DTC", "raw": "7F1212", "hex": "7F1212", "flag": "bad subfunction", "seconds": 0.14}
+{"n": 15, "priority": 2, "header": "7E2", "cmd": "12", "why": "same service on the HV ECU, NRC shape only", "raw": "7F1212", "hex": "7F1212", "flag": "bad subfunction", "seconds": 0.14}
+{"n": 16, "priority": 2, "header": "7E2", "cmd": "1200", "why": "same service on the HV ECU, NRC shape only", "raw": "7F1212", "hex": "7F1212", "flag": "bad subfunction", "seconds": 0.15}
+{"n": 17, "priority": 2, "header": "7E2", "cmd": "1201", "why": "same service on the HV ECU, NRC shape only", "raw": "7F1212", "hex": "7F1212", "flag": "bad subfunction", "seconds": 0.12}
+{"n": 18, "priority": 2, "header": "7E2", "cmd": "1202", "why": "same service on the HV ECU, NRC shape only", "raw": "7F1212", "hex": "7F1212", "flag": "bad subfunction", "seconds": 0.12}
+{"n": 19, "priority": 2, "header": "7E2", "cmd": "12C6", "why": "same service on the HV ECU, NRC shape only", "raw": "7F1212", "hex": "7F1212", "flag": "bad subfunction", "seconds": 0.16}
+{"n": 20, "priority": 2, "header": "7E2", "cmd": "12C7", "why": "same service on the HV ECU, NRC shape only", "raw": "7F1212", "hex": "7F1212", "flag": "bad subfunction", "seconds": 0.12}
+{"n": 21, "priority": 2, "header": "7E2", "cmd": "1280", "why": "same service on the HV ECU, NRC shape only", "raw": "7F1212", "hex": "7F1212", "flag": "bad subfunction", "seconds": 0.16}
+{"n": 22, "priority": 2, "header": "7E2", "cmd": "12FF", "why": "same service on the HV ECU, NRC shape only", "raw": "7F1212", "hex": "7F1212", "flag": "bad subfunction", "seconds": 0.14}
+{"n": 23, "priority": 3, "header": "7E0", "cmd": "020000", "why": "mode 02 supported-PID mask, frame 0", "raw": "4200007E1F8803", "hex": "4200007E1F8803", "flag": "*** POSITIVE ***", "seconds": 0.2}
+{"n": 24, "priority": 4, "header": "7E0", "cmd": "020100", "why": "freeze frame PID 01, frame 0", "raw": "NO DATA", "hex": "", "flag": "silent", "seconds": 0.28}
+{"n": 25, "priority": 4, "header": "7E0", "cmd": "020200", "why": "freeze frame PID 02, frame 0", "raw": "420200C293", "hex": "420200C293", "flag": "*** POSITIVE ***", "seconds": 0.12}
+{"n": 26, "priority": 4, "header": "7E0", "cmd": "020300", "why": "freeze frame PID 03, frame 0", "raw": "4203000100", "hex": "4203000100", "flag": "*** POSITIVE ***", "seconds": 0.18}
+{"n": 27, "priority": 4, "header": "7E0", "cmd": "020400", "why": "freeze frame PID 04, frame 0", "raw": "42040000", "hex": "42040000", "flag": "*** POSITIVE ***", "seconds": 0.12}
+{"n": 28, "priority": 4, "header": "7E0", "cmd": "020500", "why": "freeze frame PID 05, frame 0", "raw": "4205004F", "hex": "4205004F", "flag": "*** POSITIVE ***", "seconds": 0.16}
+{"n": 29, "priority": 4, "header": "7E0", "cmd": "020B00", "why": "freeze frame PID 0B, frame 0", "raw": "NO DATA", "hex": "", "flag": "silent", "seconds": 0.31}
+{"n": 30, "priority": 4, "header": "7E0", "cmd": "020C00", "why": "freeze frame PID 0C, frame 0", "raw": "420C000000", "hex": "420C000000", "flag": "*** POSITIVE ***", "seconds": 0.14}
+{"n": 31, "priority": 4, "header": "7E0", "cmd": "020D00", "why": "freeze frame PID 0D, frame 0", "raw": "420D0000", "hex": "420D0000", "flag": "*** POSITIVE ***", "seconds": 0.12}
+{"n": 32, "priority": 4, "header": "7E0", "cmd": "020E00", "why": "freeze frame PID 0E, frame 0", "raw": "420E008A", "hex": "420E008A", "flag": "*** POSITIVE ***", "seconds": 0.11}
+{"n": 33, "priority": 4, "header": "7E0", "cmd": "020F00", "why": "freeze frame PID 0F, frame 0", "raw": "420F004A", "hex": "420F004A", "flag": "*** POSITIVE ***", "seconds": 0.13}
+{"n": 34, "priority": 4, "header": "7E0", "cmd": "021000", "why": "freeze frame PID 10, frame 0", "raw": "421000000A", "hex": "421000000A", "flag": "*** POSITIVE ***", "seconds": 0.13}
+{"n": 35, "priority": 4, "header": "7E0", "cmd": "021100", "why": "freeze frame PID 11, frame 0", "raw": "42110025", "hex": "42110025", "flag": "*** POSITIVE ***", "seconds": 0.17}
+{"n": 36, "priority": 4, "header": "7E0", "cmd": "021C00", "why": "freeze frame PID 1C, frame 0", "raw": "NO DATA", "hex": "", "flag": "silent", "seconds": 0.3}
+{"n": 37, "priority": 4, "header": "7E0", "cmd": "021F00", "why": "freeze frame PID 1F, frame 0", "raw": "421F000000", "hex": "421F000000", "flag": "*** POSITIVE ***", "seconds": 0.14}
+{"n": 38, "priority": 4, "header": "7E0", "cmd": "022000", "why": "freeze frame PID 20, frame 0", "raw": "4220001005E015", "hex": "4220001005E015", "flag": "*** POSITIVE ***", "seconds": 0.16}
+{"n": 39, "priority": 4, "header": "7E0", "cmd": "022100", "why": "freeze frame PID 21, frame 0", "raw": "NO DATA", "hex": "", "flag": "silent", "seconds": 0.3}
+{"n": 40, "priority": 4, "header": "7E0", "cmd": "022F00", "why": "freeze frame PID 2F, frame 0", "raw": "NO DATA", "hex": "", "flag": "silent", "seconds": 0.28}
+{"n": 41, "priority": 4, "header": "7E0", "cmd": "023100", "why": "freeze frame PID 31, frame 0", "raw": "423100003E", "hex": "423100003E", "flag": "*** POSITIVE ***", "seconds": 0.11}
+{"n": 42, "priority": 4, "header": "7E0", "cmd": "023300", "why": "freeze frame PID 33, frame 0", "raw": "42330064", "hex": "42330064", "flag": "*** POSITIVE ***", "seconds": 0.14}
+{"n": 43, "priority": 4, "header": "7E0", "cmd": "024200", "why": "freeze frame PID 42, frame 0", "raw": "4242002BB7", "hex": "4242002BB7", "flag": "*** POSITIVE ***", "seconds": 0.12}
+{"n": 44, "priority": 4, "header": "7E0", "cmd": "024300", "why": "freeze frame PID 43, frame 0", "raw": "4243000000", "hex": "4243000000", "flag": "*** POSITIVE ***", "seconds": 0.2}
+{"n": 45, "priority": 4, "header": "7E0", "cmd": "024400", "why": "freeze frame PID 44, frame 0", "raw": "42440049F7", "hex": "42440049F7", "flag": "*** POSITIVE ***", "seconds": 0.19}
+{"n": 46, "priority": 5, "header": "7E0", "cmd": "020201", "why": "is there a second freeze frame? frame 01", "raw": "420201C293", "hex": "420201C293", "flag": "*** POSITIVE ***", "seconds": 0.12}
+{"n": 47, "priority": 5, "header": "7E0", "cmd": "020202", "why": "is there a second freeze frame? frame 02", "raw": "7F0212", "hex": "7F0212", "flag": "bad subfunction", "seconds": 0.18}
+{"n": 48, "priority": 6, "header": "7E2", "cmd": "0100", "why": "supported-PID / mode-09 masks on the HV ECU", "raw": "4100981A8013", "hex": "4100981A8013", "flag": "*** POSITIVE ***", "seconds": 0.12}
+{"n": 49, "priority": 6, "header": "7E2", "cmd": "0120", "why": "supported-PID / mode-09 masks on the HV ECU", "raw": "412080018001", "hex": "412080018001", "flag": "*** POSITIVE ***", "seconds": 0.1}
+{"n": 50, "priority": 6, "header": "7E2", "cmd": "0140", "why": "supported-PID / mode-09 masks on the HV ECU", "raw": "4140C4CC0000", "hex": "4140C4CC0000", "flag": "*** POSITIVE ***", "seconds": 0.11}
+{"n": 51, "priority": 6, "header": "7E2", "cmd": "0160", "why": "supported-PID / mode-09 masks on the HV ECU", "raw": "NO DATA", "hex": "", "flag": "silent", "seconds": 0.28}
+{"n": 52, "priority": 6, "header": "7E2", "cmd": "0900", "why": "supported-PID / mode-09 masks on the HV ECU", "raw": "4900FC000000", "hex": "4900FC000000", "flag": "*** POSITIVE ***", "seconds": 0.12}
+{"n": 53, "priority": 6, "header": "7E0", "cmd": "0100", "why": "same for the ECM", "raw": "4100BE1FA813", "hex": "4100BE1FA813", "flag": "*** POSITIVE ***", "seconds": 0.13}
+{"n": 54, "priority": 6, "header": "7E0", "cmd": "0120", "why": "same for the ECM", "raw": "41209005E015", "hex": "41209005E015", "flag": "*** POSITIVE ***", "seconds": 0.11}
+{"n": 55, "priority": 6, "header": "7E0", "cmd": "0140", "why": "same for the ECM", "raw": "4140FE1C2000", "hex": "4140FE1C2000", "flag": "*** POSITIVE ***", "seconds": 0.13}
+{"n": 56, "priority": 7, "header": "7E2", "cmd": "1900", "why": "UDS/KWP DTC-information routes", "raw": "7F1911", "hex": "7F1911", "flag": "no such service", "seconds": 0.12}
+{"n": 57, "priority": 7, "header": "7E2", "cmd": "1902", "why": "UDS/KWP DTC-information routes", "raw": "7F1911", "hex": "7F1911", "flag": "no such service", "seconds": 0.13}
+{"n": 58, "priority": 7, "header": "7E2", "cmd": "190A", "why": "UDS/KWP DTC-information routes", "raw": "7F1911", "hex": "7F1911", "flag": "no such service", "seconds": 0.14}
+{"n": 59, "priority": 7, "header": "7E2", "cmd": "1800", "why": "UDS/KWP DTC-information routes", "raw": "7F1811", "hex": "7F1811", "flag": "no such service", "seconds": 0.12}
+{"n": 60, "priority": 7, "header": "7E2", "cmd": "18FF00", "why": "UDS/KWP DTC-information routes", "raw": "7F1811", "hex": "7F1811", "flag": "no such service", "seconds": 0.17}
+{"n": 61, "priority": 7, "header": "7E2", "cmd": "17", "why": "UDS/KWP DTC-information routes", "raw": "7F1711", "hex": "7F1711", "flag": "no such service", "seconds": 0.12}
+{"n": 62, "priority": 7, "header": "7E2", "cmd": "1700", "why": "UDS/KWP DTC-information routes", "raw": "7F1711", "hex": "7F1711", "flag": "no such service", "seconds": 0.12}
+{"n": 63, "priority": 7, "header": "7E0", "cmd": "1902", "why": "same against the ECU that has a DTC", "raw": "7F1911", "hex": "7F1911", "flag": "no such service", "seconds": 0.16}
+{"n": 64, "priority": 7, "header": "7E0", "cmd": "18FF00", "why": "same against the ECU that has a DTC", "raw": "7F1811", "hex": "7F1811", "flag": "no such service", "seconds": 0.11}
+{"n": 65, "priority": 8, "header": "7E2", "cmd": "21C0", "why": "identifier sweep 0xc0", "raw": "61C0F7F0A001", "hex": "61C0F7F0A001", "flag": "*** POSITIVE ***", "seconds": 0.16}
+{"n": 66, "priority": 8, "header": "7E2", "cmd": "21C1", "why": "identifier sweep 0xc1", "raw": "014 0:61C14E485732 1:302020314E5A46 2:58450400416A20", "hex": "61C14E485732302020314E5A4658450400416A20", "flag": "*** POSITIVE ***", "seconds": 0.12}
+{"n": 67, "priority": 8, "header": "7E2", "cmd": "21C2", "why": "identifier sweep 0xc2", "raw": "00A 0:61C234373231 1:32000005000000", "hex": "61C23437323132000005", "flag": "*** POSITIVE ***", "seconds": 0.11}
+{"n": 68, "priority": 8, "header": "7E2", "cmd": "21C3", "why": "identifier sweep 0xc3", "raw": "027 0:61C33FFF0FA0 1:00003FFF0FA000 2:00000000000020 3:6F41620080005C 4:5A58596E00817A 5:7A4A4C01800000", "hex": "61C33FFF0FA000003FFF0FA000000000000000206F41620080005C5A58596E00817A7A4A4C0180", "flag": "*** POSITIVE ***", "seconds": 0.16}
+{"n": 69, "priority": 8, "header": "7E2", "cmd": "21C4", "why": "identifier sweep 0xc4", "raw": "011 0:61C400400068 1:495F6006047F80 2:FF200014000000", "hex": "61C400400068495F6006047F80FF200014", "flag": "*** POSITIVE ***", "seconds": 0.16}
+{"n": 70, "priority": 8, "header": "7E2", "cmd": "21C5", "why": "identifier sweep 0xc5", "raw": "NO DATA", "hex": "", "flag": "silent", "seconds": 0.3}
+{"n": 71, "priority": 8, "header": "7E2", "cmd": "21C6", "why": "identifier sweep 0xc6", "raw": "032 0:61C600000000 1:00000000000000 2:00000000000000 3:00000000000000 4:00000000000000 5:00000000000000 6:00000000000000 7:00000000000000", "hex": "61C6000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000", "flag": "*** POSITIVE ***", "seconds": 0.14}
+{"n": 72, "priority": 8, "header": "7E2", "cmd": "21C7", "why": "identifier sweep 0xc7", "raw": "032 0:61C700000000 1:00000000000000 2:00000000000000 3:00000000000000 4:00000000000000 5:00000000000000 6:00000000000000 7:00000000000000", "hex": "61C7000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000", "flag": "*** POSITIVE ***", "seconds": 0.17}
+{"n": 73, "priority": 8, "header": "7E2", "cmd": "21C8", "why": "identifier sweep 0xc8", "raw": "032 0:61C800000000 1:00000000000000 2:00000000000000 3:00000000000000 4:00000000000000 5:00000000000000 6:00000000000000 7:00000000000000", "hex": "61C8000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000", "flag": "*** POSITIVE ***", "seconds": 0.12}
+{"n": 74, "priority": 8, "header": "7E2", "cmd": "21C9", "why": "identifier sweep 0xc9", "raw": "032 0:61C900000000 1:00000000000000 2:00000000000000 3:00000000000000 4:00000000000000 5:00000000000000 6:00000000000000 7:00000000000000", "hex": "61C9000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000", "flag": "*** POSITIVE ***", "seconds": 0.14}
+{"n": 75, "priority": 8, "header": "7E2", "cmd": "21CA", "why": "identifier sweep 0xca", "raw": "032 0:61CA00000000 1:00000000000000 2:00000000000000 3:00000000000000 4:00000000000000 5:00000000000000 6:00000000000000 7:00000000000000", "hex": "61CA000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000", "flag": "*** POSITIVE ***", "seconds": 0.15}
+{"n": 76, "priority": 8, "header": "7E2", "cmd": "21CB", "why": "identifier sweep 0xcb", "raw": "026 0:61CB00000000 1:00000000000000 2:00000000000000 3:00000000000000 4:00000000000000 5:00000000000000", "hex": "61CB000000000000000000000000000000000000000000000000000000000000000000000000", "flag": "*** POSITIVE ***", "seconds": 0.16}
+{"n": 77, "priority": 8, "header": "7E2", "cmd": "21CC", "why": "identifier sweep 0xcc", "raw": "032 0:61CC00000000 1:00000000000000 2:00000000000000 3:00000000000000 4:00000000000000 5:05070208000000 6:00020800000000 7:00000000000000", "hex": "61CC000000000000000000000000000000000000000000000000000000000000000005070208000000000208000000000000", "flag": "*** POSITIVE ***", "seconds": 0.12}
+{"n": 78, "priority": 8, "header": "7E2", "cmd": "21CD", "why": "identifier sweep 0xcd", "raw": "NO DATA", "hex": "", "flag": "silent", "seconds": 0.31}
+{"n": 79, "priority": 8, "header": "7E2", "cmd": "21CE", "why": "identifier sweep 0xce", "raw": "NO DATA", "hex": "", "flag": "silent", "seconds": 0.3}
+{"n": 80, "priority": 8, "header": "7E2", "cmd": "21CF", "why": "identifier sweep 0xcf", "raw": "NO DATA", "hex": "", "flag": "silent", "seconds": 0.28}
+{"n": 81, "priority": 8, "header": "7E2", "cmd": "21D0", "why": "identifier sweep 0xd0", "raw": "NO DATA", "hex": "", "flag": "silent", "seconds": 0.28}
+{"n": 82, "priority": 8, "header": "7E2", "cmd": "21D1", "why": "identifier sweep 0xd1", "raw": "SEARCHING... 008 0:61D17E0103FF 1:0AE80000000000", "hex": "61D17E0103FF0AE8", "flag": "*** POSITIVE ***", "seconds": 0.5}
+{"n": 83, "priority": 8, "header": "7E2", "cmd": "21D2", "why": "identifier sweep 0xd2", "raw": "NO DATA", "hex": "", "flag": "silent", "seconds": 0.31}
+{"n": 84, "priority": 8, "header": "7E2", "cmd": "21D3", "why": "identifier sweep 0xd3", "raw": "61D30000000007", "hex": "61D30000000007", "flag": "*** POSITIVE ***", "seconds": 0.33}
+{"n": 85, "priority": 8, "header": "7E2", "cmd": "21D4", "why": "identifier sweep 0xd4", "raw": "NO DATA", "hex": "", "flag": "silent", "seconds": 0.32}
+{"n": 86, "priority": 8, "header": "7E2", "cmd": "21D5", "why": "identifier sweep 0xd5", "raw": "NO DATA", "hex": "", "flag": "silent", "seconds": 0.35}
+{"n": 87, "priority": 8, "header": "7E2", "cmd": "21D6", "why": "identifier sweep 0xd6", "raw": "NO DATA", "hex": "", "flag": "silent", "seconds": 0.31}
+{"n": 88, "priority": 8, "header": "7E2", "cmd": "21D7", "why": "identifier sweep 0xd7", "raw": "NO DATA", "hex": "", "flag": "silent", "seconds": 0.33}
+{"n": 89, "priority": 8, "header": "7E2", "cmd": "21D8", "why": "identifier sweep 0xd8", "raw": "SEARCHING... NO DATA", "hex": "", "flag": "silent", "seconds": 0.52}
+{"n": 90, "priority": 8, "header": "7E2", "cmd": "21D9", "why": "identifier sweep 0xd9", "raw": "NO DATA", "hex": "", "flag": "silent", "seconds": 0.28}
+{"n": 91, "priority": 8, "header": "7E2", "cmd": "21DA", "why": "identifier sweep 0xda", "raw": "NO DATA", "hex": "", "flag": "silent", "seconds": 0.29}
+{"n": 92, "priority": 8, "header": "7E2", "cmd": "21DB", "why": "identifier sweep 0xdb", "raw": "NO DATA", "hex": "", "flag": "silent", "seconds": 0.3}
+{"n": 93, "priority": 8, "header": "7E2", "cmd": "21DC", "why": "identifier sweep 0xdc", "raw": "SEARCHING... NO DATA", "hex": "", "flag": "silent", "seconds": 0.48}
+{"n": 94, "priority": 8, "header": "7E2", "cmd": "21DD", "why": "identifier sweep 0xdd", "raw": "NO DATA", "hex": "", "flag": "silent", "seconds": 0.31}
+{"n": 95, "priority": 8, "header": "7E2", "cmd": "21DE", "why": "identifier sweep 0xde", "raw": "NO DATA", "hex": "", "flag": "silent", "seconds": 0.29}
+{"n": 96, "priority": 8, "header": "7E2", "cmd": "21DF", "why": "identifier sweep 0xdf", "raw": "NO DATA", "hex": "", "flag": "silent", "seconds": 0.3}
+{"n": 97, "priority": 9, "header": "7E3", "cmd": "1380", "why": "battery ECU", "raw": "SEARCHING... 5300", "hex": "5300", "flag": "*** POSITIVE ***", "seconds": 0.5}
+{"n": 98, "priority": 9, "header": "7E3", "cmd": "21C0", "why": "battery ECU", "raw": "61C000070001", "hex": "61C000070001", "flag": "*** POSITIVE ***", "seconds": 0.29}
+{"n": 99, "priority": 9, "header": "7E3", "cmd": "21C1", "why": "battery ECU", "raw": "NO DATA", "hex": "", "flag": "silent", "seconds": 0.29}
+{"n": 100, "priority": 9, "header": "7E3", "cmd": "21CE", "why": "battery ECU", "raw": "021 0:61CE54819386 1:0B860985F985FE 2:8605860C860186 3:078607860985FD 4:85FD85FF860800", "hex": "61CE548193860B860985F985FE8605860C860186078607860985FD85FD85FF8608", "flag": "*** POSITIVE ***", "seconds": 0.16}

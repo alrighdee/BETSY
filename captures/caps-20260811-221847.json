@@ -1,0 +1,105 @@
+{
+  "seconds": 3.4,
+  "aborted": null,
+  "steps": [
+    {
+      "step": 1,
+      "header": "7E2",
+      "cmd": "13B0",
+      "why": "GATE: bus alive, and is 7E2 clean?",
+      "raw": "SEARCHING... 5300",
+      "hex": "5300",
+      "verdict": "OK",
+      "note": "positive 53, 0 stored DTC(s) on 7E2. Bus alive.",
+      "seconds": 0.51
+    },
+    {
+      "step": 2,
+      "header": "7E2",
+      "cmd": "0100",
+      "why": "does 7E2 answer generic mode 01?",
+      "raw": "4100981A8013",
+      "hex": "4100981A8013",
+      "verdict": "YES",
+      "note": "positive 41, supported-PID mask 981A8013. 7E2 DOES answer generic mode 01. The 21C6 fallback can be deleted.",
+      "seconds": 0.3
+    },
+    {
+      "step": 3,
+      "header": "7E2",
+      "cmd": "0902",
+      "why": "does 7E2 answer generic mode 09 (VIN)?",
+      "raw": "014 0:490201<VIN-REDACTED>
+      "hex": "490201<VIN-REDACTED>
+      "verdict": "YES",
+      "note": "positive 49. Mode 09 works on 7E2: 490201<VIN-REDACTED>
+      "seconds": 0.16
+    },
+    {
+      "step": 4,
+      "header": "7E2",
+      "cmd": "1200",
+      "why": "KWP readFreezeFrameData: does the service exist?",
+      "raw": "7F1212",
+      "hex": "7F1212",
+      "verdict": "YES",
+      "note": "negative response, NRC 12: subfunction not supported -> service 12 EXISTS, wrong parameters",
+      "seconds": 0.17
+    },
+    {
+      "step": 5,
+      "header": "7E2",
+      "cmd": "12",
+      "why": "same, bare form, in case 1200 was a parameter error",
+      "raw": "7F1212",
+      "hex": "7F1212",
+      "verdict": "YES",
+      "note": "negative response, NRC 12: subfunction not supported -> service 12 EXISTS, wrong parameters",
+      "seconds": 0.16
+    },
+    {
+      "step": 6,
+      "header": "7E2",
+      "cmd": "020200",
+      "why": "generic mode 02 freeze frame, PID 02 frame 0",
+      "raw": "4202000000",
+      "hex": "4202000000",
+      "verdict": "YES",
+      "note": "POSITIVE 42, generic freeze frame exists: 4202000000",
+      "seconds": 0.17
+    },
+    {
+      "step": 7,
+      "header": "7E0",
+      "cmd": "13B0",
+      "why": "is U0293 still stored on the ECM?",
+      "raw": "5301C293",
+      "hex": "5301C293",
+      "verdict": "STORED",
+      "note": "positive 53, 1 stored DTC(s), raw ['C293']. A real DTC to probe against.",
+      "seconds": 0.15
+    },
+    {
+      "step": 8,
+      "header": "7E0",
+      "cmd": "03",
+      "why": "generic stored DTCs on the ECM",
+      "raw": "4301C293",
+      "hex": "4301C293",
+      "verdict": "OK",
+      "note": "positive 43: 4301C293",
+      "seconds": 0.21
+    },
+    {
+      "step": 9,
+      "header": "7E0",
+      "cmd": "020200",
+      "why": "freeze frame on the ECM, against a real DTC if one is stored",
+      "raw": "420200C293",
+      "hex": "420200C293",
+      "verdict": "YES",
+      "note": "POSITIVE 42, generic freeze frame exists: 420200C293",
+      "seconds": 0.14
+    }
+  ]
+}

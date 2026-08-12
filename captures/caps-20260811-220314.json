@@ -1,0 +1,105 @@
+{
+  "seconds": 1.0,
+  "aborted": null,
+  "steps": [
+    {
+      "step": 1,
+      "header": "7E2",
+      "cmd": "13B0",
+      "why": "GATE: bus alive, and is 7E2 clean?",
+      "raw": "5300",
+      "hex": "5300",
+      "verdict": "OK",
+      "note": "positive 53, 0 stored DTC(s) on 7E2. Bus alive.",
+      "seconds": 0.11
+    },
+    {
+      "step": 2,
+      "header": "7E2",
+      "cmd": "0100",
+      "why": "does 7E2 answer generic mode 01?",
+      "raw": "4100FFE0FFE0",
+      "hex": "4100FFE0FFE0",
+      "verdict": "YES",
+      "note": "positive 41, supported-PID mask FFE0FFE0. 7E2 DOES answer generic mode 01. The 21C6 fallback can be deleted.",
+      "seconds": 0.11
+    },
+    {
+      "step": 3,
+      "header": "7E2",
+      "cmd": "0902",
+      "why": "does 7E2 answer generic mode 09 (VIN)?",
+      "raw": "NO DATA",
+      "hex": "",
+      "verdict": "NO",
+      "note": "silent. Mode 09 is not a usable liveness probe on 7E2 either.",
+      "seconds": 0.1
+    },
+    {
+      "step": 4,
+      "header": "7E2",
+      "cmd": "1200",
+      "why": "KWP readFreezeFrameData: does the service exist?",
+      "raw": "7F1222",
+      "hex": "7F1222",
+      "verdict": "YES",
+      "note": "negative response, NRC 22: conditions not correct -> service 12 EXISTS, nothing stored to report",
+      "seconds": 0.1
+    },
+    {
+      "step": 5,
+      "header": "7E2",
+      "cmd": "12",
+      "why": "same, bare form, in case 1200 was a parameter error",
+      "raw": "7F1212",
+      "hex": "7F1212",
+      "verdict": "YES",
+      "note": "negative response, NRC 12: subfunction not supported -> service 12 EXISTS, wrong parameters",
+      "seconds": 0.11
+    },
+    {
+      "step": 6,
+      "header": "7E2",
+      "cmd": "020200",
+      "why": "generic mode 02 freeze frame, PID 02 frame 0",
+      "raw": "NO DATA",
+      "hex": "",
+      "verdict": "SILENT",
+      "note": "silent. Expected on a car with no stored emissions DTC. Proves nothing.",
+      "seconds": 0.11
+    },
+    {
+      "step": 7,
+      "header": "7E0",
+      "cmd": "13B0",
+      "why": "is U0293 still stored on the ECM?",
+      "raw": "5301C293",
+      "hex": "5301C293",
+      "verdict": "STORED",
+      "note": "positive 53, 1 stored DTC(s), raw ['C293']. A real DTC to probe against.",
+      "seconds": 0.11
+    },
+    {
+      "step": 8,
+      "header": "7E0",
+      "cmd": "03",
+      "why": "generic stored DTCs on the ECM",
+      "raw": "430100",
+      "hex": "430100",
+      "verdict": "OK",
+      "note": "positive 43: 430100",
+      "seconds": 0.11
+    },
+    {
+      "step": 9,
+      "header": "7E0",
+      "cmd": "020200",
+      "why": "freeze frame on the ECM, against a real DTC if one is stored",
+      "raw": "4202C293",
+      "hex": "4202C293",
+      "verdict": "YES",
+      "note": "POSITIVE 42, generic freeze frame exists: 4202C293",
+      "seconds": 0.1
+    }
+  ]
+}

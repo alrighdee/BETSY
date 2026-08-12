@@ -1,0 +1,197 @@
+[   0.0s] HARVEST. READ-ONLY. 100 questions, ordered most valuable first.
+[   0.0s] writing harvest-live.jsonl after every single answer
+[   0.0s] 
+[   0.0s] establishing first session ...
+[   0.0s]     session: unpair, re-pair (attempt 1/4) ...
+[   9.1s]     session: connecting (attempt 1/4) ...
+[  17.6s]     session: UP
+[  17.6s] 
+[  18.1s] [1/100] p1 7E0 12        bad subfunction   SEARCHING... 7F1212
+[  18.5s] [2/100] p1 7E0 1200      bad subfunction   7F1212 eta ~49s
+[  18.8s] [3/100] p1 7E0 1201      bad subfunction   7F1212 eta ~48s
+[  19.1s] [4/100] p1 7E0 1202      bad subfunction   7F1212 eta ~35s
+[  19.2s] [5/100] p1 7E0 1203      bad subfunction   7F1212 eta ~34s
+[  19.4s] [6/100] p1 7E0 1204      bad subfunction   7F1212 eta ~30s
+[  19.5s] [7/100] p1 7E0 1205      bad subfunction   7F1212 eta ~29s
+[  19.7s] [8/100] p1 7E0 12C293    bad subfunction   7F1212 eta ~26s
+[  19.9s] [9/100] p1 7E0 12C29300  bad subfunction   7F1212 eta ~26s
+[  20.0s] [10/100] p1 7E0 12C29301  bad subfunction   7F1212 eta ~15s
+[  20.2s] [11/100] p1 7E0 120000    bad subfunction   7F1212 eta ~15s
+[  20.3s] [12/100] p1 7E0 1280      bad subfunction   7F1212 eta ~14s
+[  20.5s] [13/100] p1 7E0 12FF      bad subfunction   7F1212 eta ~14s
+[  20.6s] [14/100] p1 7E0 12FFFF00  bad subfunction   7F1212 eta ~14s
+[  20.7s] [15/100] p2 7E2 12        bad subfunction   7F1212 eta ~14s
+[  20.9s] [16/100] p2 7E2 1200      bad subfunction   7F1212 eta ~14s
+[  21.0s] [17/100] p2 7E2 1201      bad subfunction   7F1212 eta ~13s
+[  21.1s] [18/100] p2 7E2 1202      bad subfunction   7F1212 eta ~12s
+[  21.3s] [19/100] p2 7E2 12C6      bad subfunction   7F1212 eta ~12s
+[  21.4s] [20/100] p2 7E2 12C7      bad subfunction   7F1212 eta ~12s
+[  21.6s] [21/100] p2 7E2 1280      bad subfunction   7F1212 eta ~12s
+[  21.7s] [22/100] p2 7E2 12FF      bad subfunction   7F1212 eta ~12s
+[  21.9s] [23/100] p3 7E0 020000    *** POSITIVE ***  4200007E1F8803 eta ~12s
+[  22.2s] [24/100] p4 7E0 020100    silent            NO DATA eta ~11s
+[  22.3s] [25/100] p4 7E0 020200    *** POSITIVE ***  420200C293 eta ~12s
+[  22.5s] [26/100] p4 7E0 020300    *** POSITIVE ***  4203000100 eta ~11s
+[  22.6s] [27/100] p4 7E0 020400    *** POSITIVE ***  42040000 eta ~12s
+[  22.8s] [28/100] p4 7E0 020500    *** POSITIVE ***  4205004F eta ~11s
+[  23.1s] [29/100] p4 7E0 020B00    silent            NO DATA eta ~11s
+[  23.2s] [30/100] p4 7E0 020C00    *** POSITIVE ***  420C000000 eta ~11s
+[  23.3s] [31/100] p4 7E0 020D00    *** POSITIVE ***  420D0000 eta ~11s
+[  23.5s] [32/100] p4 7E0 020E00    *** POSITIVE ***  420E008A eta ~10s
+[  23.6s] [33/100] p4 7E0 020F00    *** POSITIVE ***  420F004A eta ~10s
+[  23.7s] [34/100] p4 7E0 021000    *** POSITIVE ***  421000000A eta ~10s
+[  23.9s] [35/100] p4 7E0 021100    *** POSITIVE ***  42110025 eta ~10s
+[  24.2s] [36/100] p4 7E0 021C00    silent            NO DATA eta ~9s
+[  24.3s] [37/100] p4 7E0 021F00    *** POSITIVE ***  421F000000 eta ~9s
+[  24.5s] [38/100] p4 7E0 022000    *** POSITIVE ***  4220001005E015 eta ~9s
+[  24.8s] [39/100] p4 7E0 022100    silent            NO DATA eta ~9s
+[  25.1s] [40/100] p4 7E0 022F00    silent            NO DATA eta ~9s
+[  25.2s] [41/100] p4 7E0 023100    *** POSITIVE ***  423100003E eta ~9s
+[  25.3s] [42/100] p4 7E0 023300    *** POSITIVE ***  42330064 eta ~9s
+[  25.4s] [43/100] p4 7E0 024200    *** POSITIVE ***  4242002BB7 eta ~9s
+[  25.6s] [44/100] p4 7E0 024300    *** POSITIVE ***  4243000000 eta ~8s
+[  25.8s] [45/100] p4 7E0 024400    *** POSITIVE ***  42440049F7 eta ~8s
+[  25.9s] [46/100] p5 7E0 020201    *** POSITIVE ***  420201C293 eta ~8s
+[  26.1s] [47/100] p5 7E0 020202    bad subfunction   7F0212 eta ~8s
+[  26.3s] [48/100] p6 7E2 0100      *** POSITIVE ***  4100981A8013 eta ~8s
+[  26.4s] [49/100] p6 7E2 0120      *** POSITIVE ***  412080018001 eta ~8s
+[  26.5s] [50/100] p6 7E2 0140      *** POSITIVE ***  4140C4CC0000 eta ~7s
+[  26.7s] [51/100] p6 7E2 0160      silent            NO DATA eta ~7s
+[  26.9s] [52/100] p6 7E2 0900      *** POSITIVE ***  4900FC000000 eta ~7s
+[  27.0s] [53/100] p6 7E0 0100      *** POSITIVE ***  4100BE1FA813 eta ~7s
+[  27.1s] [54/100] p6 7E0 0120      *** POSITIVE ***  41209005E015 eta ~7s
+[  27.2s] [55/100] p6 7E0 0140      *** POSITIVE ***  4140FE1C2000 eta ~7s
+[  27.4s] [56/100] p7 7E2 1900      no such service   7F1911 eta ~7s
+[  27.5s] [57/100] p7 7E2 1902      no such service   7F1911 eta ~6s
+[  27.6s] [58/100] p7 7E2 190A      no such service   7F1911 eta ~6s
+[  27.7s] [59/100] p7 7E2 1800      no such service   7F1811 eta ~6s
+[  27.9s] [60/100] p7 7E2 18FF00    no such service   7F1811 eta ~6s
+[  28.0s] [61/100] p7 7E2 17        no such service   7F1711 eta ~6s
+[  28.2s] [62/100] p7 7E2 1700      no such service   7F1711 eta ~6s
+[  28.3s] [63/100] p7 7E0 1902      no such service   7F1911 eta ~5s
+[  28.4s] [64/100] p7 7E0 18FF00    no such service   7F1811 eta ~5s
+[  28.6s] [65/100] p8 7E2 21C0      *** POSITIVE ***  61C0F7F0A001 eta ~5s
+[  28.7s] [66/100] p8 7E2 21C1      *** POSITIVE ***  014 0:61C14E485732 1:302020314E5A46 2:58450400 eta ~5s
+[  28.8s] [67/100] p8 7E2 21C2      *** POSITIVE ***  00A 0:61C234373231 1:32000005000000 eta ~5s
+[  29.0s] [68/100] p8 7E2 21C3      *** POSITIVE ***  027 0:61C33FFF0FA0 1:00003FFF0FA000 2:00000000 eta ~5s
+[  29.1s] [69/100] p8 7E2 21C4      *** POSITIVE ***  011 0:61C400400068 1:495F6006047F80 2:FF200014 eta ~5s
+[  29.4s] [70/100] p8 7E2 21C5      silent            NO DATA eta ~4s
+[  29.6s] [71/100] p8 7E2 21C6      *** POSITIVE ***  032 0:61C600000000 1:00000000000000 2:00000000 eta ~4s
+[  29.8s] [72/100] p8 7E2 21C7      *** POSITIVE ***  032 0:61C700000000 1:00000000000000 2:00000000 eta ~4s
+[  29.9s] [73/100] p8 7E2 21C8      *** POSITIVE ***  032 0:61C800000000 1:00000000000000 2:00000000 eta ~4s
+[  30.0s] [74/100] p8 7E2 21C9      *** POSITIVE ***  032 0:61C900000000 1:00000000000000 2:00000000 eta ~4s
+[  30.2s] [75/100] p8 7E2 21CA      *** POSITIVE ***  032 0:61CA00000000 1:00000000000000 2:00000000 eta ~4s
+[  30.3s] [76/100] p8 7E2 21CB      *** POSITIVE ***  026 0:61CB00000000 1:00000000000000 2:00000000 eta ~4s
+[  30.5s] [77/100] p8 7E2 21CC      *** POSITIVE ***  032 0:61CC00000000 1:00000000000000 2:00000000 eta ~3s
+[  30.8s] [78/100] p8 7E2 21CD      silent            NO DATA eta ~3s
+[  31.1s] [79/100] p8 7E2 21CE      silent            NO DATA eta ~3s
+[  31.3s] [80/100] p8 7E2 21CF      silent            NO DATA eta ~3s
+[  31.6s] [81/100] p8 7E2 21D0      silent            NO DATA eta ~3s
+[  31.6s]     !! link lost, rebuilding session (rebuild #1)
+[  31.6s]     session: unpair, re-pair (attempt 1/4) ...
+[  43.3s]     session: connecting (attempt 1/4) ...
+[  51.7s]     session: UP
+[  52.2s] [82/100] p8 7E2 21D1      *** POSITIVE ***  SEARCHING... 008 0:61D17E0103FF 1:0AE800000000 eta ~3s
+[  52.5s] [83/100] p8 7E2 21D2      silent            NO DATA eta ~3s
+[  52.8s] [84/100] p8 7E2 21D3      *** POSITIVE ***  61D30000000007 eta ~2s
+[  53.2s] [85/100] p8 7E2 21D4      silent            NO DATA eta ~2s
+[  53.5s] [86/100] p8 7E2 21D5      silent            NO DATA eta ~2s
+[  53.8s] [87/100] p8 7E2 21D6      silent            NO DATA eta ~2s
+[  54.2s] [88/100] p8 7E2 21D7      silent            NO DATA eta ~2s
+[  54.2s]     !! link lost, rebuilding session (rebuild #2)
+[  54.2s]     session: unpair, re-pair (attempt 1/4) ...
+[  63.3s]     session: connecting (attempt 1/4) ...
+[  72.3s]     session: UP
+[  72.8s] [89/100] p8 7E2 21D8      silent            SEARCHING... NO DATA eta ~2s
+[  73.1s] [90/100] p8 7E2 21D9      silent            NO DATA eta ~2s
+[  73.4s] [91/100] p8 7E2 21DA      silent            NO DATA eta ~2s
+[  73.7s] [92/100] p8 7E2 21DB      silent            NO DATA eta ~1s
+[  73.7s]     !! link lost, rebuilding session (rebuild #3)
+[  73.7s]     session: unpair, re-pair (attempt 1/4) ...
+[  82.8s]     session: connecting (attempt 1/4) ...
+[  96.5s]     session: UP
+[  97.0s] [93/100] p8 7E2 21DC      silent            SEARCHING... NO DATA eta ~1s
+[  97.3s] [94/100] p8 7E2 21DD      silent            NO DATA eta ~1s
+[  97.6s] [95/100] p8 7E2 21DE      silent            NO DATA eta ~1s
+[  97.9s] [96/100] p8 7E2 21DF      silent            NO DATA eta ~1s
+[  97.9s]     !! link lost, rebuilding session (rebuild #4)
+[  97.9s]     session: unpair, re-pair (attempt 1/4) ...
+[ 107.0s]     session: connecting (attempt 1/4) ...
+[ 115.6s]     session: UP
+[ 116.1s] [97/100] p9 7E3 1380      *** POSITIVE ***  SEARCHING... 5300 eta ~1s
+[ 116.3s] [98/100] p9 7E3 21C0      *** POSITIVE ***  61C000070001 eta ~0s
+[ 116.6s] [99/100] p9 7E3 21C1      silent            NO DATA eta ~0s
+[ 116.8s] [100/100] p9 7E3 21CE      *** POSITIVE ***  021 0:61CE54819386 1:0B860985F985FE 2:8605860C eta ~0s
+[ 116.8s] 
+[ 116.8s] ========================================================================
+[ 116.8s] HARVEST COMPLETE: 100/100 answered in 117s, 4 rebuild(s)
+[ 116.8s] 
+[ 116.8s] POSITIVES (the things that answered with data):
+[ 116.8s]   7E0 020000    4200007E1F8803
+[ 116.8s]   7E0 020200    420200C293
+[ 116.8s]   7E0 020300    4203000100
+[ 116.8s]   7E0 020400    42040000
+[ 116.8s]   7E0 020500    4205004F
+[ 116.8s]   7E0 020C00    420C000000
+[ 116.8s]   7E0 020D00    420D0000
+[ 116.8s]   7E0 020E00    420E008A
+[ 116.8s]   7E0 020F00    420F004A
+[ 116.8s]   7E0 021000    421000000A
+[ 116.8s]   7E0 021100    42110025
+[ 116.8s]   7E0 021F00    421F000000
+[ 116.8s]   7E0 022000    4220001005E015
+[ 116.8s]   7E0 023100    423100003E
+[ 116.8s]   7E0 023300    42330064
+[ 116.8s]   7E0 024200    4242002BB7
+[ 116.8s]   7E0 024300    4243000000
+[ 116.8s]   7E0 024400    42440049F7
+[ 116.8s]   7E0 020201    420201C293
+[ 116.8s]   7E2 0100      4100981A8013
+[ 116.8s]   7E2 0120      412080018001
+[ 116.8s]   7E2 0140      4140C4CC0000
+[ 116.8s]   7E2 0900      4900FC000000
+[ 116.8s]   7E0 0100      4100BE1FA813
+[ 116.8s]   7E0 0120      41209005E015
+[ 116.8s]   7E0 0140      4140FE1C2000
+[ 116.8s]   7E2 21C0      61C0F7F0A001
+[ 116.8s]   7E2 21C1      61C14E485732302020314E5A4658450400416A20
+[ 116.8s]   7E2 21C2      61C23437323132000005
+[ 116.8s]   7E2 21C3      61C33FFF0FA000003FFF0FA000000000000000206F41620080005C5A58596E00
+[ 116.8s]   7E2 21C4      61C400400068495F6006047F80FF200014
+[ 116.8s]   7E2 21C6      61C6000000000000000000000000000000000000000000000000000000000000
+[ 116.8s]   7E2 21C7      61C7000000000000000000000000000000000000000000000000000000000000
+[ 116.8s]   7E2 21C8      61C8000000000000000000000000000000000000000000000000000000000000
+[ 116.8s]   7E2 21C9      61C9000000000000000000000000000000000000000000000000000000000000
+[ 116.8s]   7E2 21CA      61CA000000000000000000000000000000000000000000000000000000000000
+[ 116.8s]   7E2 21CB      61CB000000000000000000000000000000000000000000000000000000000000
+[ 116.8s]   7E2 21CC      61CC000000000000000000000000000000000000000000000000000000000000
+[ 116.8s]   7E2 21D1      61D17E0103FF0AE8
+[ 116.8s]   7E2 21D3      61D30000000007
+[ 116.8s]   7E3 1380      5300
+[ 116.8s]   7E3 21C0      61C000070001
+[ 116.8s]   7E3 21CE      61CE548193860B860985F985FE8605860C860186078607860985FD85FD85FF86
+[ 116.8s] 
+[ 116.8s] SERVICE 12 (freeze frame) RESULTS:
+[ 116.8s]   7E0 12        bad subfunction   SEARCHING... 7F1212
+[ 116.8s]   7E0 1200      bad subfunction   7F1212
+[ 116.8s]   7E0 1201      bad subfunction   7F1212
+[ 116.8s]   7E0 1202      bad subfunction   7F1212
+[ 116.8s]   7E0 1203      bad subfunction   7F1212
+[ 116.8s]   7E0 1204      bad subfunction   7F1212
+[ 116.8s]   7E0 1205      bad subfunction   7F1212
+[ 116.8s]   7E0 12C293    bad subfunction   7F1212
+[ 116.8s]   7E0 12C29300  bad subfunction   7F1212
+[ 116.8s]   7E0 12C29301  bad subfunction   7F1212
+[ 116.8s]   7E0 120000    bad subfunction   7F1212
+[ 116.8s]   7E0 1280      bad subfunction   7F1212
+[ 116.8s]   7E0 12FF      bad subfunction   7F1212
+[ 116.8s]   7E0 12FFFF00  bad subfunction   7F1212
+[ 116.8s]   7E2 12        bad subfunction   7F1212
+[ 116.8s]   7E2 1200      bad subfunction   7F1212
+[ 116.8s]   7E2 1201      bad subfunction   7F1212
+[ 116.8s]   7E2 1202      bad subfunction   7F1212
+[ 116.8s]   7E2 12C6      bad subfunction   7F1212
+[ 116.8s]   7E2 12C7      bad subfunction   7F1212
+[ 116.8s]   7E2 1280      bad subfunction   7F1212
+[ 116.8s]   7E2 12FF      bad subfunction   7F1212
+[ 116.8s] ========================================================================

@@ -1,0 +1,27 @@
+[   0.0s] BETSY capability probe. READ-ONLY. 9 steps.
+[   0.0s] budget 300s, per-command deadline 4.0s
+[   0.0s] worst case if the car is asleep: aborts after step 1, about 24s
+[   0.0s] 
+[   0.1s] link cycle 1/6: disconnect, settle, reconnect ...
+[   9.1s]    link up
+[  37.2s]    silent ATZ on attempt 1, cycling the link
+[  37.2s] link cycle 2/6: disconnect, settle, reconnect ...
+[  46.3s]    link up
+[  74.5s]    silent ATZ on attempt 2, cycling the link
+[  74.5s] link cycle 3/6: disconnect, settle, reconnect ...
+[  83.7s]    link up
+[ 111.8s]    silent ATZ on attempt 3, cycling the link
+[ 111.8s] link cycle 4/6: disconnect, settle, reconnect ...
+[ 120.8s]    link up
+[ 149.0s]    silent ATZ on attempt 4, cycling the link
+[ 149.0s] link cycle 5/6: disconnect, settle, reconnect ...
+[ 158.2s]    link up
+[ 186.4s]    silent ATZ on attempt 5, cycling the link
+[ 186.4s] link cycle 6/6: disconnect, settle, reconnect ...
+[ 195.4s]    link up
+[ 223.5s]    silent ATZ on attempt 6, cycling the link
+[ 223.5s] !! adapter stayed silent across 6 full link cycles.
+[ 223.5s] !! On 8 Aug this adapter needed several tries before it answered, so this is its
+[ 223.5s] !! normal behaviour rather than a fault, but it is not answering today.
+[ 223.5s] !! Last resort: unplug the dongle from the OBD port, wait for the LEDs to go dark,
+[ 223.5s] !! plug it back in, and rerun.

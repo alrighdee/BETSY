@@ -1,0 +1,89 @@
+{"header": "7E2", "cmd": "020100", "why": "freeze frame PID 01 frame 00", "raw": "SEARCHING... NO DATA", "hex": ""}
+{"header": "7E2", "cmd": "020101", "why": "freeze frame PID 01 frame 01", "raw": "NO DATA", "hex": ""}
+{"header": "7E2", "cmd": "020200", "why": "freeze frame PID 02 frame 00", "raw": "4202000000", "hex": "4202000000"}
+{"header": "7E2", "cmd": "020201", "why": "freeze frame PID 02 frame 01", "raw": "4202010571", "hex": "4202010571"}
+{"header": "7E2", "cmd": "020300", "why": "freeze frame PID 03 frame 00", "raw": "NO DATA", "hex": ""}
+{"header": "7E2", "cmd": "020301", "why": "freeze frame PID 03 frame 01", "raw": "NO DATA", "hex": ""}
+{"header": "7E2", "cmd": "020400", "why": "freeze frame PID 04 frame 00", "raw": "NO DATA", "hex": ""}
+{"header": "7E2", "cmd": "020401", "why": "freeze frame PID 04 frame 01", "raw": "42040100", "hex": "42040100"}
+{"header": "7E2", "cmd": "020500", "why": "freeze frame PID 05 frame 00", "raw": "NO DATA", "hex": ""}
+{"header": "7E2", "cmd": "020501", "why": "freeze frame PID 05 frame 01", "raw": "42050179", "hex": "42050179"}
+{"header": "7E2", "cmd": "020B00", "why": "freeze frame PID 0B frame 00", "raw": "NO DATA", "hex": ""}
+{"header": "7E2", "cmd": "020B01", "why": "freeze frame PID 0B frame 01", "raw": "NO DATA", "hex": ""}
+{"header": "7E2", "cmd": "020C00", "why": "freeze frame PID 0C frame 00", "raw": "NO DATA", "hex": ""}
+{"header": "7E2", "cmd": "020C01", "why": "freeze frame PID 0C frame 01", "raw": "420C010000", "hex": "420C010000"}
+{"header": "7E2", "cmd": "020D00", "why": "freeze frame PID 0D frame 00", "raw": "NO DATA", "hex": ""}
+{"header": "7E2", "cmd": "020D01", "why": "freeze frame PID 0D frame 01", "raw": "420D0100", "hex": "420D0100"}
+{"header": "7E2", "cmd": "020E00", "why": "freeze frame PID 0E frame 00", "raw": "NO DATA", "hex": ""}
+{"header": "7E2", "cmd": "020E01", "why": "freeze frame PID 0E frame 01", "raw": "NO DATA", "hex": ""}
+{"header": "7E2", "cmd": "020F00", "why": "freeze frame PID 0F frame 00", "raw": "NO DATA", "hex": ""}
+{"header": "7E2", "cmd": "020F01", "why": "freeze frame PID 0F frame 01", "raw": "420F015B", "hex": "420F015B"}
+{"header": "7E2", "cmd": "021000", "why": "freeze frame PID 10 frame 00", "raw": "NO DATA", "hex": ""}
+{"header": "7E2", "cmd": "021001", "why": "freeze frame PID 10 frame 01", "raw": "NO DATA", "hex": ""}
+{"header": "7E2", "cmd": "021100", "why": "freeze frame PID 11 frame 00", "raw": "NO DATA", "hex": ""}
+{"header": "7E2", "cmd": "021101", "why": "freeze frame PID 11 frame 01", "raw": "42110126", "hex": "42110126"}
+{"header": "7E2", "cmd": "021C00", "why": "freeze frame PID 1C frame 00", "raw": "NO DATA", "hex": ""}
+{"header": "7E2", "cmd": "021C01", "why": "freeze frame PID 1C frame 01", "raw": "NO DATA", "hex": ""}
+{"header": "7E2", "cmd": "021F00", "why": "freeze frame PID 1F frame 00", "raw": "NO DATA", "hex": ""}
+{"header": "7E2", "cmd": "021F01", "why": "freeze frame PID 1F frame 01", "raw": "421F010026", "hex": "421F010026"}
+{"header": "7E2", "cmd": "022000", "why": "freeze frame PID 20 frame 00", "raw": "42200000018001", "hex": "42200000018001"}
+{"header": "7E2", "cmd": "022001", "why": "freeze frame PID 20 frame 01", "raw": "42200100018001", "hex": "42200100018001"}
+{"header": "7E2", "cmd": "022100", "why": "freeze frame PID 21 frame 00", "raw": "NO DATA", "hex": ""}
+{"header": "7E2", "cmd": "022101", "why": "freeze frame PID 21 frame 01", "raw": "NO DATA", "hex": ""}
+{"header": "7E2", "cmd": "023100", "why": "freeze frame PID 31 frame 00", "raw": "NO DATA", "hex": ""}
+{"header": "7E2", "cmd": "023101", "why": "freeze frame PID 31 frame 01", "raw": "4231010000", "hex": "4231010000"}
+{"header": "7E2", "cmd": "023300", "why": "freeze frame PID 33 frame 00", "raw": "NO DATA", "hex": ""}
+{"header": "7E2", "cmd": "023301", "why": "freeze frame PID 33 frame 01", "raw": "NO DATA", "hex": ""}
+{"header": "7E2", "cmd": "024200", "why": "freeze frame PID 42 frame 00", "raw": "NO DATA", "hex": ""}
+{"header": "7E2", "cmd": "024201", "why": "freeze frame PID 42 frame 01", "raw": "424201357B", "hex": "424201357B"}
+{"header": "7E2", "cmd": "024300", "why": "freeze frame PID 43 frame 00", "raw": "NO DATA", "hex": ""}
+{"header": "7E2", "cmd": "024301", "why": "freeze frame PID 43 frame 01", "raw": "NO DATA", "hex": ""}
+{"header": "7E2", "cmd": "024400", "why": "freeze frame PID 44 frame 00", "raw": "NO DATA", "hex": ""}
+{"header": "7E2", "cmd": "024401", "why": "freeze frame PID 44 frame 01", "raw": "NO DATA", "hex": ""}
+{"header": "7E2", "cmd": "024600", "why": "freeze frame PID 46 frame 00", "raw": "SEARCHING... NO DATA", "hex": ""}
+{"header": "7E2", "cmd": "024601", "why": "freeze frame PID 46 frame 01", "raw": "42460147", "hex": "42460147"}
+{"header": "7E2", "cmd": "024D00", "why": "freeze frame PID 4D frame 00", "raw": "NO DATA", "hex": ""}
+{"header": "7E2", "cmd": "024D01", "why": "freeze frame PID 4D frame 01", "raw": "NO DATA", "hex": ""}
+{"header": "7E2", "cmd": "024E00", "why": "freeze frame PID 4E frame 00", "raw": "NO DATA", "hex": ""}
+{"header": "7E2", "cmd": "024E01", "why": "freeze frame PID 4E frame 01", "raw": "424E01003D", "hex": "424E01003D"}
+{"header": "7E2", "cmd": "21C0", "why": "identifier", "raw": "61C0F7F0A001", "hex": "61C0F7F0A001"}
+{"header": "7E2", "cmd": "21C1", "why": "identifier", "raw": "014 0:61C14E485732 1:302020314E5A46 2:58450400416A20", "hex": "61C14E485732302020314E5A4658450400416A20"}
+{"header": "7E2", "cmd": "21C2", "why": "identifier", "raw": "00A 0:61C234373231 1:32000005000000", "hex": "61C23437323132000005"}
+{"header": "7E2", "cmd": "21C3", "why": "identifier", "raw": "027 0:61C33FFF0FA0 1:00003FFF0FA000 2:00000000000080 3:90417800800060 4:5E5B5D6D00827A 5:7B4A4B01800000", "hex": "61C33FFF0FA000003FFF0FA00000000000000080904178008000605E5B5D6D00827A7B4A4B0180"}
+{"header": "7E2", "cmd": "21C4", "why": "identifier", "raw": "011 0:61C400400068 1:48638206048080 2:FF200019000000", "hex": "61C40040006848638206048080FF200019"}
+{"header": "7E2", "cmd": "21C5", "why": "identifier", "raw": "NO DATA", "hex": ""}
+{"header": "7E2", "cmd": "21C6", "why": "identifier", "raw": "032 0:61C600000000 1:00000000000000 2:00000000000000 3:00000000000000 4:00000000000000 5:00000000000000 6:00000000000000 7:00000000000000", "hex": "61C6000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"}
+{"header": "7E2", "cmd": "21C7", "why": "identifier", "raw": "032 0:61C780808080 1:0000049A417E00 2:615F5B5D708200 3:00A0AF00000000 4:00000001007363 5:6B4A02615F5C63 6:9E6C665D659E9A 7:801C0000000000", "hex": "61C7808080800000049A417E00615F5B5D70820000A0AF00000000000000010073636B4A02615F5C639E6C665D659E9A801C"}
+{"header": "7E2", "cmd": "21C8", "why": "identifier", "raw": "032 0:61C800000000 1:00000000000000 2:00000000000000 3:00000000000000 4:00000000000000 5:00000000000000 6:00000000000000 7:00000000000000", "hex": "61C8000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"}
+{"header": "7E2", "cmd": "21C9", "why": "identifier", "raw": "032 0:61C900000000 1:00000000000000 2:00000000000000 3:00000000000000 4:00000000000000 5:00000000000000 6:00000000000000 7:00000000000000", "hex": "61C9000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"}
+{"header": "7E2", "cmd": "21CA", "why": "identifier", "raw": "032 0:61CA00000000 1:00000000000000 2:00000000000000 3:00000000000000 4:00000000000000 5:00000000000000 6:00000000000000 7:00000000000000", "hex": "61CA000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"}
+{"header": "7E2", "cmd": "21CB", "why": "identifier", "raw": "026 0:61CB00000000 1:00000000000000 2:00000000000000 3:00000000000000 4:00000000000000 5:00000000000000", "hex": "61CB000000000000000000000000000000000000000000000000000000000000000000000000"}
+{"header": "7E2", "cmd": "21CC", "why": "identifier", "raw": "032 0:61CC00000000 1:00000000000000 2:00000000000000 3:00000000000000 4:00000000000000 5:0203050A000000 6:000202020B0000 7:00000000000000", "hex": "61CC00000000000000000000000000000000000000000000000000000000000000000203050A000000000202020B00000000"}
+{"header": "7E2", "cmd": "21CD", "why": "identifier", "raw": "NO DATA", "hex": ""}
+{"header": "7E2", "cmd": "21CE", "why": "identifier", "raw": "NO DATA", "hex": ""}
+{"header": "7E2", "cmd": "21CF", "why": "identifier", "raw": "NO DATA", "hex": ""}
+{"header": "7E2", "cmd": "21D0", "why": "identifier", "raw": "NO DATA", "hex": ""}
+{"header": "7E2", "cmd": "21D1", "why": "identifier", "raw": "SEARCHING... 008 0:61D17E0103FF 1:0AE80000000000", "hex": "61D17E0103FF0AE8"}
+{"header": "7E2", "cmd": "21D2", "why": "identifier", "raw": "NO DATA", "hex": ""}
+{"header": "7E2", "cmd": "21D3", "why": "identifier", "raw": "61D30000000C00", "hex": "61D30000000C00"}
+{"header": "7E2", "cmd": "21D4", "why": "identifier", "raw": "NO DATA", "hex": ""}
+{"header": "7E2", "cmd": "21D5", "why": "identifier", "raw": "NO DATA", "hex": ""}
+{"header": "7E2", "cmd": "21D6", "why": "identifier", "raw": "NO DATA", "hex": ""}
+{"header": "7E2", "cmd": "21D7", "why": "identifier", "raw": "NO DATA", "hex": ""}
+{"header": "7E2", "cmd": "21D8", "why": "identifier", "raw": "SEARCHING... NO DATA", "hex": ""}
+{"header": "7E2", "cmd": "21D9", "why": "identifier", "raw": "NO DATA", "hex": ""}
+{"header": "7E2", "cmd": "21DA", "why": "identifier", "raw": "NO DATA", "hex": ""}
+{"header": "7E2", "cmd": "21DB", "why": "identifier", "raw": "NO DATA", "hex": ""}
+{"header": "7E2", "cmd": "21DC", "why": "identifier", "raw": "SEARCHING... NO DATA", "hex": ""}
+{"header": "7E2", "cmd": "21DD", "why": "identifier", "raw": "NO DATA", "hex": ""}
+{"header": "7E2", "cmd": "21DE", "why": "identifier", "raw": "NO DATA", "hex": ""}
+{"header": "7E2", "cmd": "21DF", "why": "identifier", "raw": "NO DATA", "hex": ""}
+{"header": "7E2", "cmd": "21C7", "why": "re-read changed table", "raw": "SEARCHING... 032 0:61C780808080 1:0000049A417E00 2:615F5B5D708200 3:00A0AF00000000 4:00000001007363 5:6B4A02615F5C63 6:9E6C665D659E9A 7:801C0000000000", "hex": "61C7808080800000049A417E00615F5B5D70820000A0AF00000000000000010073636B4A02615F5C639E6C665D659E9A801C"}
+{"header": "7E2", "cmd": "21C7", "why": "re-read changed table", "raw": "032 0:61C780808080 1:0000049A417E00 2:615F5B5D708200 3:00A0AF00000000 4:00000001007363 5:6B4A02615F5C63 6:9E6C665D659E9A 7:801C0000000000", "hex": "61C7808080800000049A417E00615F5B5D70820000A0AF00000000000000010073636B4A02615F5C639E6C665D659E9A801C"}
+{"header": "7E2", "cmd": "1202", "why": "service probes with data present", "raw": "7F1212", "hex": "7F1212"}
+{"header": "7E2", "cmd": "1203", "why": "service probes with data present", "raw": "7F1212", "hex": "7F1212"}
+{"header": "7E2", "cmd": "12C7", "why": "service probes with data present", "raw": "7F1212", "hex": "7F1212"}
+{"header": "7E2", "cmd": "120571", "why": "service probes with data present", "raw": "7F1212", "hex": "7F1212"}
+{"header": "7E2", "cmd": "1205710", "why": "service probes with data present", "raw": "", "hex": ""}
+{"header": "7E2", "cmd": "18", "why": "service probes with data present", "raw": "7F1811", "hex": "7F1811"}
+{"header": "7E2", "cmd": "1902", "why": "service probes with data present", "raw": "7F1911", "hex": "7F1911"}

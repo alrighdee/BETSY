@@ -1,0 +1,7 @@
+[   0.0s] BETSY capability probe. READ-ONLY. 9 steps.
+[   0.0s] budget 150s, per-command deadline 4.0s
+[   0.0s] worst case if the car is asleep: aborts after step 1, about 24s
+[   0.0s] 
+[   0.0s] opening /dev/cu.OBDII ...
+[  28.1s] !! adapter did not answer ATZ. It is powered but not talking over Bluetooth.
+[  28.1s] !! Unplug the dongle, replug, wait for the LEDs, and rerun.

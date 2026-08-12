@@ -7,7 +7,7 @@ import org.junit.Test
 
 /**
  * End to end against the capture BETSY itself uploaded, verbatim from
- * `a published capture in captures/real/`. The app recorded these bytes faithfully and then
+ * a published capture in `captures/real/`. The app recorded these bytes faithfully and then
  * reported "no INF decoded" for a day, because the decoder implemented the wrong model.
  */
 class RealCaptureTest {

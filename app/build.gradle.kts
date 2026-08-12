@@ -82,7 +82,7 @@ android {
         versionName = betsyVersionName
         buildConfigField("String", "GIT_HASH", "\"$betsyGitHash\"")
         buildConfigField("String", "BUILD_TIME", "\"$betsyBuildTime\"")
-        // Hero overlay: "0.0.1 · a1b2c3d+ · an on-car read 18:30"
+        // Hero overlay: "0.0.1 · a1b2c3d+ · <build time>"
         buildConfigField(
             "String",
             "BUILD_LABEL",

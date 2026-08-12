@@ -37,7 +37,7 @@ class RedactTest {
 
     @Test
     fun payloadsWithoutAVinAreUntouched() {
-        // 21C7 from the an on-car read fault capture. Contains 0x73 (INF 115) and must survive intact.
+        // 21C7 from the fault capture. Contains 0x73 (INF 115) and must survive intact.
         val inf = "03261C7808080800000049A417E00615F5B5D70820000A0AF00000000000000010073636B4A02"
         assertEquals(inf, Redact.vin(inf))
         assertEquals("53010571", Redact.vin("53010571"))

@@ -105,7 +105,7 @@ object DtcMeaning {
                     ),
                 0x3000 to
                     Meaning(
-                        what = "The battery control unit has reported an internal problem.",
+                        what = "The computer that looks after the battery has faulted.",
                         usually =
                             "Often the battery ECU itself or its wiring rather than the cells. The " +
                                 "sub-code narrows down which.",
@@ -121,13 +121,13 @@ object DtcMeaning {
                     ),
                 0x0A1D to
                     Meaning(
-                        what = "The hybrid control computer has reported an internal fault.",
+                        what = "The computer that runs the hybrid system has faulted.",
                         usually = "The control unit or its wiring. The sub-code says which area.",
                         severity = Severity.SERIOUS,
                     ),
                 0x0A93 to
                     Meaning(
-                        what = "The inverter's cooling system is not working properly.",
+                        what = "The electronics that drive the motors are running hot.",
                         usually =
                             "Low coolant, an air lock, or a failed inverter coolant pump. Cheap to " +
                                 "check and expensive to ignore, because the inverter overheats.",
@@ -135,7 +135,7 @@ object DtcMeaning {
                     ),
                 0x0A94 to
                     Meaning(
-                        what = "The DC/DC converter has failed.",
+                        what = "The car has stopped charging its ordinary 12 V battery.",
                         usually =
                             "This is the part that charges the ordinary 12 V battery from the big one. " +
                                 "When it fails the car will eventually stop, because the 12 V side runs " +
@@ -187,7 +187,7 @@ object DtcMeaning {
                     ),
                 0x3009 to
                     Meaning(
-                        what = "A short circuit has been detected in the high-voltage system.",
+                        what = "Something in the high-voltage system is touching where it should not.",
                         usually =
                             "A damaged cable or a failed component. Do not touch anything with orange " +
                                 "cabling.",

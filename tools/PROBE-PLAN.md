@@ -95,6 +95,30 @@ Everything else in §6 is reachable from your own trouble-free car.
 
 ---
 
+## Field note: engine DTCs vs hybrid INF (not a BETSY bug)
+
+An HEV fuse test can leave **U0293** (lost communication with hybrid control) on the
+**engine ECM** while `7E2` INF tables read empty after power is restored. Those results are
+**not contradictory**: different ECUs, different services. See PROTOCOL.md §7.1.
+
+| What was tested | What was seen |
+|---|---|
+| HEV fuse test → power restored | Hybrid ECU / `7E2` INF: empty / no stored hybrid detail |
+| Same situation, engine ECM DTC | U0293 (lost comms with hybrid control) |
+
+### What this does and does not change for development
+
+- The app DTC sweep also reads the **engine ECM** at `ATSH7E0` with KWP2000 `13B0` (Gen3 also
+  `0A`), so a code like U0293 is visible next to hybrid/INF results.
+- Gen2 STOP-fuse work: the phone must show **7E2 liveness** (`0100`), **generic $03/$07**
+  (labeled generic, not Toyota enhanced), **INF k/5 responded**, and full raw keys in share —
+  never only "No DTCs." See PROTOCOL.md §7.1.1–7.1.2.
+- **Immediate INF goal** is still: deliberately create a **known INF code in `7E2`** while
+  keeping `7E2` powered, so BETSY can capture the **raw INF table** bytes. An engine-side
+  U-code does not substitute for that.
+
+---
+
 ## Traffic discipline
 
 On hotspot: no web access, batched commands, short replies. The script prints a live

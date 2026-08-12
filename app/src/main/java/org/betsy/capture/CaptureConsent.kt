@@ -39,7 +39,7 @@ object CaptureConsent {
      */
     val SENT =
         listOf(
-            "Raw responses from the hybrid ECU (13B0, 21C6-21CA)",
+            "Raw responses from the hybrid ECU (13B0, 21C6-21CA) and engine ECU (7E0/13B0)",
             "App version, detected generation, adapter model",
             "A short extract of this session's diagnostic log",
             "Anything you type in the notes field",

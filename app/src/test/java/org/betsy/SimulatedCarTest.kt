@@ -38,18 +38,19 @@ class SimulatedCarTest {
     fun aStoredFaultIsReadAndItsTablesCapturedVerbatim() {
         val (_, result) = read(SimulatedCar.gen2WithStoredFault)
 
-        assertEquals(listOf("P0AA6"), result.groups.flatMap { g -> g.codes.map { it.code } })
+        // ReplayTransport answers the same 13B0 for HV and engine, so both groups see P0AA6.
+        assertEquals(listOf("P0AA6", "P0AA6"), result.groups.flatMap { g -> g.codes.map { it.code } })
         assertTrue(result.hasStoredDtcs)
 
         // Set bits in the C9 and CA tables reach the capture untouched. Naming them is what
         // InfLayout deliberately does not do, so nothing decodes and the capture is flagged a
         // decoder miss: the raw bytes are the deliverable, the interpretation is not.
         assertEquals(emptyList<Int>(), result.infCodes.map { it.code })
-        assertTrue(result.rawResponses.getValue("21C9").contains("61C9"))
-        assertTrue(result.rawResponses.getValue("21CA").contains("61CA"))
+        assertTrue(result.rawResponses.getValue("7E2/21C9").contains("61C9"))
+        assertTrue(result.rawResponses.getValue("7E2/21CA").contains("61CA"))
         assertTrue(
             result.rawResponses
-                .getValue("21CA")
+                .getValue("7E2/21CA")
                 .trimEnd('0')
                 .isNotEmpty(),
         )
@@ -61,15 +62,59 @@ class SimulatedCarTest {
         // 7E2 refuses a batched 21C6C7C8C9CA with 7F2112, so each table is its own request -
         // but they share one ATSH7E2 (§9.4.0).
         assertEquals(
-            listOf("ATSH7E2", "13B0", "ATSH7E3", "1380", "ATSH7E2", "21C6", "21C7", "21C8", "21C9", "21CA"),
+            listOf(
+                "ATSH7E2",
+                "0100",
+                "ATSH7E2",
+                "13B0",
+                "ATSH7E3",
+                "1380",
+                "ATSH7E0",
+                "13B0",
+                "ATSH7E2",
+                "ATH1",
+                "03",
+                "ATH0",
+                "ATSH7E2",
+                "ATH1",
+                "07",
+                "ATH0",
+                "ATSH7E2",
+                "21C6",
+                "21C7",
+                "21C8",
+                "21C9",
+                "21CA",
+            ),
             t.sent,
         )
-        // The five reads are one critical section: a header set immediately before, and none
+        // The five INF reads are one critical section: a header set immediately before, and none
         // in between. An interleaved ATSH here is the race withEcu exists to prevent (§1.2).
         val first = t.sent.indexOf("21C6")
         val last = t.sent.indexOf("21CA")
         assertEquals("ATSH7E2", t.sent[first - 1])
         assertTrue(t.sent.subList(first, last + 1).none { it.startsWith("ATSH") })
+    }
+
+    @Test
+    fun gen2LivenessAndGenericFieldsArePopulated() {
+        val (_, result) = read(SimulatedCar.gen2Healthy)
+        assertTrue(result.liveness!!.responding)
+        assertEquals("Responding", result.liveness!!.detail)
+        assertEquals(emptyList<String>(), result.storedGenericDtcs.map { it.code })
+        assertEquals(emptyList<String>(), result.pendingGenericDtcs.map { it.code })
+        assertEquals(5, result.infTablesResponded)
+        assertTrue(result.rawResponses.containsKey("7E2/0100"))
+        assertTrue(result.rawResponses.getValue("7E2/03").contains("7EA"))
+    }
+
+    @Test
+    fun storedFaultAlsoExposesGenericStoredCodeSeparately() {
+        val (_, result) = read(SimulatedCar.gen2WithStoredFault)
+        // KWP path still reports P0AA6; generic $03 also has P0AA6; they stay separate fields.
+        assertTrue(result.hasStoredDtcs)
+        assertEquals(listOf("P0AA6"), result.storedGenericDtcs.map { it.code })
+        assertEquals(5, result.infTablesResponded)
     }
 
     @Test
@@ -96,11 +141,23 @@ class SimulatedCarTest {
         // The decoded InfDetail values are a hypothesis about these bytes. A capture has to be
         // able to disagree with the decoder, so the bytes travel beside the interpretation.
         assertEquals(
-            listOf("13B0", "1380", "21C6", "21C7", "21C8", "21C9", "21CA"),
+            listOf(
+                "7E2/0100",
+                "7E2/13B0",
+                "7E3/1380",
+                "7E0/13B0",
+                "7E2/03",
+                "7E2/07",
+                "7E2/21C6",
+                "7E2/21C7",
+                "7E2/21C8",
+                "7E2/21C9",
+                "7E2/21CA",
+            ),
             result.rawResponses.keys.toList(),
         )
-        assertTrue(result.rawResponses.getValue("21CA").startsWith("61CA"))
-        assertEquals("53010AA6", result.rawResponses.getValue("13B0"))
+        assertTrue(result.rawResponses.getValue("7E2/21CA").startsWith("61CA"))
+        assertEquals("53010AA6", result.rawResponses.getValue("7E2/13B0"))
         assertTrue(result.hasStoredDtcs)
     }
 
@@ -113,7 +170,7 @@ class SimulatedCarTest {
 
         assertTrue(result.hasStoredDtcs)
         assertEquals(emptyList<Int>(), result.infCodes.map { it.code })
-        assertEquals(listOf("P0AA6"), result.groups.flatMap { g -> g.codes.map { it.code } })
+        assertEquals(listOf("P0AA6", "P0AA6"), result.groups.flatMap { g -> g.codes.map { it.code } })
     }
 
     /**

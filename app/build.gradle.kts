@@ -29,6 +29,47 @@ val betsyVersionCode =
         major.toInt() * 10000 + minor.toInt() * 100 + patch.toInt()
     }
 
+// Short git identity burned into BuildConfig and drawn on the connect hero so a phone build can
+// be matched to a tree without guessing. Repo root is the parent of `app/` (public/). Dirty trees
+// get a trailing "+" so an uncommitted install is obvious.
+fun gitShortIdentity(): String {
+    fun run(vararg args: String): String =
+        try {
+            ProcessBuilder(*args)
+                .directory(rootProject.projectDir.parentFile)
+                .redirectErrorStream(true)
+                .start()
+                .inputStream
+                .bufferedReader()
+                .readText()
+                .trim()
+        } catch (_: Exception) {
+            ""
+        }
+    val hash = run("git", "rev-parse", "--short", "HEAD").ifBlank { "unknown" }
+    val dirty = run("git", "status", "--porcelain").isNotEmpty()
+    return if (dirty && hash != "unknown") "$hash+" else hash
+}
+
+val betsyGitHash = gitShortIdentity()
+
+// Wall-clock stamp of this Gradle configuration, local time. Rebuilds always refresh it so the
+// hero can tell two installs of the same hash apart (dirty trees especially). Avoid java.time /
+// java.util here: the Android Gradle DSL shadows the `java` package name.
+val betsyBuildTime =
+    try {
+        ProcessBuilder("date", "+%Y-%m-%d %H:%M")
+            .redirectErrorStream(true)
+            .start()
+            .inputStream
+            .bufferedReader()
+            .readText()
+            .trim()
+            .ifBlank { "unknown" }
+    } catch (_: Exception) {
+        "unknown"
+    }
+
 android {
     namespace = "org.betsy"
     compileSdk = 34
@@ -39,6 +80,14 @@ android {
         targetSdk = 34
         versionCode = betsyVersionCode
         versionName = betsyVersionName
+        buildConfigField("String", "GIT_HASH", "\"$betsyGitHash\"")
+        buildConfigField("String", "BUILD_TIME", "\"$betsyBuildTime\"")
+        // Hero overlay: "0.0.1 · a1b2c3d+ · an on-car read 18:30"
+        buildConfigField(
+            "String",
+            "BUILD_LABEL",
+            "\"$betsyVersionName · $betsyGitHash · $betsyBuildTime\"",
+        )
     }
 
     signingConfigs {

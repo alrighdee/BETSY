@@ -8,6 +8,7 @@ import android.view.View
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
+import org.betsy.BuildConfig
 import org.betsy.ui.theme.DesignTokens
 import org.betsy.ui.theme.Surfaces
 import org.betsy.ui.theme.TextStyles
@@ -193,9 +194,9 @@ class SettingsActivity : Activity() {
     }
 
     /**
-     * Reads the real version rather than carrying a literal. The mockup shows "Version 2.4", which
-     * is placeholder copy, printing it in a shipped build would state a version that does not
-     * exist. Taking it from the package means it can never drift from the manifest.
+     * Real version + burned git identity rather than a mockup literal. The hero shows the same
+     * build label; Settings spells it out with the license so both places stay honest about what
+     * is installed.
      */
     private fun versionLine(): String {
         val name =
@@ -204,7 +205,7 @@ class SettingsActivity : Activity() {
             } catch (_: Exception) {
                 null
             }
-        return "Version ${name ?: "?"} \u00b7 MIT license"
+        return "Version ${name ?: "?"} · ${BuildConfig.GIT_HASH} · ${BuildConfig.BUILD_TIME} · MIT license"
     }
 
     private fun aboutCard(): View =

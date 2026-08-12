@@ -88,7 +88,7 @@ class ElmSession(
 
     /** Issues an OBD request and returns the §2-normalized response R. */
     suspend fun command(cmd: String): String {
-        val raw = sendRaw(cmd)
+        val raw = rawCommand(cmd)
         if (raw.contains('?')) {
             val e = ElmException("adapter rejected command '$cmd'")
             CaptureLog.logThrowable("ELM", e)
@@ -115,18 +115,13 @@ class ElmSession(
         return r
     }
 
-    private suspend fun expect(
-        cmd: String,
-        token: String,
-    ) {
-        repeat(2) {
-            // §1.1: retry once, then abort and report the failing command
-            if (sendRaw(cmd).contains(token)) return
-        }
-        throw ElmException("ELM327 setup failed at $cmd (last response: ${lastRawResponse.trim()})")
-    }
-
-    private suspend fun sendRaw(cmd: String): String {
+    /**
+     * Sends [cmd] and returns the adapter's verbatim output with no normalization, no error
+     * classification, and no negative-response detection. Used by the Gen2 7E2 liveness probe and
+     * ATH1 generic OBD reads so the caller can classify every outcome (including timeout / NO DATA
+     * / 7F / unexpected hex) without throwing.
+     */
+    suspend fun rawCommand(cmd: String): String {
         lock.lock()
         try {
             transport.readTimeoutMs = commandTimeoutMs
@@ -141,6 +136,17 @@ class ElmSession(
         } finally {
             lock.unlock()
         }
+    }
+
+    private suspend fun expect(
+        cmd: String,
+        token: String,
+    ) {
+        repeat(2) {
+            // §1.1: retry once, then abort and report the failing command
+            if (rawCommand(cmd).contains(token)) return
+        }
+        throw ElmException("ELM327 setup failed at $cmd (last response: ${lastRawResponse.trim()})")
     }
 
     companion object {

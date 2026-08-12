@@ -59,6 +59,7 @@ Select the target with `ATSH<header>` before each command group.
 |---|---|---|
 | `7E2` | HV / power management | DTCs, INF detail tables; battery data on Gen3 and the `7E2` Gen2 layout |
 | `7E3` | HV battery (Gen2) | block voltages, temps, current, SOC, internal resistance |
+| `7E0` | Engine (ECM) | engine DTCs via KWP2000 `13B0` / `0A` on Gen2–Gen3 (*inferred*) |
 | `7D2` | Hybrid vehicle control (Gen4) | recognised, not supported |
 | `747` | HV/EV battery, Gen4.5 | recognised, not supported |
 | `7E7` | GM two-mode | recognised, not supported |
@@ -251,19 +252,61 @@ faster.
 
 ### 7.1 Reading DTCs
 
-This ECU family is **KWP2000** (ISO 14230), not UDS (ISO 14229). DTCs come from service `0x13`,
-not `0x19`.
+Hybrid/HV DTCs on this ECU family are **KWP2000** (ISO 14230), not UDS (ISO 14229). Those come
+from service `0x13`, not `0x19`. On Gen2–Gen3 the **engine (ECM)** uses the same KWP2000 services
+on a different address (`7E0`). Generic SAE modes `$03`/`$07` on **7E2** are a separate,
+experimental observation used for STOP-fuse / liveness work (see below); they are **not** a
+substitute for Toyota enhanced DTCs or INF tables.
 
-| Generation | Reads |
-|---|---|
-| Gen2 | `ATSH7E2` `13B0`, then `ATSH7E3` `1380` |
-| Gen2, battery on `7E2` | `ATSH7E2` `13B0` and `1380` |
-| Gen3 | `ATSH7E2` `0A` (permanent) and `13B0` |
+| Generation | Hybrid / battery reads | Engine (ECM) reads |
+|---|---|---|
+| Gen2 | `ATSH7E2` `13B0`, then `ATSH7E3` `1380` | `ATSH7E0` `13B0` |
+| Gen2, battery on `7E2` | `ATSH7E2` `13B0` and `1380` | `ATSH7E0` `13B0` |
+| Gen3 | `ATSH7E2` `0A` (permanent) and `13B0` | `ATSH7E0` `0A` and `13B0` |
 
-*Measured:* `13B0` and `1380` both answer `5300` on a healthy car. Masks `1381` and `1382` are
-refused with `7F1312`.
+*Measured:* `13B0` and `1380` both answer `5300` on a healthy car's hybrid/battery ECUs. Masks
+`1381` and `1382` are refused with `7F1312`.
 
-Service `0A` is generic OBD-II permanent-DTC storage and is unrelated to Toyota detail codes.
+Service `0A` is generic OBD-II permanent-DTC storage and is unrelated to Toyota INF detail codes.
+
+**Engine path (*inferred*; confirm on-car).** Physical ECM header `7E0`,
+never functional `7DF` (§1.2). Response tags and the two-byte layout match §7.2–7.3 (`53` for
+mode 13, `4A` for mode 0A). A quiet or refusing ECM is recorded as a note and must not hide
+hybrid results: hybrid INF empty after an HEV fuse test and an engine U-code such as **U0293**
+are not contradictory; they are different ECUs answering different questions.
+
+Capture raw keys are `"<header>/<cmd>"` (e.g. `7E2/13B0` vs `7E0/13B0`) so the same command on
+two ECUs stays distinct.
+
+#### 7.1.1 Gen2 7E2 liveness probe (*inferred* until STOP-fuse confirms)
+
+Before Gen2 / Gen2-on-7E2 DTC or INF reads, the app sends `ATSH7E2` then `0100` and classifies:
+
+| Adapter / ECU output | ECU alive? | UI / result detail |
+|---|---|---|
+| Normalized response starts with `41` | yes | Responding |
+| Normalized response starts with `7F` | yes | Negative response + NRC meaning |
+| `NO DATA` / `CAN ERROR` / `BUS ERROR` | no | No response (NO DATA) |
+| Transport timeout | no | No response (timeout) |
+| `?` / `STOPPED` / `UNABLE TO CONNECT` | no | Adapter error |
+| Other hex | no | Unexpected response |
+
+A clean "no DTCs" result is only meaningful if liveness says the ECU is responding.
+
+#### 7.1.2 Gen2 generic OBD `$03` / `$07` on 7E2 (*experimental*)
+
+After KWP2000 group reads and before INF tables, Gen2 sweeps also:
+
+1. `ATH1` (headers on) so the responder CAN ID is preserved in the raw log  
+2. `03` (stored) and `07` (pending)  
+3. `ATH0` in a `finally` block  
+
+The raw line containing `7EA` is stripped of CAN ID + ISO-TP PCI before count-byte decode
+(tags `43` / `47`). Mode `$07` is **supplemental**: Toyota enhanced / non-emissions faults may
+not appear there. A clean `$03`/`$07` result must **not** be interpreted as "HV ECU has no
+Toyota DTCs." KWP2000 groups, generic OBD, and INF remain three separate observations.
+
+New raw keys: `7E2/0100`, `7E2/03`, `7E2/07`.
 
 ### 7.2 Response layout
 

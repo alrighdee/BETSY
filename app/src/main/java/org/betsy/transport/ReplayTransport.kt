@@ -79,10 +79,19 @@ object SimulatedCar {
             "21D0" to "61D00E000000000000000085DF0385F6051313131313131313131313131313",
             "21CED0CF" to CE_D0_CF,
             "010C0D" to "410C00000D00",
-            // DTC read (§9.1): one stored code on the HV ECU, none on the battery ECU
+            // Liveness + generic OBD (openspec gen2-7e2-diagnostics)
+            "0100" to "4100FFE0FFE0",
+            "ATH1" to "OK",
+            "ATH0" to "OK",
+            // Generic $03 with one stored code; $07 clean (supplemental)
+            "03" to "7EA 04 43 01 0A A6 ",
+            "07" to "7EA 02 47 00 ",
+            // DTC read (§7.1): one stored code on the HV ECU; battery and engine clean
+            // (engine uses the same 13B0 command on 7E0; ReplayTransport is not call-order
+            // aware, so both ECUs see P0AA6 unless overridden. Healthy fixture zeros 13B0.)
             "13B0" to "53010AA6",
             "1380" to "5300",
-            // INF detail tables (§9.4.0)
+            // INF detail tables (§7.4)
             "21C6" to table(0xC6),
             "21C7" to table(0xC7),
             "21C8" to table(0xC8),
@@ -95,6 +104,8 @@ object SimulatedCar {
         gen2WithStoredFault +
             mapOf(
                 "13B0" to "5300",
+                "03" to "7EA 02 43 00 ",
+                "07" to "7EA 02 47 00 ",
                 "21C9" to table(0xC9),
                 "21CA" to table(0xCA),
             )

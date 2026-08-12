@@ -23,11 +23,11 @@ import org.betsy.transport.awaitBlocking
 import org.betsy.ui.theme.applyBetsyTheme
 
 /**
- * Read-only DTC / INF screen (PROTOCOL.md §9). Runs one HV DTC + INF sweep on a background
- * thread and renders the decoded groups. No clear/erase action, reporting only. The reads
- * are slow, so they never run inside the fast poll cycle. Each ECU-addressed group goes through
- * ElmSession.withEcu, which is what keeps them from interleaving with the still-running poll
- * loop, the per-exchange lock alone would not, since ATSH is adapter-global state.
+ * Read-only DTC / INF screen (PROTOCOL.md §7). Runs one HV + engine DTC + INF sweep on a
+ * background thread and renders the decoded groups. No clear/erase action, reporting only. The
+ * reads are slow, so they never run inside the fast poll cycle. Each ECU-addressed group goes
+ * through ElmSession.withEcu, which is what keeps them from interleaving with the still-running
+ * poll loop; the per-exchange lock alone would not, since ATSH is adapter-global state.
  */
 class DtcActivity : Activity() {
     private val handler = Handler(Looper.getMainLooper())
@@ -183,17 +183,65 @@ class DtcActivity : Activity() {
         }.start()
     }
 
+    /**
+     * Status sheet: liveness, KWP2000 groups, generic $03/$07, INF k/5, then detail.
+     * Never collapses a completed sweep into "No DTCs or INF detail codes."
+     * (openspec gen2-diagnostics R5).
+     */
     private fun render(result: DtcReadResult) {
         lastResult = result
         shareButton.isEnabled = true
         val sb = StringBuilder()
-        for (group in result.groups) {
-            sb.append(group.label).append(":\n")
-            sb.append("  ").append(group.codes.joinToString(", ") { it.code }).append("\n\n")
+
+        result.liveness?.let { live ->
+            val line =
+                when {
+                    live.detail == "Responding" -> "HV ECU 7E2: responding"
+                    live.detail.startsWith("Negative response:") ->
+                        "HV ECU 7E2: negative response — ${live.detail.removePrefix("Negative response: ").trim()}"
+                    live.detail.startsWith("No response (timeout)") -> "HV ECU 7E2: no response (timeout)"
+                    live.detail.startsWith("No response (NO DATA)") -> "HV ECU 7E2: no response (NO DATA)"
+                    live.detail.startsWith("Adapter error:") ->
+                        "HV ECU 7E2: adapter error — ${live.detail.removePrefix("Adapter error:").trim()}"
+                    live.detail.startsWith("Unexpected response:") ->
+                        "HV ECU 7E2: unexpected response — ${live.detail.removePrefix("Unexpected response:").trim()}"
+                    else -> "HV ECU 7E2: ${live.detail}"
+                }
+            sb.append(line).append("\n\n")
         }
+
+        if (result.groups.isNotEmpty()) {
+            for (group in result.groups) {
+                sb.append(group.label).append(":\n")
+                sb.append("  ").append(group.codes.joinToString(", ") { it.code }).append("\n\n")
+            }
+        } else {
+            sb.append("Toyota enhanced DTCs (KWP2000): none reported\n\n")
+        }
+
+        // Generic OBD is a separate observation from Toyota enhanced — always show when present.
+        if (result.liveness != null ||
+            result.storedGenericDtcs.isNotEmpty() ||
+            result.pendingGenericDtcs.isNotEmpty() ||
+            result.rawResponses.containsKey("7E2/03") ||
+            result.rawResponses.containsKey("7E2/07")
+        ) {
+            sb
+                .append("Generic stored DTCs (\$03): ")
+                .append(formatGenericCodes(result.storedGenericDtcs, result.notes, "03"))
+                .append("\n")
+            sb
+                .append("Generic pending DTCs (\$07): ")
+                .append(formatGenericCodes(result.pendingGenericDtcs, result.notes, "07"))
+                .append("\n")
+            sb.append("(generic OBD ≠ Toyota enhanced state)\n\n")
+        }
+
+        sb.append("INF tables: ${result.infTablesResponded}/5 responded\n\n")
+
         if (result.infCodes.isNotEmpty()) {
             // A fault reports a code from more than one table, and the combination is what
-            // names the failed component (PROTOCOL.md §9.4.0). Flattening these into one list
+            // names the failed component (PROTOCOL.md §7.4). Flattening these into one list
             // throws that away, so group by table.
             sb.append("INF DETAIL CODES:\n")
             for ((table, codes) in result.infCodes.groupBy { it.tableLabel }.toSortedMap()) {
@@ -204,14 +252,15 @@ class DtcActivity : Activity() {
             if (pair.size > 1) {
                 sb.append("  → ").append(pair.joinToString("-")).append("\n")
             }
-            // The byte→code mapping has never been checked against a car with a real fault, so
-            // say so here rather than presenting a derived number as a diagnosis.
-            sb.append("  (mapping unverified, see docs/PROTOCOL.md §9.4.0)\n")
+            sb.append("  (mapping unverified, see docs/PROTOCOL.md §7.4)\n")
             sb.append("\n")
         }
-        if (!result.hasCodes) {
-            sb.append("No DTCs or INF detail codes.\n")
+
+        CaptureLog.captureFile?.let { f ->
+            sb.append("Raw log: ").append(f.name).append("\n")
+            sb.append("Build: ").append(BuildConfig.BUILD_LABEL).append("\n")
         }
+
         if (result.notes.isNotEmpty()) {
             sb.append("\n")
             for (note in result.notes) {
@@ -221,6 +270,19 @@ class DtcActivity : Activity() {
         bodyText.text = sb.toString()
         statusText.text = "Updated ${java.text.SimpleDateFormat("HH:mm:ss").format(java.util.Date())}"
         statusText.setTextColor(Color.GRAY)
+    }
+
+    private fun formatGenericCodes(
+        codes: List<org.betsy.model.Dtc>,
+        notes: List<String>,
+        cmd: String,
+    ): String {
+        val fail = notes.firstOrNull { it.startsWith("Generic DTCs ($cmd):") }
+        if (fail != null && codes.isEmpty()) {
+            return fail.removePrefix("Generic DTCs ($cmd): ").trim()
+        }
+        if (codes.isEmpty()) return "0"
+        return codes.joinToString(", ") { it.code }
     }
 
     override fun onDestroy() {

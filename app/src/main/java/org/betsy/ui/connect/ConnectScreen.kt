@@ -184,8 +184,8 @@ class ConnectScreen(
     }
 
     /**
-     * Full-bleed logo. The tagline is part of the artwork, so no text is drawn over it: a second
-     * copy was landing on top of the one already in the image.
+     * Full-bleed logo. The product tagline lives in the artwork; only a small build label
+     * (version · git) is overlaid so an installed APK can be identified.
      */
     private fun buildHeader(): View = LogoHeaderView(context)
 

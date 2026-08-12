@@ -18,16 +18,24 @@ package org.betsy.decode
  * wording says so where it matters.
  */
 object DtcMeaning {
-    /** How much the owner should worry, which is not the same as how expensive it is. */
-    enum class Severity {
-        /** Safe to drive. Get it looked at when convenient. */
-        MINOR,
+    /**
+     * How much the owner should worry, which is not the same as how expensive it is.
+     *
+     * [advice] closes the explanation rather than opening it. The fault itself leads, the cause
+     * follows, and what to do about it comes last: someone reading their own car's fault wants to
+     * know what broke before being told how to feel about it.
+     */
+    enum class Severity(
+        val advice: String,
+    ) {
+        /** Safe to drive. Worth mentioning, not worth worrying about. */
+        MINOR("No hurry. Mention it at the next service."),
 
-        /** Drive gently and get it diagnosed soon. Something is degraded. */
-        SERIOUS,
+        /** Something is degraded. Drive gently and get it diagnosed. */
+        SERIOUS("Get this looked at soon."),
 
-        /** Stop using the car until it is checked. Possible danger to people. */
-        URGENT,
+        /** Possible danger to people. Stop using the car. */
+        URGENT("Stop driving and get this checked before using the car again."),
     }
 
     data class Meaning(

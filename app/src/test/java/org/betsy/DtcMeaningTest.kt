@@ -55,6 +55,14 @@ class DtcMeaningTest {
         assertTrue(m.usually.contains("module"))
     }
 
+    /** The closing line has to stand alone, since it is read last and acted on. */
+    @Test
+    fun everySeverityCarriesUsableAdvice() {
+        for (s in DtcMeaning.Severity.entries) {
+            assertTrue(s.name, s.advice.length > 10 && s.advice.endsWith("."))
+        }
+    }
+
     @Test
     fun everyExplanationIsActuallyWritten() {
         assertTrue(DtcMeaning.explainedCount >= 10)

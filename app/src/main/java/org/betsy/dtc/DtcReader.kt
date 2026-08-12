@@ -278,7 +278,12 @@ class DtcReader(
                         emptyList()
                     }
                 } finally {
-                    session.rawCommand("ATH0")
+                    try {
+                        session.rawCommand("ATH0")
+                    } catch (_: Exception) {
+                        // adapter already in bad state; don't let cleanup failure
+                        // propagate and leave ATH1 on for the next sweep
+                    }
                 }
             }
         } catch (e: Exception) {

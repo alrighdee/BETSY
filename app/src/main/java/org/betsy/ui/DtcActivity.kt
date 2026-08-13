@@ -215,11 +215,21 @@ class DtcActivity : Activity() {
             for (group in result.groups) {
                 sb.append(group.label).append(":\n")
                 for (dtc in group.codes) {
-                    // The sub-code, when the car transmitted one, is what turns a system name into
-                    // an area: P0AA6 alone is "something in the HV system leaks", P0AA6-612 is the
-                    // battery rather than the air conditioning (PROTOCOL.md 7.4.2).
-                    val sub = result.infCodes.firstOrNull()?.code
-                    val label = if (sub != null) "${dtc.code}-$sub" else dtc.code
+                    // The sub-code turns a system name into an area: P0AA6 alone is "something in
+                    // the HV system leaks", P0AA6-612 is the battery rather than the air
+                    // conditioning (PROTOCOL.md 7.4.2).
+                    //
+                    // It is only attached to a code when the pairing is unambiguous: one stored
+                    // DTC and one populated page. How pages map to codes when several are stored
+                    // has never been observed, so with more than one of either the sub-codes are
+                    // listed separately below rather than guessed at. Printing "P0AA6-612" beside
+                    // a battery-block code that did not produce that page would be an invented
+                    // diagnosis, and a costly one.
+                    val unambiguous =
+                        result.groups.sumOf { it.codes.size } == 1 &&
+                            result.infCodes.size == 1
+                    val label =
+                        if (unambiguous) "${dtc.code}-${result.infCodes[0].code}" else dtc.code
                     sb.append("  ").append(label).append("\n")
 
                     // An unexplained code is shown bare rather than guessed at: someone might

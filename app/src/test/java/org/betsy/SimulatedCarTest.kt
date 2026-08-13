@@ -240,4 +240,32 @@ class SimulatedCarTest {
         assertEquals(emptyList<Int>(), result.infCodes.map { it.code })
         assertEquals(5, result.notes.count { it.startsWith("INF 21C") })
     }
+
+    /**
+     * The case the project is waiting for and cannot manufacture: a car with more than one stored
+     * fault. Page-to-DTC assignment has never been observed, so the sub-code must not be attached
+     * to a code on a guess. This pins that the data still reaches the capture intact, which is
+     * what makes such a car worth having.
+     */
+    @Test
+    fun aSecondFaultedCarStillYieldsUsableEvidence() {
+        val twoFaults =
+            SimulatedCar.gen2WithStoredFault +
+                mapOf("13B0" to "53020571 0AA6".replace(" ", ""))
+        val (_, result) = read(twoFaults)
+
+        assertEquals(
+            listOf("P0571", "P0AA6"),
+            result.groups
+                .first()
+                .codes
+                .map { it.code },
+        )
+        // One page populated, one sub-code decoded. Which DTC owns it is unknown, and the app
+        // must not pretend otherwise, but the bytes are all preserved for later analysis.
+        assertEquals(listOf(115), result.infCodes.map { it.code })
+        assertTrue(result.rawResponses.getValue("7E2/21C7").contains("61C7"))
+        assertTrue(result.rawResponses.containsKey("7E2/21C6"))
+        assertTrue(result.rawResponses.containsKey("7E2/21CA"))
+    }
 }

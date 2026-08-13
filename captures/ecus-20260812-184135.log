@@ -1,0 +1,66 @@
+[   0.0s] ECU DISCOVERY. READ-ONLY. 40 addresses to try, up to 3 probes each.
+[   0.0s] A reply of any kind means an ECU is there. A refusal counts; silence does not.
+[   0.0s] budget 900s. Empty addresses return fast: adapter timeout set low.
+[   0.0s] 
+[   0.0s]     session: unpair, re-pair (attempt 1/4) ...
+[   9.1s]     session: connecting (attempt 1/4) ...
+[  23.0s]     session: cannot open port: [Errno 2] No such file or directory: '/dev/cu.OBDII'
+[  23.0s]     session: unpair, re-pair (attempt 2/4) ...
+[  32.1s]     session: connecting (attempt 2/4) ...
+[  48.2s]     session: UP
+[  48.3s] 
+[  48.7s] [1/40   2%  eta   13s] 7E0  ANSWERS via 0100: SEARCHING... 4100BE1FA813   <- engine ECU (BETSY reads this)
+[  49.3s] [2/40   5%  eta   22s] 7E1  silent (1 in a row)
+[  49.4s] [3/40   7%  eta   12s] 7E2  ANSWERS via 0100: 4100981A8013   <- HV control ECU (BETSY reads this)
+[  49.7s] [4/40  10%  eta   12s] 7E3  ANSWERS via 0100: 410098188013   <- battery ECU (BETSY reads this)
+[  50.3s] [5/40  12%  eta   12s] 7E4  silent (1 in a row)
+[  51.1s] [6/40  15%  eta   20s] 7E5  silent (2 in a row)
+[  51.8s] [7/40  17%  eta   19s] 7E6  silent (3 in a row)
+[  52.4s] [8/40  20%  eta   20s] 7E7  silent (4 in a row)
+[  53.0s] [9/40  22%  eta   19s] 7B0  silent (5 in a row)
+[  53.6s] [10/40  25%  eta   19s] 7B1  silent (6 in a row)
+[  54.3s] [11/40  27%  eta   18s] 7B2  silent (7 in a row)
+[  55.0s] [12/40  30%  eta   17s] 7B3  silent (8 in a row)
+[  55.5s] [13/40  32%  eta   17s] 7B4  silent (9 in a row)
+[  56.2s] [14/40  35%  eta   16s] 7B5  silent (10 in a row)
+[  56.8s] [15/40  37%  eta   15s] 7B6  silent (11 in a row)
+[  57.5s] [16/40  40%  eta   15s] 7B7  silent (12 in a row)
+[  58.1s] [17/40  42%  eta   14s] 7C0  silent (13 in a row)
+[  58.8s] [18/40  45%  eta   14s] 7C1  silent (14 in a row)
+[  59.4s] [19/40  47%  eta   13s] 7C2  silent (15 in a row)
+[  60.2s] [20/40  50%  eta   12s] 7C3  silent (16 in a row)
+[  60.8s] [21/40  52%  eta   12s] 7C4  silent (17 in a row)
+[  61.5s] [22/40  55%  eta   11s] 7C5  silent (18 in a row)
+[  62.1s] [23/40  57%  eta   11s] 7C6  silent (19 in a row)
+[  62.8s] [24/40  60%  eta   10s] 7C7  silent (20 in a row)
+[  63.4s] [25/40  62%  eta    9s] 7A0  silent (21 in a row)
+[  64.1s] [26/40  65%  eta    9s] 7A1  silent (22 in a row)
+[  64.7s] [27/40  67%  eta    8s] 7A2  silent (23 in a row)
+[  65.4s] [28/40  70%  eta    8s] 7A3  silent (24 in a row)
+[  65.4s]     !! 24 silent in a row, which may be a dropped link rather than empty addresses. Rebuilding the session to find out.
+[  65.4s]     !! link lost, rebuilding session (rebuild #1)
+[  65.4s]     session: unpair, re-pair (attempt 1/4) ...
+[  77.1s]     session: connecting (attempt 1/4) ...
+[  88.0s]     session: UP
+[  88.8s] [29/40  72%  eta    7s] 7A4  silent (1 in a row)
+[  89.4s] [30/40  75%  eta    6s] 7A5  silent (2 in a row)
+[  90.1s] [31/40  77%  eta    6s] 7A6  silent (3 in a row)
+[  90.8s] [32/40  80%  eta    5s] 7A7  silent (4 in a row)
+[  91.4s] [33/40  82%  eta    4s] 7D0  silent (5 in a row)
+[  92.1s] [34/40  85%  eta    4s] 7D1  silent (6 in a row)
+[  92.7s] [35/40  87%  eta    3s] 7D2  silent (7 in a row)
+[  93.2s] [36/40  90%  eta    3s] 7D3  silent (8 in a row)
+[  94.1s] [37/40  92%  eta    2s] 7D4  silent (9 in a row)
+[  94.7s] [38/40  95%  eta    1s] 7D5  silent (10 in a row)
+[  95.4s] [39/40  97%  eta    1s] 7D6  silent (11 in a row)
+[  96.0s] [40/40 100%  eta    0s] 7D7  silent (12 in a row)
+[  96.0s] 
+[  96.0s] ======================================================================
+[  96.0s] 3 ECU(s) answered
+[  96.0s]   7E0  via 0100  engine ECU (BETSY reads this)
+[  96.0s]   7E2  via 0100  HV control ECU (BETSY reads this)
+[  96.0s]   7E3  via 0100  battery ECU (BETSY reads this)
+[  96.0s] 
+[  96.0s] Nothing beyond the three already read. The documented extras do not answer,
+[  96.0s] which is itself worth knowing and stops anyone chasing them again.
+[  96.0s] ======================================================================

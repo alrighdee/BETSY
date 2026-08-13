@@ -26,3 +26,6 @@ captures/*.console
 
 # Internal agent instructions. Local only: not part of the published project.
 AGENTS.md
+
+# sweep artefacts from the reachability probes; the timestamped ones are the record
+captures/ecus-wide.*

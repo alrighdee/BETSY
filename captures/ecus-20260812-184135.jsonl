@@ -1,0 +1,40 @@
+{"address": "7E0", "present": true, "probe": "0100", "raw": "SEARCHING... 4100BE1FA813", "hex": "4100BE1FA813", "known": "engine ECU (BETSY reads this)"}
+{"address": "7E1", "present": false, "probe": null, "raw": "", "hex": "", "known": ""}
+{"address": "7E2", "present": true, "probe": "0100", "raw": "4100981A8013", "hex": "4100981A8013", "known": "HV control ECU (BETSY reads this)"}
+{"address": "7E3", "present": true, "probe": "0100", "raw": "410098188013", "hex": "410098188013", "known": "battery ECU (BETSY reads this)"}
+{"address": "7E4", "present": false, "probe": null, "raw": "", "hex": "", "known": ""}
+{"address": "7E5", "present": false, "probe": null, "raw": "", "hex": "", "known": ""}
+{"address": "7E6", "present": false, "probe": null, "raw": "", "hex": "", "known": ""}
+{"address": "7E7", "present": false, "probe": null, "raw": "", "hex": "", "known": ""}
+{"address": "7B0", "present": false, "probe": null, "raw": "", "hex": "", "known": ""}
+{"address": "7B1", "present": false, "probe": null, "raw": "", "hex": "", "known": ""}
+{"address": "7B2", "present": false, "probe": null, "raw": "", "hex": "", "known": ""}
+{"address": "7B3", "present": false, "probe": null, "raw": "", "hex": "", "known": ""}
+{"address": "7B4", "present": false, "probe": null, "raw": "", "hex": "", "known": ""}
+{"address": "7B5", "present": false, "probe": null, "raw": "", "hex": "", "known": ""}
+{"address": "7B6", "present": false, "probe": null, "raw": "", "hex": "", "known": ""}
+{"address": "7B7", "present": false, "probe": null, "raw": "", "hex": "", "known": ""}
+{"address": "7C0", "present": false, "probe": null, "raw": "", "hex": "", "known": ""}
+{"address": "7C1", "present": false, "probe": null, "raw": "", "hex": "", "known": ""}
+{"address": "7C2", "present": false, "probe": null, "raw": "", "hex": "", "known": ""}
+{"address": "7C3", "present": false, "probe": null, "raw": "", "hex": "", "known": ""}
+{"address": "7C4", "present": false, "probe": null, "raw": "", "hex": "", "known": ""}
+{"address": "7C5", "present": false, "probe": null, "raw": "", "hex": "", "known": ""}
+{"address": "7C6", "present": false, "probe": null, "raw": "", "hex": "", "known": ""}
+{"address": "7C7", "present": false, "probe": null, "raw": "", "hex": "", "known": ""}
+{"address": "7A0", "present": false, "probe": null, "raw": "", "hex": "", "known": ""}
+{"address": "7A1", "present": false, "probe": null, "raw": "", "hex": "", "known": ""}
+{"address": "7A2", "present": false, "probe": null, "raw": "", "hex": "", "known": ""}
+{"address": "7A3", "present": false, "probe": null, "raw": "", "hex": "", "known": ""}
+{"address": "7A4", "present": false, "probe": null, "raw": "", "hex": "", "known": ""}
+{"address": "7A5", "present": false, "probe": null, "raw": "", "hex": "", "known": ""}
+{"address": "7A6", "present": false, "probe": null, "raw": "", "hex": "", "known": ""}
+{"address": "7A7", "present": false, "probe": null, "raw": "", "hex": "", "known": ""}
+{"address": "7D0", "present": false, "probe": null, "raw": "", "hex": "", "known": ""}
+{"address": "7D1", "present": false, "probe": null, "raw": "", "hex": "", "known": ""}
+{"address": "7D2", "present": false, "probe": null, "raw": "", "hex": "", "known": ""}
+{"address": "7D3", "present": false, "probe": null, "raw": "", "hex": "", "known": ""}
+{"address": "7D4", "present": false, "probe": null, "raw": "", "hex": "", "known": ""}
+{"address": "7D5", "present": false, "probe": null, "raw": "", "hex": "", "known": ""}
+{"address": "7D6", "present": false, "probe": null, "raw": "", "hex": "", "known": ""}
+{"address": "7D7", "present": false, "probe": null, "raw": "", "hex": "", "known": ""}

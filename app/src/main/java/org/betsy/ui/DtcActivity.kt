@@ -18,6 +18,7 @@ import org.betsy.capture.PendingCapture
 import org.betsy.capture.UploadResult
 import org.betsy.debug.CaptureLog
 import org.betsy.decode.DtcMeaning
+import org.betsy.decode.InfMeaning
 import org.betsy.dtc.DtcReadResult
 import org.betsy.dtc.DtcReader
 import org.betsy.transport.awaitBlocking
@@ -231,6 +232,20 @@ class DtcActivity : Activity() {
                     val label =
                         if (unambiguous) "${dtc.code}-${result.infCodes[0].code}" else dtc.code
                     sb.append("  ").append(label).append("\n")
+
+                    // The sub-code's own explanation, where this project has one. Most pairs are
+                    // undocumented and InfMeaning returns null for those, leaving the bare number
+                    // on screen. That is the honest outcome: the number is still what a garage
+                    // asks for, and inventing a sentence to fill the space would be worse than
+                    // the gap.
+                    if (unambiguous) {
+                        InfMeaning.forCode(dtc.code, result.infCodes[0].code)?.let { d ->
+                            sb.append("    ").append(d.narrows).append("\n")
+                            if (d.area.isNotBlank()) {
+                                sb.append("    Look at: ").append(d.area).append("\n")
+                            }
+                        }
+                    }
 
                     // An unexplained code is shown bare rather than guessed at: someone might
                     // replace a battery on the strength of a confident wrong sentence.

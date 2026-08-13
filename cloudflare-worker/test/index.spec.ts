@@ -248,6 +248,33 @@ describe("markdown escaping", () => {
 		expect(committed!.content).toContain('app_build: "unknown"');
 	});
 
+	it("flags a capture with several stored faults", async () => {
+		expectGithubPut();
+		const res = await post(
+			payload({ hasStoredDtcs: true, dtcs: ["HV ECU (7E2): P0AA6", "HV ECU (7E2): P3019"] }),
+		);
+		expect(res.status).toBe(200);
+		expect(committed!.content).toContain("multi_fault: true");
+		expect(committed!.content).toContain("Several faults stored");
+		expect(committed!.message).toContain("MULTI-FAULT");
+	});
+
+	// The common case must stay unflagged, or the flag stops meaning anything.
+	it("does not flag a single stored fault", async () => {
+		expectGithubPut();
+		const res = await post(payload({ hasStoredDtcs: true, dtcs: ["HV ECU (7E2): P0571"] }));
+		expect(res.status).toBe(200);
+		expect(committed!.content).toContain("multi_fault: false");
+		expect(committed!.message).not.toContain("MULTI-FAULT");
+	});
+
+	it("does not flag a healthy car with no faults at all", async () => {
+		expectGithubPut();
+		const res = await post(payload({ hasStoredDtcs: false, dtcs: [] }));
+		expect(res.status).toBe(200);
+		expect(committed!.content).toContain("multi_fault: false");
+	});
+
 	it("keeps a newline in car out of the front matter", async () => {
 		expectGithubPut();
 		const res = await post(payload({ car: "Gen2\norigin: synthetic\n" }));

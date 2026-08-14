@@ -190,7 +190,7 @@ class DtcReader(
         if (gen2Family) readFreezeFrame("7E2", notes, raws)
 
         val (inf, infResponded) = readInf(notes, raws)
-        appendSourceMismatchNotes(groups, notes)
+        appendSourceMismatchNotes(groups, inf, notes)
         val hybridDtcs =
             groups
                 .asSequence()
@@ -509,11 +509,20 @@ class DtcReader(
         }
     }
 
-    /** Makes a wrong logical-source assumption visible instead of silently dropping a parent. */
+    /**
+     * Makes a wrong logical-source assumption visible instead of silently dropping a parent.
+     *
+     * Only meaningful when the sweep actually read an INF value: with no INF value there is no
+     * relationship that could have been mis-attributed, and a note claiming one was left
+     * unresolved would be a warning about nothing. The owner reads these notes and so does every
+     * shared capture, so the detector stays quiet unless something was genuinely at stake.
+     */
     private fun appendSourceMismatchNotes(
         groups: List<DtcGroup>,
+        inf: List<InfDetail>,
         notes: MutableList<String>,
     ) {
+        if (inf.isEmpty()) return
         groups
             .asSequence()
             .filter { it.source != DtcSource.HYBRID_CONTROL }

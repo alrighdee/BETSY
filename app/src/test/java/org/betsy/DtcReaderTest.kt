@@ -484,6 +484,54 @@ class DtcReaderTest {
         assertFalse(result.notes.any { it.contains("source mismatch") })
     }
 
+    /**
+     * The detector exists to make a wrong source assumption visible. Every other test asserts it
+     * stays quiet, which an always-false detector would also satisfy, so one case must prove it
+     * can speak.
+     */
+    @Test
+    fun documentedParentOutsideHybridControlProducesSourceMismatchNote() {
+        val t =
+            FakeTransport(
+                gen2Base(mapOf("21C7" to "61C7" + payload(29 to 0x00, 30 to 0x7B))),
+                byHeader =
+                    mapOf(
+                        "7E2/13B0" to "5300",
+                        "7E3/1380" to "53010A1F",
+                        "7E0/13B0" to "5300",
+                    ),
+            )
+        val result = awaitBlocking { reader(t, VehicleModel.GEN2).read() }
+
+        assertEquals(listOf(123), result.infCodes.map { it.code })
+        assertTrue(result.notes.any { it.contains("source mismatch") && it.contains("P0A1F") })
+        // The value stays unresolved: P0A1F was not read from hybrid control, so it is not a
+        // candidate parent. The note is the only thing that says so out loud.
+        assertEquals(InfMeaning.Resolution.Unresolved(123), result.infResolutions.single())
+    }
+
+    /**
+     * With no INF value read, nothing could have been mis-attributed. The note would be a warning
+     * about a relationship that never existed, shown to the owner and uploaded with the capture.
+     */
+    @Test
+    fun sourceMismatchNoteIsSilentWhenNoInfValueWasRead() {
+        val t =
+            FakeTransport(
+                gen2Base(),
+                byHeader =
+                    mapOf(
+                        "7E2/13B0" to "5300",
+                        "7E3/1380" to "53010A1F",
+                        "7E0/13B0" to "5300",
+                    ),
+            )
+        val result = awaitBlocking { reader(t, VehicleModel.GEN2).read() }
+
+        assertTrue(result.infCodes.isEmpty())
+        assertFalse(result.notes.any { it.contains("source mismatch") })
+    }
+
     @Test
     fun gen3DoesNotRunGen2LivenessOrGeneric() {
         val t =

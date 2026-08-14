@@ -77,28 +77,69 @@ object InfMeaning {
         "The leak is in the hybrid battery, its control unit, the main relays or the main resistor."
     private const val LEAK_TRANSAXLE =
         "The leak is in the transaxle, or in the motor and generator inverters."
+
+    // One row in the source covers all six immobiliser sub-codes, so one string covers them here.
+    private val IMMOBILISER =
+        Detail(
+            "The immobiliser and the hybrid controller cannot agree that the key is genuine.",
+            "Immobiliser wiring and the hybrid controller",
+        )
+
     private const val LEAK_INVERTER =
         "The leak is in the inverters, the main relays, the main resistor or the frame wiring."
 
     /**
      * The hybrid controller failing one of its own internal checks, `P0A1D`.
      *
-     * The source's fault table prints the *same* sentence against all eighteen of these sub-codes,
-     * so on the table alone the sub-code narrows nothing. The distinction is real but is written
+     * The source's fault table prints the *same* sentence against every one of these sub-codes, so
+     * on the table alone the sub-code narrows nothing. The distinction is real but is written
      * elsewhere on the page, beside the monitor description rather than in the fault table, and
-     * most of it has now been read across. Nine sub-codes still share the generic sentence,
-     * which is all the source says about them.
+     * it names which processor inside the controller failed. Eight sub-codes still share the
+     * generic sentence, which is all the source says about them.
      *
-     * `390` is deliberately absent: it is a `P0A1D` sub-code that means something else entirely,
-     * and blanket-applying the family sentence to it would be wrong. It is written out with the
-     * other codes.
+     * Two sub-codes are deliberately absent from every group here, because grouping them would
+     * state something false. `390` means something else entirely. `142` is not an internal fault
+     * at all: the master chart gives it its own row pointing at the wiring and the power source
+     * control unit, so the family sentence would send a repair to the wrong part. Both are
+     * written out individually below.
      */
     private val controllerSelfTest: Map<Pair<String, Int>, Detail> =
-        listOf(142, 155, 160, 183, 193, 197, 392, 393, 511)
+        listOf(155, 160, 183, 193, 197, 392, 393, 511)
             .associate {
                 ("P0A1D" to it) to
                     Detail("The hybrid controller failed one of its own internal checks.", "Hybrid controller")
             } +
+            // Which part of the controller. The fault table prints the same generic sentence for
+            // all of these; the distinction is stated once per page beside the monitor
+            // description and applies to the whole group listed there.
+            listOf(150, 151, 152, 156, 158, 564).associate {
+                ("P0A1D" to it) to
+                    Detail("The hybrid controller's generator processor failed its self-check.", "Hybrid controller")
+            } +
+            listOf(163, 164, 512).associate {
+                ("P0A1D" to it) to
+                    Detail("The power supply to the hybrid controller's motor processor has failed.", "Hybrid controller")
+            } +
+            listOf(166, 167, 200).associate {
+                ("P0A1D" to it) to
+                    Detail("The hybrid controller cannot decode the generator's position signal.", "Hybrid controller")
+            } +
+            listOf(177, 178, 567).associate {
+                ("P0A1D" to it) to
+                    Detail("The hybrid controller's main motor processor failed its self-check.", "Hybrid controller")
+            } +
+            listOf(180, 181, 182, 184, 185, 186).associate {
+                ("P0A1D" to it) to
+                    Detail("The hybrid controller's rotation-angle processor is returning bad output.", "Hybrid controller")
+            } +
+            listOf(188, 189, 192, 195, 196, 565).associate {
+                ("P0A1D" to it) to
+                    Detail("The hybrid controller's motor processor failed its self-check.", "Hybrid controller")
+            } +
+            mapOf(
+                ("P0A1D" to 159) to
+                    Detail("The hybrid controller cannot talk to its own motor processor.", "Hybrid controller"),
+            ) +
             listOf(134, 135, 570).associate {
                 ("P0A1D" to it) to
                     Detail("The hybrid controller's analogue-to-digital conversion has failed.", "Hybrid controller")
@@ -132,6 +173,16 @@ object InfMeaning {
                     Detail("A critical part of the hybrid controller's working memory has failed.", "Hybrid controller"),
                 ("P0A1D" to 615) to
                     Detail("The hybrid controller's own network interface has failed.", "Hybrid controller"),
+                // The one sub-code in this family that is not an internal fault at all. The
+                // master chart gives it its own row, pointing at the wiring and the power source
+                // control unit rather than the hybrid controller. It shipped inside the generic
+                // family for one release, which read as "replace the ECU" for a fault that is not
+                // in the ECU.
+                ("P0A1D" to 142) to
+                    Detail(
+                        "The hybrid controller is still being told to run after the power switch is off.",
+                        "Wiring and the power source control unit",
+                    ),
             )
 
     /**
@@ -335,6 +386,30 @@ object InfMeaning {
             ("P0A1F" to 129) to Detail("The high-voltage battery voltage circuit is faulty.", "High-voltage fuse"),
             ("P0A1F" to 593) to Detail("The battery unit's ignition signal circuit is faulty.", "Battery ECU"),
             ("P0560" to 117) to Detail("The 12 volt supply signal is faulty.", "HEV fuse"),
+            // The immobiliser. All six sub-codes share one row in the source, which lists four
+            // ways the key check can fail without saying which number means which. They read the
+            // same here because inventing six distinctions the source does not draw would be
+            // worse than repeating the one it does. Listed out rather than generated so the six
+            // numbers stay greppable.
+            ("B2799" to 539) to IMMOBILISER,
+            ("B2799" to 540) to IMMOBILISER,
+            ("B2799" to 541) to IMMOBILISER,
+            ("B2799" to 542) to IMMOBILISER,
+            ("B2799" to 543) to IMMOBILISER,
+            ("B2799" to 544) to IMMOBILISER,
+            ("P0500" to 352) to
+                Detail("The speed signal dropped out while cruise control was engaged.", "Vehicle speed sensor and its wiring"),
+            ("P0607" to 116) to
+                Detail(
+                    "The hybrid controller's two processors disagree about whether the brake is pressed.",
+                    "Hybrid controller",
+                ),
+            ("P0338" to 600) to
+                Detail("The engine speed signal line into the hybrid controller is faulty.", "Wiring and the hybrid controller"),
+            ("P0343" to 601) to
+                Detail("The camshaft signal line into the hybrid controller is faulty.", "Wiring and the hybrid controller"),
+            ("P3107" to 213) to
+                Detail("The airbag unit's link to the hybrid controller is touching earth.", "Wiring and the airbag unit"),
             // Engine speed reaching the hybrid controller two different ways, and disagreeing.
             // The sub-code says which route was wrong, which decides whether to suspect the
             // sensors or the network carrying their reading.
@@ -352,6 +427,8 @@ object InfMeaning {
             ("P0A08" to 264) to Detail("The DC/DC converter, which charges the 12 V battery, has failed.", "Inverter assembly"),
             ("P0A09" to 265) to
                 Detail("A DC/DC converter signal wire is broken or touching earth.", "Wiring and inverter assembly"),
+            ("P0A09" to 591) to
+                Detail("The DC/DC converter's voltage signal wire is broken or touching earth.", "Wiring and inverter assembly"),
             ("P0A10" to 263) to Detail("A DC/DC converter signal wire is touching battery positive.", "Inverter assembly"),
             ("P0A10" to 592) to Detail("A DC/DC converter output signal wire is touching battery positive.", "Inverter assembly"),
             ("P0A94" to 442) to Detail("The boost converter's output voltage is wrong.", "Boost converter"),
@@ -423,8 +500,12 @@ object InfMeaning {
             // being complained about is probably fine.
             ("P0A78" to 278) to
                 Detail("The drive inverter's over-voltage warning line is touching battery positive.", "Wiring and inverter assembly"),
+            ("P0A78" to 280) to
+                Detail("The drive inverter's over-voltage warning line is broken or touching earth.", "Wiring and inverter assembly"),
             ("P0A78" to 283) to
                 Detail("The drive inverter's fault warning line is touching battery positive.", "Wiring and inverter assembly"),
+            ("P0A78" to 285) to
+                Detail("The drive inverter's fault warning line is broken or touching earth.", "Wiring and inverter assembly"),
             // Over-current trips on the drive inverter. The symptom is identical in all three;
             // the sub-code is the only thing naming which component caused it. 284 is a real
             // overheat, unlike the temperature-sensor codes above.
@@ -450,6 +531,15 @@ object InfMeaning {
             // overheat.
             ("P3212" to 275) to
                 Detail("The drive inverter's temperature sensor wiring is broken or touching earth.", "Wiring and inverter assembly"),
+            ("P3211" to 276) to
+                Detail("The motor inverter's temperature reading jumped abruptly.", "Inverter cooling system"),
+            ("P3226" to 562) to
+                Detail("The boost converter's temperature reading jumped abruptly.", "Inverter cooling system"),
+            ("P3226" to 563) to
+                Detail(
+                    "The boost converter's temperature reading has drifted away from what is plausible.",
+                    "Inverter cooling system",
+                ),
             ("P3221" to 314) to
                 Detail("The generator inverter's temperature reading jumped abruptly.", "Inverter cooling system"),
             ("P3221" to 315) to

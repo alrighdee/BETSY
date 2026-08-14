@@ -192,6 +192,22 @@ class InfMeaningTest {
         assertTrue(odd.contains("charge", ignoreCase = true))
     }
 
+    /**
+     * `142` sits among eighteen sub-codes whose fault-table text is identical, and it shipped
+     * inside that generated family for one release. The master chart gives it its own row, and it
+     * is not an internal fault: the area is the wiring and the power source control unit. Read as
+     * the family sentence it says "replace the hybrid controller", which is the wrong part.
+     */
+    @Test
+    fun `the controller sub-code that is not an internal fault points away from the controller`() {
+        val odd = InfMeaning.forCode("P0A1D", 142)!!
+        val family = InfMeaning.forCode("P0A1D", 155)!!
+        assertNotEquals(family.narrows, odd.narrows)
+        assertNotEquals(family.area, odd.area)
+        assertTrue(!odd.area.contains("Hybrid controller"))
+        assertTrue(odd.area.contains("power source", ignoreCase = true))
+    }
+
     /** Where the per-sub-code detail was recovered, it must beat the family sentence. */
     @Test
     fun `known controller sub-codes are more specific than the family`() {

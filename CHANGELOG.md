@@ -2,13 +2,13 @@
 
 ## [0.0.3](https://github.com/alrighdee/BETSY/compare/v0.0.2...v0.0.3) (2026-08-14)
 
-**Prius INF sub-codes through ELM327—no dealer software required.** BETSY 0.0.3 is the first public app we know of that reads and explains the INF sub-code transmitted by a Gen2 Prius directly through an ELM327-compatible adapter. These values provide the detail behind a trouble code—for example, which area of the high-voltage system has an isolation fault.
+**Prius INF sub-codes through ELM327, no dealer software required.** BETSY 0.0.3 is the first public app we know of that reads and explains the INF sub-code transmitted by a Gen2 Prius directly through an ELM327-compatible adapter. These values provide the detail behind a trouble code: for example, which area of the high-voltage system has an isolation fault.
 
 ### Added
 
 * **Toyota INF sub-code support.** BETSY reads the value transmitted in the vehicle's diagnostic freeze-page data and displays its meaning.
 * **Direct ELM327 access.** No laptop or proprietary dealer diagnostic software is required.
-* **204 documented explanations.** Added explanations for 204 DTC/sub-code combinations across 60 trouble codes.
+* **249 documented explanations.** Added explanations for 249 DTC/sub-code combinations across 72 trouble codes, including the motor and generator phase-current sensors, where the sub-code separates a main sensor from its backup and says whether it died, disconnected, disagreed or drifted.
 * **Support for cars with multiple faults.** BETSY attributes values to documented parent trouble codes, shares genuinely equivalent explanations and leaves ambiguous combinations unresolved rather than guessing.
 * Plain-language explanations for battery-block, motor, generator, inverter and hybrid-control trouble codes.
 * Separate hybrid-control, battery-control, engine, generic stored and generic pending diagnostic observations.

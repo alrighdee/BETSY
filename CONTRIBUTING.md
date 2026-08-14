@@ -2,10 +2,11 @@
 
 ## The most useful thing you can contribute
 
-A capture from a car with a stored hybrid fault. The INF sub-code *read* is confirmed; the *decode*
-is not, because the only car this has run against is healthy and every byte comes back zero. If you
-have a hybrid with a live code, [`tools/PROBE-PLAN.md`](tools/PROBE-PLAN.md) says what to capture.
-That closes the one open question in the project. Code is easier to come by.
+A capture from a car with a stored hybrid fault. Reading the transmitted INF value is confirmed on
+a Gen2 Prius, and known DTC/sub-code pairs can be explained without inferring page ownership. A
+different fault, a multi-fault car or another supported vehicle layout is still valuable evidence.
+If you have one, [`tools/PROBE-PLAN.md`](tools/PROBE-PLAN.md) says what to capture. Code is easier
+to come by.
 
 ## Commit messages
 
@@ -13,7 +14,7 @@ Commits follow [Conventional Commits](https://www.conventionalcommits.org/), bec
 and the version number are generated from them:
 
 ```
-feat: read Toyota INF sub-code detail tables
+feat: read Toyota INF diagnostic sub-codes
 fix: handle ELM327 connection timeout
 docs: add supported adapter list
 ```

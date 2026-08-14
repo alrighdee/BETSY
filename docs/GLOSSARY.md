@@ -77,8 +77,8 @@ A three-digit number Toyota attaches to a DTC to narrow it from a system to an a
 Same code, four completely different repairs. **Almost no affordable scan tool reads these**, which
 is the gap this project exists to close.
 
-Sub-codes are not universally available. Some are readable from standing tables on the HV ECU;
-others are not exposed there at all. See `PROTOCOL.md` §7.4.
+Sub-codes are not universally available. On the confirmed Gen2 path, BETSY reads the transmitted
+value from freeze pages on the hybrid-control ECU. See `PROTOCOL.md` §7.4.
 
 ### Freeze frame
 A snapshot of sensor readings recorded at the exact moment a DTC set. The car's dashcam for

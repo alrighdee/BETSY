@@ -19,11 +19,10 @@ import org.json.JSONObject
  * that as licence to put an identifier in here: it removes one known shape of one known field,
  * and it is the last line of defence, not the first.
  *
- * The split between [raw] and [codes] is the whole point of this type. `InfLayout`'s bit mapping
- * has never been checked against a car with a real fault (§9.4.0), so [codes] is a hypothesis,
- * not a finding. It travels beside the bytes and never in place of them, and nothing downstream
- * is allowed to decide a capture's worth by looking at it: a decoder that is wrong would then
- * discard exactly the captures that prove it wrong.
+ * The split between [raw] and [codes] is the whole point of this type. A decoded value travels
+ * beside the bytes and never in place of them, and nothing downstream decides a capture's worth
+ * by looking at the interpretation: an unknown value or a decoder defect must not discard the
+ * evidence needed to understand it (PROTOCOL.md §7.4).
  */
 data class CaptureData(
     /** App version, from BuildConfig. */

@@ -49,9 +49,9 @@ class CaptureDisclosureDialog(
             TextStyles
                 .body(
                     activity,
-                    "BETSY can read your hybrid battery, but the part that names a fault's sub-code " +
-                        "has never been checked against a car that is genuinely broken. Sharing one " +
-                        "scan is what fixes that, for everyone.",
+                    "BETSY reads known diagnostic sub-codes and keeps the raw responses beside " +
+                        "every explanation. Sharing scans from different faults and vehicles is " +
+                        "how its coverage and accuracy improve.",
                     DesignTokens.TEXT_3,
                     DesignTokens.GRAY_12,
                 ).apply { setPadding(0, pad(14), 0, 0) },

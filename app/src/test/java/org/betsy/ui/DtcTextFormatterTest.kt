@@ -120,6 +120,8 @@ class DtcTextFormatterTest {
         assertEquals(1, occurrences(text, sentence))
         assertTrue(text.contains("Detail Code 2: 612"))
         assertTrue(text.contains("Detail Code 5: 612"))
+        assertTrue(text.contains("raw values retained with the scan"))
+        assertFalse(text.contains("mapping unverified"))
     }
 
     @Test

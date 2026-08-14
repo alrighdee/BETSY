@@ -19,8 +19,8 @@ import org.betsy.ui.theme.TextStyles
  * Shows what is about to be shared and collects the one thing the bytes cannot supply.
  *
  * Three states, and the middle one matters most: DTCs read but no sub-code recognised means the
- * bit mapping is wrong, which is the single most useful thing a stranger's car can tell this
- * project. It is presented as worth sending, not as an error.
+ * ECU stored no readable value or the decoder does not know it yet. That is useful evidence and
+ * is presented as worth sending, not as an error.
  *
  * The scan is never re-run here. The result is already in hand, so a failed send can be retried
  * without touching the car again.

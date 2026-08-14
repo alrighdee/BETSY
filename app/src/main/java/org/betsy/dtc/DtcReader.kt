@@ -66,7 +66,7 @@ data class DtcReadResult(
      * non-emissions faults may not appear here.
      */
     val pendingGenericDtcs: List<Dtc> = emptyList(),
-    /** How many of the five INF tables returned a positive response (did not throw). */
+    /** How many of the five INF pages returned a positive response (did not throw). */
     val infTablesResponded: Int = 0,
 ) {
     /**
@@ -104,7 +104,7 @@ class DtcReader(
         val commands: List<Pair<String, (String) -> List<Dtc>>>,
     )
 
-    /** Runs the HV + engine DTC reads for this generation, then the INF tables, and decodes both. */
+    /** Runs the HV + engine DTC reads for this generation, then the INF pages, and decodes both. */
     suspend fun read(): DtcReadResult {
         val groups = mutableListOf<DtcGroup>()
         val notes = mutableListOf<String>()
@@ -200,7 +200,7 @@ class DtcReader(
                 .toList()
         val infResolutions = inf.map { it.code }.distinct().map { InfMeaning.resolve(hybridDtcs, it) }
         CaptureLog.log("DTC", "sweep: ${groups.joinToString { "${it.label}=${it.codes.joinToString { c -> c.code }}" }}")
-        CaptureLog.log("DTC", "INF tables: $infResponded/5 responded")
+        CaptureLog.log("DTC", "INF pages: $infResponded/5 responded")
         if (inf.isNotEmpty()) {
             CaptureLog.log("DTC", "INF active: ${inf.joinToString { "${it.tableLabel}/${it.code}" }}")
         }
@@ -539,7 +539,7 @@ class DtcReader(
     }
 
     /**
-     * §7.4, the five INF detail tables from the HV ECU at `7E2`. Returns active codes and how
+     * §7.4, the five INF freeze pages from the hybrid-control ECU at `7E2`. Returns active codes and how
      * many tables returned a positive response (did not throw in the per-table try).
      */
     private suspend fun readInf(

@@ -1,16 +1,16 @@
 package org.betsy.transport
 
 /**
- * An [ElmTransport] that answers from a fixed script instead of a car (PROTOCOL.md §9.4.0).
+ * An [ElmTransport] that answers from a fixed script instead of a car (PROTOCOL.md §7.4).
  *
- * This exists because the INF detail decode cannot be exercised on a healthy vehicle: every
- * table reads all zeros, so the path a *set* byte takes through the reader, decoder and UI is
- * never executed. [SimulatedCar] supplies a car with a stored fault so that path runs.
+ * This exists because a healthy vehicle returns empty freeze pages, so the path a transmitted INF
+ * value takes through the reader, decoder and UI is not exercised. [SimulatedCar] supplies a car
+ * with a stored fault so that path runs.
  *
  * It is a replay, not an emulator, it does not model ECU state, timing or error behaviour.
- * A green run here means the decode path is wired correctly; it says nothing about whether the
- * byte→code mapping matches a real Toyota. Only a capture from a genuinely faulty car settles
- * that (§9.4.0).
+ * A green run here means the decode path is wired correctly. The field position and one known
+ * DTC/sub-code value are independently pinned from a Gen2 response; other vehicles and faults
+ * still require their own evidence.
  */
 class ReplayTransport(
     private val script: Map<String, String>,
@@ -38,8 +38,7 @@ class ReplayTransport(
 }
 
 /**
- * A scripted Gen2 with a stored `P0AA6` and one INF detail code set in each of two tables,
- * the 5xx/6xx pair that names a failed component (§9.4.0).
+ * A scripted Gen2 with stored `P0571` and its transmitted INF detail code, `115` (§7.4).
  *
  * Live-data responses are real bytes captured from a 2009 Gen2, so the battery screen renders
  * plausible values rather than zeros.
@@ -60,8 +59,8 @@ object SimulatedCar {
     /**
      * `21C7` exactly as a 2009 Gen2 returned it with `P0571` stored, all 48 payload bytes.
      *
-     * Read three times across seventeen hours and an ignition cycle, byte for byte identical, so a
-     * page is a snapshot written when the fault sets rather than live data. Bytes 29-30 are
+     * Byte-for-byte identical across an ignition cycle, so this page is a snapshot written when
+     * the fault sets rather than live data. Bytes 29-30 are
      * `00 73`, decimal 115, which is `P0571`'s documented sub-code. The run of `0x80` at the start
      * is offset-binary midpoints, a car at rest; treating those as flags is what produced 35
      * phantom sub-codes under the old model.
@@ -93,7 +92,7 @@ object SimulatedCar {
     /**
      * Gen2 with a stored fault. **Every response below was measured on a real car.**
      *
-     * Recorded from a 2009 Gen2, twice across an ignition cycle, with `P0571` deliberately stored
+     * Recorded from a 2009 Gen2 across an ignition cycle, with `P0571` deliberately stored
      * on `7E2`, framed exactly as the car speaks it. The five freeze pages are the real ones: page
      * 2 populated, the other four all zero. Its sub-code, 115, is not written here as a constant;
      * it is carried inside the page bytes at 29-30 and has to be decoded to be seen, which is the
@@ -114,7 +113,7 @@ object SimulatedCar {
             // Liveness + generic OBD (PROTOCOL.md §7.1.1, §7.1.2)
             "0100" to "4100FFE0FFE0",
             // Mode 02 freeze frame: frame 00 exists, frame 01 is declined, matching the
-            // an on-car read measurement where the car held two frames and refused the third.
+            // on-car behavior where the car held two frames and refused the third.
             "020000" to "4200007E1F8803",
             "020200" to "4202000000",
             "020201" to "4202010571",
@@ -140,7 +139,7 @@ object SimulatedCar {
             "21CA" to EMPTY_PAGE_CA,
         )
 
-    /** A healthy Gen2, every table reads zero, as the real test car does. */
+    /** A healthy Gen2, every INF page reads zero, as the real test car does. */
     val gen2Healthy: Map<String, String> =
         gen2WithStoredFault +
             mapOf(

@@ -1,6 +1,6 @@
 package org.betsy.decode
 
-/** A single INF detail-code field inside one table's response (PROTOCOL.md §9.4.0). */
+/** A single INF detail-code field inside one freeze page (PROTOCOL.md §7.4). */
 data class InfField(
     /** The 3-digit INF code. */
     val code: Int,
@@ -24,7 +24,7 @@ data class InfTable(
 }
 
 /**
- * The five INF detail tables on the HV ECU, `21C6`..`21CA` (PROTOCOL.md §9.4.0).
+ * The five INF freeze pages on the hybrid-control ECU, `21C6`..`21CA` (PROTOCOL.md §7.4).
  *
  * **The sub-code is read as a value, not looked up in this map. See PROTOCOL.md §7.4.2.**
  *
@@ -37,8 +37,8 @@ data class InfTable(
  * ```
  *
  * Measured on a 2009 Gen2 with `P0571` stored: bytes 29-30 read `0x0073`, 115, which is that
- * code's documented sub-code. Read again seventeen hours and an ignition cycle later, byte for
- * byte identical, so a page is a stored snapshot rather than live data.
+ * code's documented sub-code. The page remained byte-for-byte identical across an ignition cycle,
+ * so it is a stored snapshot rather than live data.
  *
  * **This type was built for a model that does not describe this ECU.** A `(code, bitStart,
  * bitEnd)` triple answers "which flag is set", and there are no flags. Treating a page's non-zero

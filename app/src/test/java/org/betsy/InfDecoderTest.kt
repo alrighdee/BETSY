@@ -16,7 +16,7 @@ class InfDecoderTest {
 
     /**
      * The whole point, byte for byte. This payload was read from a 2009 Gen2 with `P0571` stored,
-     * on three separate occasions across an ignition cycle. `P0571` documents sub-code 115.
+     * across an ignition cycle. `P0571` documents sub-code 115.
      */
     private val realP0571Page =
         "03261C7" +

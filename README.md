@@ -4,7 +4,7 @@
 
 ![B.E.T.S.Y.](docs/assets/betsy-header-dark.png)
 
-### Reads the INF detail tables. Open source. Runs on a $3.50 adapter.
+### Reads and explains Toyota INF diagnostic sub-codes. Open source. Runs on a $3.50 adapter.
 ### Looking for captures from real Toyota hybrids.
 
 [![Download the APK](https://img.shields.io/github/v/release/alrighdee/BETSY?sort=semver&display_name=tag&style=for-the-badge&label=download%20the%20apk&color=3DDC84)](https://github.com/alrighdee/BETSY/releases/latest)
@@ -17,10 +17,9 @@
 **Every capture helps, and it takes about two minutes.** Any Prius from roughly 2004 to 2015. You
 do not need to know anything about your car beyond that; the app works the rest out itself.
 
-**Car with the triangle on? This is the one the project actually needs.** A stored code,
-`P0AA6`, `P3000`, `P3019` or anything else. It is the only kind of capture that can finish the
-job, it is rare, and if you have one you are holding the thing nobody has been able to get for
-free. Please do send it.
+**Car with the triangle on? This is the scan the project needs most.** A stored code such as
+`P0AA6`, `P3000` or `P3019` exercises the detail path that a healthy car cannot. It may confirm a
+new fault, vehicle layout or multi-fault combination. Please do send it.
 
 **Car perfectly healthy? Send it too.** Not a consolation prize: healthy captures are the control
 group. They prove the read works across different adapters, firmware and model years, and they are
@@ -41,20 +40,18 @@ actuator test, or writes to an ECU.
 
 ### Why this is needed
 
-The repair manuals already tell us what the sub-codes *mean*. `P0AA6` with one sub-code is a
-battery problem, with another it is the A/C compressor. What nobody has published is **where those
-sub-codes live in the data the car sends back**.
+The repair manuals tell us what the sub-codes *mean*. `P0AA6` with one sub-code is a battery-area
+problem; with another it points at the A/C compressor circuit. BETSY also knows where a Gen2 Prius
+transmits that value: bytes 29–30 of a diagnostic freeze page on the hybrid-control ECU.
 
-BETSY reads the five INF detail tables off the HV ECU and gets 48 bytes from each. On a healthy
-car, which is the only kind I have, every one of those bytes is zero. Zeros prove the read works.
-They cannot show which bit means which sub-code, and no number of healthy cars ever will.
+That field has been confirmed on a Gen2 carrying `P0571-115`. BETSY reads all five pages, retains
+the raw responses, and explains a value only when it matches a documented DTC/sub-code pair. On a
+multi-fault car it does not infer ownership from page order, and an ambiguous combination remains
+unresolved instead of becoming a guessed diagnosis.
 
-So both are needed, for different reasons. A faulty car is the only thing that can show where a
-sub-code sits. Healthy cars are what make that finding trustworthy rather than one unrepeatable
-data point.
-
-The decoder, the app and the findings are all open source. If this works, hybrid owners read this
-off a $3.50 adapter instead of a dealer tool.
+More captures still matter. Faulty cars validate different codes and combinations; healthy cars
+prove the same read works across adapters, firmware and model years. The decoder, app and evidence
+are open source, so hybrid owners can read the result with an ordinary adapter.
 
 ---
 
@@ -94,8 +91,9 @@ than by badge, but none have been tested. A capture from one would settle it.
 
 - **Live pack data**: state of charge, pack current, per-block voltages, internal resistance,
   auxiliary battery, temperatures, charge and discharge limits
-- **Trouble codes**: the hybrid DTC read, on both ECUs for Gen2
-- **INF detail tables**: all five, read off the HV ECU
+- **Trouble codes**: separate hybrid-control, battery-control and engine observations on Gen2
+- **INF sub-codes and freeze pages**: all five pages read from the hybrid-control ECU, with known
+  DTC/sub-code pairs explained in plain language
 
 ### Will it change anything on my car?
 
@@ -119,17 +117,16 @@ what the app was developed against. Wi-Fi adapters work too.
 Android will warn you about installing an APK from outside the store. That is expected for
 anything not distributed through Google Play, and you only have to allow it once.
 
-### Why doesn't it tell me the sub-code?
+### Does it tell me the sub-code?
 
-Because it cannot honestly do that yet. It reads the five detail tables and shows you the bytes,
-but it ships no bit-to-code mapping, because nothing in the data collected so far supports one. A
-guess presented as a diagnosis is worse than saying nothing, especially when the answer decides
-whether you quote a battery pack or an A/C compressor. Captures are how that gets fixed.
+Yes, on the confirmed Gen2 path. BETSY reads the transmitted INF value and explains documented
+DTC/sub-code pairs. If a value is unknown or could belong to more than one reported DTC, the raw
+value remains visible and BETSY does not guess.
 
 ### What gets uploaded when I share a scan?
 
-- The raw responses from the hybrid ECU (`13B0`, `21C6`-`21CA`)
-- App version, detected generation, adapter model
+- The raw diagnostic responses from the hybrid-control, battery-control and engine reads
+- App version and build, detected vehicle layout, adapter model
 - A short extract of that session's diagnostic log
 - Anything you type in the notes field
 - Your IP address, briefly, and only to rate-limit abuse

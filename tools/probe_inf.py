@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Read-only INF sub-code probe over a Bluetooth SPP ELM327, driven from macOS.
 
-Answers the open question in the INF spec: does the HV ECU (7E2) implement KWP2000
-service 0x21, and does local identifier CA/C9 reach the detail tables?
+Reads the hybrid-control ECU's five diagnostic freeze pages with KWP2000 service 0x21 and retains
+their raw responses for comparison with the app decoder.
 
 Every command here is a read. Nothing writes, clears, or changes diagnostic session
 state, no 14/04 clear, no 10 xx session control, no 2F/31 routine control.
@@ -142,7 +142,7 @@ PROBE = [
     ("7E2", "2101", "THE load-bearing unknown: does 7E2 answer service 21?"),
     ("7E2", "21CA", "detail table 5 (INF 6xx), the headline read"),
     ("7E2", "21C9", "detail table 4 (INF 5xx), other half of a P0AA6 pair"),
-    ("7E2", "21C6C7C8C9CA", "all five tables in one request"),
+    ("7E2", "21C6C7C8C9CA", "all five freeze pages in one request"),
     ("7E2", "2105CA", "variant: service 21 with a two-byte identifier"),
     ("7E2", "2205CA", "control: expect 7F 22 11"),
     ("7E2", "22F186", "control: any UDS DID at all"),
@@ -326,7 +326,7 @@ def main() -> int:
             if h.startswith("61"):
                 nbytes = (len(h) - 4) // 2
                 log(f"  + {label}: ANSWERS. payload {nbytes} bytes"
-                    + ("  -> matches the observed table shape"
+                    + ("  -> matches the observed freeze-page shape"
                        if nbytes == INF_PAYLOAD_BYTES else ""), "ok")
             elif h.startswith("7F") and h[4:6] == "31":
                 log(f"  ~ {label}: service 21 accepted, identifier rejected "
@@ -342,8 +342,8 @@ def main() -> int:
                 "Stop and re-think.", "bad")
         dtc = reply("13B0")
         if dtc and dtc.startswith("53") and len(dtc) >= 4 and int(dtc[2:4], 16):
-            log(f"  * {int(dtc[2:4], 16)} stored DTC(s), this car CAN validate the "
-                "INF mapping. Capture everything.", "ok")
+            log(f"  * {int(dtc[2:4], 16)} stored DTC(s), this car can extend INF "
+                "coverage. Capture everything.", "ok")
         log("=" * 72, "step")
         log(f"log:  {path}")
         log(f"json: {jpath}   <- bring this home for deeper analysis")

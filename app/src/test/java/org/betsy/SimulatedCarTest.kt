@@ -15,15 +15,11 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * End-to-end exercise of the INF path against a scripted car (PROTOCOL.md §9.4.0).
+ * End-to-end exercise of the INF path against a scripted car (PROTOCOL.md §7.4).
  *
- * The real test vehicle is fault-free, so every detail table reads zero and the code that
- * handles a *set* byte never runs on hardware. These tests run the whole stack, transport,
- * session, reader, decoder, against a car that does have a stored fault.
- *
- * This proves the decode path is wired correctly. It does **not** validate that byte 13 of the
- * `CA` table really means INF 611; that mapping is derived and needs a capture from a genuinely
- * faulty car.
+ * These tests run the whole stack—transport, session, reader and decoder—against measured Gen2
+ * responses carrying stored `P0571-115`. Additional scripted combinations exercise attribution
+ * rules that cannot be produced by the single-fault fixture.
  */
 class SimulatedCarTest {
     private val gen2 = VehicleInfo(VehicleModel.GEN2, supported = true, blockCount = 14, cellCount = 28)
@@ -47,8 +43,7 @@ class SimulatedCarTest {
         assertEquals(listOf(115), result.infCodes.map { it.code })
         assertEquals("Detail Code 2", result.infCodes.single().tableLabel)
 
-        // And the bytes still travel beside the interpretation, which is what let this decode be
-        // worked out a day after the capture was taken.
+        // The bytes still travel beside the interpretation so the decoder can be checked again.
         assertTrue(result.rawResponses.getValue("7E2/21C7").contains("61C7"))
         assertTrue(result.rawResponses.getValue("7E2/21CA").contains("61CA"))
         assertTrue(
@@ -63,7 +58,7 @@ class SimulatedCarTest {
     fun theWireSequenceIsFiveSeparateTableReadsUnderOneHeader() {
         val (t, _) = read(SimulatedCar.gen2WithStoredFault)
         // 7E2 refuses a batched 21C6C7C8C9CA with 7F2112, so each table is its own request -
-        // but they share one ATSH7E2 (§9.4.0).
+        // but they share one ATSH7E2 (§7.4.1).
         assertEquals(
             listOf(
                 "ATSH7E2",
@@ -141,10 +136,9 @@ class SimulatedCarTest {
         assertEquals(emptyList<Int>(), result.infCodes.map { it.code })
         assertFalse(result.hasStoredDtcs)
 
-        // An earlier version skipped this read when nothing was stored. It is fired now, because
-        // the all-zero answer is itself the evidence: when a genuinely faulty car eventually reads
-        // back as zero, only a body of healthy captures distinguishes "the mapping is wrong" from
-        // "the read failed on that adapter" (§9.4.0).
+        // An earlier version skipped this read when nothing was stored. It is fired now because
+        // empty pages are the healthy baseline: a fault with no readable INF value must remain
+        // distinguishable from a read that failed on that adapter (PROTOCOL.md §7.4).
         assertEquals(
             listOf("21C6", "21C7", "21C8", "21C9", "21CA"),
             t.sent.filter { it.startsWith("21C") && it.length == 4 },
@@ -156,8 +150,8 @@ class SimulatedCarTest {
     fun everyRequestKeepsItsVerbatimResponseForSharing() {
         val (_, result) = read(SimulatedCar.gen2WithStoredFault)
 
-        // The decoded InfDetail values are a hypothesis about these bytes. A capture has to be
-        // able to disagree with the decoder, so the bytes travel beside the interpretation.
+        // A capture has to be able to disagree with the decoder, so the bytes travel beside the
+        // interpreted InfDetail values.
         assertEquals(
             listOf(
                 "7E2/0100",
@@ -234,7 +228,7 @@ class SimulatedCarTest {
 
     @Test
     fun aSilentEcuBecomesANoteRatherThanASilentEmptyResult() {
-        // Script the DTC read but not the detail tables: the ECU goes quiet mid-sweep.
+        // Script the DTC read but not the INF pages: the ECU goes quiet mid-sweep.
         val partial = SimulatedCar.gen2WithStoredFault.filterKeys { !it.startsWith("21C") || it == "21CED0CF" }
         val (_, result) = read(partial)
         assertEquals(emptyList<Int>(), result.infCodes.map { it.code })

@@ -57,7 +57,7 @@ Select the target with `ATSH<header>` before each command group.
 
 | Header | ECU | Carries |
 |---|---|---|
-| `7E2` | HV / power management | DTCs, INF detail tables; battery data on Gen3 and the `7E2` Gen2 layout |
+| `7E2` | HV / power management | DTCs, INF freeze pages; battery data on Gen3 and the `7E2` Gen2 layout |
 | `7E3` | HV battery (Gen2) | block voltages, temps, current, SOC, internal resistance |
 | `7E0` | Engine (ECM) | engine DTCs via KWP2000 `13B0` / `0A` on Gen2–Gen3 (*inferred*) |
 | `7D2` | Hybrid vehicle control (Gen4) | recognised, not supported |
@@ -124,17 +124,17 @@ identifier. `221809` answers `62 18 09` on success and `7F 22 13` on refusal; ma
 These two are **protocol layouts, not model generations**, and they are named for the behaviour
 that separates them because nothing else reliably predicts it.
 
-The label "the `7E2` Gen2 layout" was used here previously and has been removed. In the Prius community that term
-means the 2006-2009 facelift, which is a different claim about a different thing. *Measured:* this
-*Measured:* the test car, a 2009 and the last Gen2 model year, answers `21CE` on `7E3` and takes
-the first branch. Its captures show `ATSH7E3` followed by `21CED0CF` returning `61CE…`, with DTCs
-and the INF tables coming separately from `7E2`.
+The label "the `7E2` Gen2 layout" was used here previously and has been removed. In the Prius
+community that term means the 2006-2009 facelift, which is a different claim about a different
+thing. *Measured:* the test car, a 2009 and the last Gen2 model year, answers `21CE` on `7E3` and
+takes the first branch. Its captures show `ATSH7E3` followed by `21CED0CF` returning `61CE…`, with
+DTCs and the INF freeze pages coming separately from `7E2`.
 
 The third branch is **recognised but never decoded**. `21CE` is not guaranteed to be answered by
 the battery ECU, so the probe tries the other address rather than giving up, but no car has ever
 been observed taking it, which means its payload layout has never been checked against anything.
 
-A car that takes it is therefore admitted for capture only: trouble codes and the five INF tables
+A car that takes it is therefore admitted for capture only: trouble codes and the five INF pages
 are read and recorded verbatim, and no live battery value is decoded or displayed. Producing a
 state of charge from an unchecked layout would be a guess presented as a reading, which is the one
 thing this project will not do. The capture is what would turn that branch into a supported one.
@@ -256,7 +256,7 @@ Hybrid/HV DTCs on this ECU family are **KWP2000** (ISO 14230), not UDS (ISO 1422
 from service `0x13`, not `0x19`. On Gen2–Gen3 the **engine (ECM)** uses the same KWP2000 services
 on a different address (`7E0`). Generic SAE modes `$03`/`$07` on **7E2** are a separate,
 experimental observation used for STOP-fuse / liveness work (see below); they are **not** a
-substitute for Toyota enhanced DTCs or INF tables.
+substitute for Toyota enhanced DTCs or INF freeze pages.
 
 | Generation | Hybrid / battery reads | Engine (ECM) reads |
 |---|---|---|
@@ -307,7 +307,7 @@ A clean "no DTCs" result is only meaningful if liveness says the ECU is respondi
 
 #### 7.1.2 Gen2 generic OBD `$03` / `$07` on 7E2 (*experimental*)
 
-After KWP2000 group reads and before INF tables, Gen2 sweeps also:
+After KWP2000 group reads and before INF freeze pages, Gen2 sweeps also:
 
 1. `ATH1` (headers on) so the responder CAN ID is preserved in the raw log  
 2. `03` (stored) and `07` (pending)  
@@ -343,17 +343,18 @@ Toyota hybrid DTCs carry a 3-digit **INF** (detail) code that narrows a fault to
 alone means a high-voltage isolation fault, which could be the battery, the A/C system, the
 transaxle or the HV DC circuitry.
 
-The repair procedure describes a sequence, not a pair:
+The repair procedure describes a sequence:
 
 - **`526`**, insulation resistance is low somewhere. The general detection code; it does not
   isolate an area.
 - **`611` / `612` / `613` / `614`**, stored after the car isolates the area: A/C, HV battery,
-  transaxle, HV DC respectively. These are **not** stored at the same time as `526`.
+  transaxle, HV DC respectively. The later localising value is added on the next trip; `526`
+  remains stored, so both values can be present together.
 
 These name an **area, not a component**. `612` spans the battery assembly, battery ECU, system
 main relays, resistor, cables, battery plug and junction block.
 
-### 7.4.0 The read
+#### 7.4.1 Reading the freeze pages (**confirmed on-car**)
 
 *Measured.* Service `0x21` with a single-byte local identifier, on `7E2`:
 
@@ -364,8 +365,9 @@ ATSH7E2
 21C8 -> 61C8 + 48 data bytes
 ```
 
-Five parallel tables partitioned by the hundreds digit of the INF code, 2xx, 3xx, 4xx, 5xx, 6xx.
-All five answer, all return an identical 48 bytes.
+These are five per-DTC freeze pages, not bitmap tables partitioned by the hundreds digit. An empty
+page is all zero. When a DTC writes a page, its INF value and analog snapshot occupy the 48-byte
+payload.
 
 Four consequences for any implementation, all *measured*:
 
@@ -379,43 +381,12 @@ Four consequences for any implementation, all *measured*:
 Full identifier map answering on `7E2`:
 `C0 C1 C2 C3 C4 C6 C7 C8 C9 CA CB CC D1 D3 E0 E1 E2 E3`.
 
-> **See §7.4.2.** A car carrying a known 7E2 fault was read, the first such read
-> this project has made. Everything below stands. What it adds is that applying a slot layout to
-> that payload does not produce a credible diagnosis, so the layout question is open rather than
-> merely unfilled.
-
-**No payload layout is published here.** `InfLayout.kt` defines the shape a layout takes, a
-(code, bitStart, bitEnd) triple per slot, and ships none: no capture this project holds has ever
-had a bit set, so nothing in the collected data supports a mapping, and asserting one would claim
-a correspondence that cannot be demonstrated.
-
-The read still happens. All five tables are requested on every sweep and their responses are
-recorded verbatim, which is what the capture pipeline uploads. Decoding simply yields nothing, so
-a capture from a car with a stored fault is flagged `decoder_miss` and travels as raw bytes.
-Those captures are the route to a layout this project can stand behind.
-
-If a layout is supplied, apply it to whatever length the ECU returns and treat any slot whose end
-bit exceeds `8 × payloadLength` as **absent**, do not zero-fill, do not error, do not infer a
-different layout from a shorter response.
-
-Bit numbering is **MSB-first**: "bit 0" is `0x80`, not `0x01`. Reversing it does not crash and
-does not look wrong, it swaps slots in pairs and yields a confident diagnosis naming the wrong
-area. `InfDecoderTest` pins this deliberately.
-
-A slot is active iff its extracted value is non-zero.
-
-**What is not confirmed.** No car with a stored fault has been read. Every table observed so far
-has been all zeros, because the test vehicle is healthy. So the read, the identifiers, the ECU
-and the 48-byte shape are established, and *which byte carries which INF code is not*. The UI
-must qualify a decoded sub-code accordingly, and does.
-
-### 7.4.2 The sub-code is transmitted, not derived (**measured**)
+#### 7.4.2 The sub-code is transmitted, not derived (**confirmed on-car**)
 
 *Measured on a 2009 Gen2 read with `P0571` deliberately stored on `7E2`.*
 
-`21C6`..`21CA` are **not** flag tables. They are per-DTC **freeze pages**: when the ECU stores a
-DTC it writes one page, and the page carries the sub-code as a value alongside a frame of analog
-snapshot data.
+When the ECU stores a DTC it writes one page, and that page carries the sub-code as a value
+alongside analog snapshot data.
 
 ```
 21C7 with P0571 stored, all 48 payload bytes:
@@ -432,11 +403,9 @@ snapshot data.
 is the only 16-bit field in a page; every other field is 8 or 1 bit, and a three-digit code cannot
 fit in 8 bits. A page that is entirely zero holds nothing.
 
-**A page is a stored snapshot, not live data.** The 48 bytes above were read twice, seventeen hours
-and an ignition cycle apart, and were byte-for-byte identical. Live values would have drifted. So a
-page is written once, when the DTC sets, and then left alone. The remaining bytes are analog
-readings, offset-binary, which is why a car at rest shows `80 80 80 80`: those are midpoints, not
-flags.
+**A page is a stored snapshot, not live data.** The 48 bytes remained identical across an ignition
+cycle. Live values would have drifted. The remaining bytes are analog readings, offset-binary,
+which is why a car at rest shows `80 80 80 80`: those are midpoints, not flags.
 
 **Three things this rules out**, all measured:
 
@@ -446,26 +415,29 @@ flags.
 3. **Page 1 is not where a single DTC lands.** The only stored DTC owned page 2, `21C7`. So pages
    are not simply filled in order from `21C6`.
 
-**Still open.** How pages are assigned when several DTCs are stored, and confirmation against a
-second, different DTC. Both need a differently-faulted car; nothing further is extractable from
-one.
+**Page assignment is not inferred.** A single-fault observation proves the field but not how five
+pages are assigned when several DTCs are stored. BETSY therefore resolves an INF value against the
+documented `(DTC, INF)` pairs for the DTCs reported by hybrid control:
+
+1. One matching parent produces an exact explanation.
+2. Several matching parents produce one shared explanation only when their full detail is equal.
+3. No match, or conflicting matches, remains unresolved.
+
+Raw pages stay beside every interpretation. Page order never selects a parent, and DTCs reported
+only by the engine or battery-control observation cannot acquire a hybrid-control INF explanation.
+Confirmation against other on-car DTCs and multi-fault combinations remains useful, but is not a
+precondition for deterministic pair resolution.
 
 **Correction to earlier revisions of this document.** Two claims here were wrong and are withdrawn.
 There is no "coverage ceiling" restricting readable sub-codes to 201-663: that followed from
 treating the payload as slot-numbered, and since the code is a transmitted value, any sub-code can
 appear, including 1xx. And byte 30 reading `0x73` was previously called a coincidence and warned
 against; it was the answer, misread. Slot numbers cannot be 1xx, but a field's value can be
-anything, and conflating the two cost a day.
+anything.
 
-### 7.4.1 Freeze frame, and an open question about where INF actually lives
+#### 7.4.3 Generic mode 02 freeze frame is separate
 
 *measured, on a 2009 Gen2 with `U0293` stored on the ECM and nothing on the HV ECU.*
-
-There is a competing account of where INF sub-codes live. §7.4.0 reads them as five bitmap tables
-at `21C6`..`21CA`. The alternative is that an INF is **freeze-frame data attached to a stored
-DTC**, carried in five fields alongside the frame rather than in a standing table. The two are
-not compatible, and no capture yet distinguishes them, because every table observed has been all
-zeros on a car whose HV ECU had no fault to report.
 
 What the car does answer:
 
@@ -495,10 +467,8 @@ them:
    (`0x10`) is deliberately never sent, see §7.5.
 4. **UDS `readDTCInformation` is absent.** This is a KWP2000 car; `19xx` recipes do not apply.
 
-**What this means for the INF question.** It is now testable rather than merely arguable. When a
-DTC is finally stored on `7E2`, reading `21C6`..`21CA` *and* mode 02 in the same session
-discriminates all three cases: a value or bit appears in the tables, or the frame carries the
-sub-code, or neither does. Until then both accounts remain live, and §7.4.0's caution stands.
+Generic mode 02 is useful parallel evidence, but it is not the Toyota INF carrier. INF extraction
+uses the hybrid-control freeze pages described in §7.4.1 and §7.4.2.
 
 ### 7.5 Clearing
 

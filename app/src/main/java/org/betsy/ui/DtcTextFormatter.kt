@@ -67,7 +67,7 @@ internal object DtcTextFormatter {
         infCodes: List<InfDetail>,
         tablesResponded: Int,
     ): String {
-        val sb = StringBuilder("INF tables: $tablesResponded/5 responded\n\n")
+        val sb = StringBuilder("INF pages: $tablesResponded/5 responded\n\n")
         if (infCodes.isEmpty()) return sb.toString()
 
         sb.append("INF DETAIL CODES:\n")
@@ -79,7 +79,7 @@ internal object DtcTextFormatter {
         if (pair.size > 1) {
             sb.append("  → ").append(pair.joinToString("-")).append("\n")
         }
-        sb.append("  (mapping unverified, see docs/PROTOCOL.md §7.4)\n\n")
+        sb.append("  (raw values retained with the scan)\n\n")
         return sb.toString()
     }
 

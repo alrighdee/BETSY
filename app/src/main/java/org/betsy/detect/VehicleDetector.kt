@@ -49,7 +49,7 @@ data class VehicleInfo(
     val badAdapter: Boolean = false,
     val breadcrumbs: List<String> = emptyList(),
     /**
-     * Recognised well enough to read trouble codes and the INF tables and send them, but not
+     * Recognised well enough to read trouble codes and the INF pages and send them, but not
      * well enough to decode live battery values. The capture is the point: it is what turns an
      * unknown variant into a supported one.
      */

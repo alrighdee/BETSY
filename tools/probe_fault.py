@@ -1,22 +1,14 @@
 #!/usr/bin/env python3
-"""Read everything that matters while a DTC is actually stored on the HV ECU.
+"""Read everything that matters while a DTC is stored on the hybrid-control ECU.
 
-This is the run the whole INF question has been waiting for. A clean 7E2 cannot distinguish the
-competing accounts of where INF sub-codes live, because all of them predict zeros. A 7E2 with a
-stored fault distinguishes all three:
+The transmitted INF value is a big-endian field at bytes 29-30 of a populated `21C6`..`21CA`
+freeze page. This probe retains all five pages beside the DTC reads so another fault, vehicle or
+multi-fault combination can extend the confirmed coverage without inferring ownership from page
+order.
 
-  1. the `21C6`..`21CA` tables gain a set bit          -> the bitmap model is right
-  2. a table gains a *value* (e.g. 0x68 = 104)         -> the tables are INFORMATION 1..5
-  3. nothing changes, but mode 02 populates            -> INF is freeze-frame data and BETSY
-                                                          needs a read it does not yet have
-
-Outcome 3 is a real result, not a failure. That is the point of running this against a confirmed
-fault: it makes a null answer meaningful, which it never was on a healthy car.
-
-Ordering is deliberate. The DTC confirmation runs first, because if nothing stored then nothing
-below it means anything, and the tables come before the exploratory reads so a mid-run link loss
-costs the least. Read-only throughout; clearing would destroy the freeze frame and the INF with
-it (§7.5).
+Ordering is deliberate. The DTC confirmation runs first, and the INF pages come before exploratory
+reads so a mid-run link loss costs the least. Read-only throughout; clearing would destroy the
+freeze page and its INF value (§7.5).
 """
 
 import json
@@ -28,7 +20,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from probe_harvest import Session, check_safe, scrub  # noqa: E402
 from probe_inf import norm  # noqa: E402
 
-BASELINE_TABLES = {  # what these read on the clean car, an on-car read harvest
+BASELINE_PAGES = {  # what these read on the clean car
     "21C6": "0" * 96, "21C7": "0" * 96, "21C8": "0" * 96,
     "21C9": "0" * 96, "21CA": "0" * 96,
 }
@@ -36,11 +28,11 @@ BASELINE_TABLES = {  # what these read on the clean car, an on-car read harvest
 PLAN = [
     ("7E2", "13B0", "DID IT STORE? HV ECU stored-DTC mask. Everything else depends on this"),
     ("7E0", "13B0", "and the ECM, to see where the fault actually landed"),
-    ("7E2", "21C6", "INF table 1, compare against the all-zero baseline"),
-    ("7E2", "21C7", "INF table 2"),
-    ("7E2", "21C8", "INF table 3"),
-    ("7E2", "21C9", "INF table 4"),
-    ("7E2", "21CA", "INF table 5"),
+    ("7E2", "21C6", "INF freeze page 1, compare against the all-zero baseline"),
+    ("7E2", "21C7", "INF freeze page 2"),
+    ("7E2", "21C8", "INF freeze page 3"),
+    ("7E2", "21C9", "INF freeze page 4"),
+    ("7E2", "21CA", "INF freeze page 5"),
     ("7E2", "020200", "mode 02: which DTC caused the freeze frame?"),
     ("7E2", "020000", "mode 02: which freeze-frame PIDs are populated now?"),
     ("7E2", "020201", "second freeze frame?"),
@@ -88,7 +80,7 @@ def main():
             raw = f"(io {e})"
         h = norm(raw)
         note = ""
-        if cmd in BASELINE_TABLES and h:
+        if cmd in BASELINE_PAGES and h:
             payload = h[h.find("61") + 4:] if "61" in h else ""
             if payload and set(payload) != {"0"}:
                 note = "  *** CHANGED FROM BASELINE, NON-ZERO ***"
@@ -113,16 +105,15 @@ def main():
         s.elm.close()
     log("")
     log("=" * 68)
-    changed = [r for r in results if r["cmd"] in BASELINE_TABLES
+    changed = [r for r in results if r["cmd"] in BASELINE_PAGES
                and r["hex"] and set(r["hex"][r["hex"].find("61") + 4:] or "0") != {"0"}]
     if changed:
-        log("*** INF TABLES CHANGED. This is the calibration data. ***")
+        log("*** POPULATED INF FREEZE PAGE(S). ***")
         for r in changed:
             log(f"  {r['cmd']}  {r['hex']}")
     else:
-        log("INF tables still all zero.")
-        log("If a DTC did store on 7E2, that is EVIDENCE, not a failure: it means 21C6..21CA")
-        log("are not where INF lives, and the freeze-frame route is the one to build.")
+        log("INF freeze pages still all zero.")
+        log("If a DTC is stored on 7E2, retain this result: some faults may carry no INF value.")
     log("=" * 68)
     logf.close()
     jl.close()

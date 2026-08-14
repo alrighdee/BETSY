@@ -18,8 +18,8 @@ import org.betsy.model.InfDetail
  * ```
  *
  * Measured on a 2009 Gen2 with `P0571` stored: bytes 29-30 read `0x0073`, decimal 115, which is
- * that code's documented sub-code. Read again seventeen hours and an ignition cycle later, all 48
- * bytes identical, so a page is a snapshot written when the fault sets rather than live data.
+ * that code's documented sub-code. All 48 bytes remained identical across an ignition cycle, so a
+ * page is a snapshot written when the fault sets rather than live data.
  *
  * **Why there is no bit map here.** An earlier model treated each page as a table of flags and
  * called a slot active when non-zero. On a car whose only fault was a brake switch that reported

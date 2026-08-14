@@ -13,12 +13,16 @@
 		"@cloudflare/vitest-pool-workers": "^0.12.4",
 		"typescript": "^5.5.2",
 		"vitest": "~3.2.0",
-		"wrangler": "^3.101.0"
+		"wrangler": "^4.123.0"
 	},
 	"allowScripts": {
+		"esbuild@0.28.1": true,
 		"esbuild@0.27.3": true,
 		"esbuild@0.17.19": true,
+		"workerd@1.20260811.1": true,
 		"workerd@1.20260310.1": true,
-		"workerd@1.20250718.0": true
+		"workerd@1.20250718.0": true,
+		"fsevents@2.3.3": true,
+		"sharp@0.34.5": true
 	}
 }

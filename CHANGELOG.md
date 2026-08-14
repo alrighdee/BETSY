@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.0.4](https://github.com/alrighdee/BETSY/compare/v0.0.3...v0.0.4) (2026-08-14)
+
+
+### Fixed
+
+* correct P0A1D-142 and complete the known sub-code table ([310c9c3](https://github.com/alrighdee/BETSY/commit/310c9c324e49e11a9bcad47d79d59621e280ee00))
+
+
+### Documentation
+
+* record the completed table and the P0A1D-142 correction ([c0309ef](https://github.com/alrighdee/BETSY/commit/c0309efbeb088dff7805124e847a192c284c73f7))
+
 ## [0.0.3](https://github.com/alrighdee/BETSY/compare/v0.0.2...v0.0.3) (2026-08-14)
 
 **Prius INF sub-codes through ELM327, no dealer software required.** BETSY 0.0.3 is the first public app we know of that reads and explains the INF sub-code transmitted by a Gen2 Prius directly through an ELM327-compatible adapter. These values provide the detail behind a trouble code: for example, which area of the high-voltage system has an isolation fault.

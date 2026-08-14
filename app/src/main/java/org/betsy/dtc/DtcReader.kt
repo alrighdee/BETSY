@@ -510,12 +510,15 @@ class DtcReader(
     }
 
     /**
-     * Makes a wrong logical-source assumption visible instead of silently dropping a parent.
+     * Makes a wrong battery-control source assumption visible instead of silently dropping a
+     * parent.
      *
      * Only meaningful when the sweep actually read an INF value: with no INF value there is no
      * relationship that could have been mis-attributed, and a note claiming one was left
      * unresolved would be a warning about nothing. The owner reads these notes and so does every
      * shared capture, so the detector stays quiet unless something was genuinely at stake.
+     * Engine observations are deliberately excluded: an engine ECU can legitimately report the
+     * same standardized DTC number as hybrid control without owning its documented INF relation.
      */
     private fun appendSourceMismatchNotes(
         groups: List<DtcGroup>,
@@ -525,7 +528,7 @@ class DtcReader(
         if (inf.isEmpty()) return
         groups
             .asSequence()
-            .filter { it.source != DtcSource.HYBRID_CONTROL }
+            .filter { it.source == DtcSource.BATTERY_CONTROL }
             .flatMap { group -> group.codes.asSequence().map { group.source to it.code } }
             .filter { (_, code) -> InfMeaning.isDocumentedParent(code) }
             .distinct()

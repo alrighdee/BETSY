@@ -490,7 +490,7 @@ class DtcReaderTest {
      * can speak.
      */
     @Test
-    fun documentedParentOutsideHybridControlProducesSourceMismatchNote() {
+    fun documentedParentOnBatteryControlProducesSourceMismatchNote() {
         val t =
             FakeTransport(
                 gen2Base(mapOf("21C7" to "61C7" + payload(29 to 0x00, 30 to 0x7B))),
@@ -508,6 +508,34 @@ class DtcReaderTest {
         // The value stays unresolved: P0A1F was not read from hybrid control, so it is not a
         // candidate parent. The note is the only thing that says so out loud.
         assertEquals(InfMeaning.Resolution.Unresolved(123), result.infResolutions.single())
+    }
+
+    /**
+     * Engine and hybrid control can legitimately report the same standardized DTC number. An
+     * active INF value must not turn that ordinary overlap into a source-mismatch warning.
+     */
+    @Test
+    fun documentedParentOnEngineDoesNotProduceSourceMismatchNote() {
+        val t =
+            FakeTransport(
+                gen2Base(mapOf("21C7" to "61C7" + payload(29 to 0x00, 30 to 0x7B))),
+                byHeader =
+                    mapOf(
+                        "7E2/13B0" to "5300",
+                        "7E3/1380" to "5300",
+                        "7E0/13B0" to "53010560",
+                    ),
+            )
+        val result = awaitBlocking { reader(t, VehicleModel.GEN2).read() }
+
+        assertEquals(listOf(123), result.infCodes.map { it.code })
+        assertTrue(
+            result.groups
+                .single { it.source == DtcSource.ENGINE }
+                .codes
+                .any { it.code == "P0560" },
+        )
+        assertFalse(result.notes.any { it.contains("source mismatch") })
     }
 
     /**

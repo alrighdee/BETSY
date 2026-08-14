@@ -17,8 +17,6 @@ import org.betsy.capture.CaptureUploader
 import org.betsy.capture.PendingCapture
 import org.betsy.capture.UploadResult
 import org.betsy.debug.CaptureLog
-import org.betsy.decode.DtcMeaning
-import org.betsy.decode.InfMeaning
 import org.betsy.dtc.DtcReadResult
 import org.betsy.dtc.DtcReader
 import org.betsy.transport.awaitBlocking
@@ -212,63 +210,7 @@ class DtcActivity : Activity() {
             sb.append(line).append("\n\n")
         }
 
-        if (result.groups.isNotEmpty()) {
-            for (group in result.groups) {
-                sb.append(group.label).append(":\n")
-                for (dtc in group.codes) {
-                    // The sub-code turns a system name into an area: P0AA6 alone is "something in
-                    // the HV system leaks", P0AA6-612 is the battery rather than the air
-                    // conditioning (PROTOCOL.md 7.4.2).
-                    //
-                    // It is only attached to a code when the pairing is unambiguous: one stored
-                    // DTC and one populated page. How pages map to codes when several are stored
-                    // has never been observed, so with more than one of either the sub-codes are
-                    // listed separately below rather than guessed at. Printing "P0AA6-612" beside
-                    // a battery-block code that did not produce that page would be an invented
-                    // diagnosis, and a costly one.
-                    val unambiguous =
-                        result.groups.sumOf { it.codes.size } == 1 &&
-                            result.infCodes.size == 1
-                    val label =
-                        if (unambiguous) "${dtc.code}-${result.infCodes[0].code}" else dtc.code
-                    sb.append("  ").append(label).append("\n")
-
-                    // The sub-code's own explanation, where this project has one. Most pairs are
-                    // undocumented and InfMeaning returns null for those, leaving the bare number
-                    // on screen. That is the honest outcome: the number is still what a garage
-                    // asks for, and inventing a sentence to fill the space would be worse than
-                    // the gap.
-                    if (unambiguous) {
-                        InfMeaning.forCode(dtc.code, result.infCodes[0].code)?.let { d ->
-                            sb.append("    ").append(d.narrows).append("\n")
-                            if (d.area.isNotBlank()) {
-                                sb.append("    Look at: ").append(d.area).append("\n")
-                            }
-                        }
-                    }
-
-                    // An unexplained code is shown bare rather than guessed at: someone might
-                    // replace a battery on the strength of a confident wrong sentence.
-                    DtcMeaning.forWire(dtc.raw)?.let { m ->
-                        val urgency =
-                            when (m.severity) {
-                                DtcMeaning.Severity.URGENT -> "Stop driving. "
-                                DtcMeaning.Severity.SERIOUS -> "Get this looked at soon. "
-                                DtcMeaning.Severity.MINOR -> ""
-                            }
-                        sb
-                            .append("    ")
-                            .append(urgency)
-                            .append(m.what)
-                            .append("\n")
-                        sb.append("    ").append(m.usually).append("\n")
-                    }
-                    sb.append("\n")
-                }
-            }
-        } else {
-            sb.append("Toyota enhanced DTCs (KWP2000): none reported\n\n")
-        }
+        sb.append(DtcTextFormatter.formatGroups(result.groups, result.infResolutions))
 
         // Generic OBD is a separate observation from Toyota enhanced — always show when present.
         if (result.liveness != null ||
@@ -288,24 +230,7 @@ class DtcActivity : Activity() {
             sb.append("(generic OBD ≠ Toyota enhanced state)\n\n")
         }
 
-        sb.append("INF tables: ${result.infTablesResponded}/5 responded\n\n")
-
-        if (result.infCodes.isNotEmpty()) {
-            // A fault reports a code from more than one table, and the combination is what
-            // names the failed component (PROTOCOL.md §7.4). Flattening these into one list
-            // throws that away, so group by table.
-            sb.append("INF DETAIL CODES:\n")
-            for ((table, codes) in result.infCodes.groupBy { it.tableLabel }.toSortedMap()) {
-                sb.append("  ").append(table).append(": ")
-                sb.append(codes.joinToString(", ") { it.code.toString() }).append("\n")
-            }
-            val pair = result.infCodes.map { it.code }.sorted()
-            if (pair.size > 1) {
-                sb.append("  → ").append(pair.joinToString("-")).append("\n")
-            }
-            sb.append("  (mapping unverified, see docs/PROTOCOL.md §7.4)\n")
-            sb.append("\n")
-        }
+        sb.append(DtcTextFormatter.formatInfEvidence(result.infCodes, result.infTablesResponded))
 
         CaptureLog.captureFile?.let { f ->
             sb.append("Raw log: ").append(f.name).append("\n")

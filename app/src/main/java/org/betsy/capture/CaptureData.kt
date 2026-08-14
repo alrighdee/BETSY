@@ -45,7 +45,10 @@ data class CaptureData(
     val elm: String,
     /** Every request issued during the sweep mapped to its verbatim response. */
     val raw: Map<String, String>,
-    /** Stored DTCs as read, formatted "<ecu label>: <code>". */
+    /**
+     * Stored DTCs as read, formatted "<ecu label>: <code>". ECU labels are a stable capture-format
+     * contract; diagnostic attribution uses structured source identity instead of parsing them.
+     */
     val dtcs: List<String>,
     /** Per-read failures from the sweep. A table that refused says so here. */
     val notes: List<String>,

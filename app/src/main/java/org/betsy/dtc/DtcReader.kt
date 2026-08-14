@@ -4,6 +4,7 @@ import org.betsy.debug.CaptureLog
 import org.betsy.decode.DtcDecoder
 import org.betsy.decode.InfDecoder
 import org.betsy.decode.InfLayout
+import org.betsy.decode.InfMeaning
 import org.betsy.detect.VehicleInfo
 import org.betsy.detect.VehicleModel
 import org.betsy.elm.ElmSession
@@ -13,8 +14,18 @@ import org.betsy.elm.Normalize
 import org.betsy.model.Dtc
 import org.betsy.model.InfDetail
 
-/** One labeled DTC group from one ECU's read (PROTOCOL.md §7.1). */
+/** Logical source of an enhanced DTC observation. Never infer this from display text. */
+enum class DtcSource(
+    val description: String,
+) {
+    HYBRID_CONTROL("hybrid control"),
+    BATTERY_CONTROL("battery control"),
+    ENGINE("engine"),
+}
+
+/** One enhanced DTC observation with structured source and stable capture label. */
 data class DtcGroup(
+    val source: DtcSource,
     val label: String,
     val codes: List<Dtc>,
 )
@@ -35,13 +46,15 @@ data class EcuLiveness(
 data class DtcReadResult(
     val groups: List<DtcGroup>,
     val infCodes: List<InfDetail>,
+    /** One retained relationship for each distinct value in [infCodes]. */
+    val infResolutions: List<InfMeaning.Resolution> = emptyList(),
     val notes: List<String>,
     /**
      * Every request issued during the sweep mapped to its verbatim response. Keys are
      * `"<header>/<cmd>"` (e.g. `"7E2/13B0"`, `"7E0/13B0"`, `"7E2/21C6"`) so the same command
-     * on two ECUs cannot overwrite each other. [infCodes] is this data run through a bit
-     * mapping that has never been exercised against a real fault (§7.4), so the bytes are
-     * kept beside the interpretation rather than replaced by it.
+     * on two ECUs cannot overwrite each other. [infCodes] reads the transmitted value from each
+     * populated page, while page-to-DTC ownership remains unverified for multi-fault sweeps. The
+     * bytes stay beside every interpretation rather than being replaced by it.
      */
     val rawResponses: Map<String, String> = emptyMap(),
     /** Gen2/Gen2_7E2 only: outcome of the `0100` liveness probe on 7E2. */
@@ -83,6 +96,12 @@ class DtcReader(
     private val session: ElmSession,
     private val info: VehicleInfo,
 ) {
+    private data class GroupRead(
+        val source: DtcSource,
+        val label: String,
+        val commands: List<Pair<String, (String) -> List<Dtc>>>,
+    )
+
     /** Runs the HV + engine DTC reads for this generation, then the INF tables, and decodes both. */
     suspend fun read(): DtcReadResult {
         val groups = mutableListOf<DtcGroup>()
@@ -106,6 +125,7 @@ class DtcReader(
         when (info.model) {
             VehicleModel.GEN3 ->
                 readDtcGroup(
+                    DtcSource.HYBRID_CONTROL,
                     "HV ECU (7E2)",
                     "7E2",
                     listOf("0A" to { DtcDecoder.decodeMode0A(it) }, "13B0" to { DtcDecoder.decodeMode13(it) }),
@@ -115,6 +135,7 @@ class DtcReader(
                 )
             VehicleModel.GEN2 -> {
                 readDtcGroup(
+                    DtcSource.HYBRID_CONTROL,
                     "HV ECU (7E2)",
                     "7E2",
                     listOf("13B0" to { DtcDecoder.decodeMode13(it) }),
@@ -123,6 +144,7 @@ class DtcReader(
                     raws,
                 )
                 readDtcGroup(
+                    DtcSource.BATTERY_CONTROL,
                     "Battery ECU (7E3)",
                     "7E3",
                     listOf("1380" to { DtcDecoder.decodeMode13(it) }),
@@ -132,10 +154,20 @@ class DtcReader(
                 )
             }
             VehicleModel.GEN2_7E2 ->
-                readDtcGroup(
-                    "HV ECU (7E2)",
+                readDtcGroups(
                     "7E2",
-                    listOf("13B0" to { DtcDecoder.decodeMode13(it) }, "1380" to { DtcDecoder.decodeMode13(it) }),
+                    listOf(
+                        GroupRead(
+                            DtcSource.HYBRID_CONTROL,
+                            "HV ECU (7E2)",
+                            listOf("13B0" to { DtcDecoder.decodeMode13(it) }),
+                        ),
+                        GroupRead(
+                            DtcSource.BATTERY_CONTROL,
+                            "Battery ECU (7E2)",
+                            listOf("1380" to { DtcDecoder.decodeMode13(it) }),
+                        ),
+                    ),
                     groups,
                     notes,
                     raws,
@@ -156,6 +188,15 @@ class DtcReader(
         if (gen2Family) readFreezeFrame("7E2", notes, raws)
 
         val (inf, infResponded) = readInf(notes, raws)
+        appendSourceMismatchNotes(groups, notes)
+        val hybridDtcs =
+            groups
+                .asSequence()
+                .filter { it.source == DtcSource.HYBRID_CONTROL }
+                .flatMap { it.codes.asSequence() }
+                .map { it.code }
+                .toList()
+        val infResolutions = inf.map { it.code }.distinct().map { InfMeaning.resolve(hybridDtcs, it) }
         CaptureLog.log("DTC", "sweep: ${groups.joinToString { "${it.label}=${it.codes.joinToString { c -> c.code }}" }}")
         CaptureLog.log("DTC", "INF tables: $infResponded/5 responded")
         if (inf.isNotEmpty()) {
@@ -164,6 +205,7 @@ class DtcReader(
         return DtcReadResult(
             groups = groups,
             infCodes = inf,
+            infResolutions = infResolutions,
             notes = notes,
             rawResponses = raws,
             liveness = liveness,
@@ -419,38 +461,67 @@ class DtcReader(
                     listOf("13B0" to { r: String -> DtcDecoder.decodeMode13(r) })
                 else -> return
             }
-        readDtcGroup("Engine ECU (7E0)", "7E0", cmds, groups, notes, raws)
+        readDtcGroup(DtcSource.ENGINE, "Engine ECU (7E0)", "7E0", cmds, groups, notes, raws)
     }
 
     /** Reads one labeled group: sets the header, runs each command, dedupes its codes. */
     private suspend fun readDtcGroup(
+        source: DtcSource,
         label: String,
         header: String,
         cmds: List<Pair<String, (String) -> List<Dtc>>>,
         groups: MutableList<DtcGroup>,
         notes: MutableList<String>,
         raws: MutableMap<String, String>,
+    ) = readDtcGroups(header, listOf(GroupRead(source, label, cmds)), groups, notes, raws)
+
+    /** Reads logical groups under one physical header without adding transport round trips. */
+    private suspend fun readDtcGroups(
+        header: String,
+        reads: List<GroupRead>,
+        groups: MutableList<DtcGroup>,
+        notes: MutableList<String>,
+        raws: MutableMap<String, String>,
     ) {
-        val codes = mutableListOf<Dtc>()
         try {
             session.withEcu(header) {
-                for ((cmd, parse) in cmds) {
-                    codes +=
-                        try {
-                            val raw = session.command(cmd)
-                            raws[rawKey(header, cmd)] = raw
-                            parse(raw)
-                        } catch (e: Exception) {
-                            notes += "$label $cmd: ${e.message ?: e.toString()}"
-                            emptyList()
-                        }
+                for (read in reads) {
+                    val codes = mutableListOf<Dtc>()
+                    for ((cmd, parse) in read.commands) {
+                        codes +=
+                            try {
+                                val raw = session.command(cmd)
+                                raws[rawKey(header, cmd)] = raw
+                                parse(raw)
+                            } catch (e: Exception) {
+                                notes += "${read.label} $cmd: ${e.message ?: e.toString()}"
+                                emptyList()
+                            }
+                    }
+                    val unique = dedupe(codes)
+                    if (unique.isNotEmpty()) groups += DtcGroup(read.source, read.label, unique)
                 }
             }
         } catch (e: Exception) {
-            notes += "$label: ${e.message ?: e.toString()}"
+            notes += "DTC read on $header: ${e.message ?: e.toString()}"
         }
-        val unique = dedupe(codes)
-        if (unique.isNotEmpty()) groups += DtcGroup(label, unique)
+    }
+
+    /** Makes a wrong logical-source assumption visible instead of silently dropping a parent. */
+    private fun appendSourceMismatchNotes(
+        groups: List<DtcGroup>,
+        notes: MutableList<String>,
+    ) {
+        groups
+            .asSequence()
+            .filter { it.source != DtcSource.HYBRID_CONTROL }
+            .flatMap { group -> group.codes.asSequence().map { group.source to it.code } }
+            .filter { (_, code) -> InfMeaning.isDocumentedParent(code) }
+            .distinct()
+            .forEach { (source, code) ->
+                notes += "INF attribution source mismatch: $code was reported by ${source.description}; " +
+                    "its documented INF relationship was left unresolved."
+            }
     }
 
     /**

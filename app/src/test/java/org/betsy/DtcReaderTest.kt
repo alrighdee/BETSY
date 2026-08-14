@@ -1,8 +1,11 @@
 package org.betsy
 
+import org.betsy.capture.CaptureData
+import org.betsy.decode.InfMeaning
 import org.betsy.detect.VehicleInfo
 import org.betsy.detect.VehicleModel
 import org.betsy.dtc.DtcReader
+import org.betsy.dtc.DtcSource
 import org.betsy.elm.ElmSession
 import org.betsy.transport.ElmTransport
 import org.betsy.transport.TransportException
@@ -71,15 +74,14 @@ class DtcReaderTest {
     private fun reader(
         transport: ElmTransport,
         model: VehicleModel,
-    ): DtcReader =
-        DtcReader(
-            ElmSession(transport),
-            VehicleInfo(
-                model = model,
-                supported = true,
-                blockCount = 14,
-                cellCount = 28,
-            ),
+    ): DtcReader = DtcReader(ElmSession(transport), vehicleInfo(model))
+
+    private fun vehicleInfo(model: VehicleModel): VehicleInfo =
+        VehicleInfo(
+            model = model,
+            supported = true,
+            blockCount = 14,
+            cellCount = 28,
         )
 
     @Test
@@ -335,6 +337,151 @@ class DtcReaderTest {
         // The HV ECU is genuinely clean, and an ECM code must not be attributed to it.
         assertEquals("5300", result.rawResponses.getValue("7E2/13B0"))
         assertTrue(result.hasStoredDtcs)
+    }
+
+    @Test
+    fun standardGen2KeepsLogicalSourcesAndRetainsExactResolution() {
+        val t =
+            FakeTransport(
+                gen2Base(mapOf("21CA" to "61CA" + payload(29 to 0x02, 30 to 0x64))),
+                byHeader =
+                    mapOf(
+                        "7E2/13B0" to "53010AA6",
+                        "7E3/1380" to "53010A80",
+                        "7E0/13B0" to "5300",
+                    ),
+            )
+        val result = awaitBlocking { reader(t, VehicleModel.GEN2).read() }
+
+        assertEquals(
+            listOf(DtcSource.HYBRID_CONTROL, DtcSource.BATTERY_CONTROL),
+            result.groups.map { it.source },
+        )
+        val exact = result.infResolutions.single() as InfMeaning.Resolution.Exact
+        assertEquals("P0AA6", exact.dtc)
+        assertEquals(612, exact.inf)
+        assertEquals(listOf(612), result.infCodes.map { it.code })
+    }
+
+    @Test
+    fun fallbackKeepsTwoLogicalSourcesInsideOnePhysicalSession() {
+        val t =
+            FakeTransport(
+                gen2Base(mapOf("21CA" to "61CA" + payload(29 to 0x02, 30 to 0x64))),
+                byHeader =
+                    mapOf(
+                        "7E2/13B0" to "53010AA6",
+                        "7E2/1380" to "53010A80",
+                        "7E0/13B0" to "5300",
+                    ),
+            )
+        val result = awaitBlocking { reader(t, VehicleModel.GEN2_7E2).read() }
+
+        assertEquals(
+            listOf(DtcSource.HYBRID_CONTROL, DtcSource.BATTERY_CONTROL),
+            result.groups.map { it.source },
+        )
+        assertEquals(listOf("HV ECU (7E2)", "Battery ECU (7E2)"), result.groups.map { it.label })
+        val firstDtc = t.commands.indexOf("13B0")
+        val batteryDtc = t.commands.indexOf("1380")
+        assertEquals("ATSH7E2", t.commands[firstDtc - 1])
+        assertFalse(t.commands.subList(firstDtc + 1, batteryDtc).any { it.startsWith("ATSH") })
+
+        val exact = result.infResolutions.single() as InfMeaning.Resolution.Exact
+        assertEquals("P0AA6", exact.dtc)
+        assertEquals(612, exact.inf)
+
+        val capture =
+            CaptureData.from(
+                result = result,
+                info = vehicleInfo(VehicleModel.GEN2_7E2),
+                elm = "test",
+                version = "test",
+                build = "test",
+            )
+        assertEquals(listOf("HV ECU (7E2): P0AA6", "Battery ECU (7E2): P0A80"), capture.dtcs)
+        assertEquals(result.rawResponses, capture.raw)
+        assertEquals(listOf(612), capture.codes.map { it.code })
+    }
+
+    @Test
+    fun documentedParentsOutsideHybridSourceProduceVisibleNotes() {
+        val t =
+            FakeTransport(
+                gen2Base(mapOf("21C7" to "61C7" + payload(29 to 0x00, 30 to 0x7B))),
+                byHeader =
+                    mapOf(
+                        "7E2/13B0" to "5300",
+                        "7E3/1380" to "53020A1F3000",
+                        "7E0/13B0" to "5300",
+                    ),
+            )
+        val result = awaitBlocking { reader(t, VehicleModel.GEN2).read() }
+
+        assertEquals(InfMeaning.Resolution.Unresolved(123), result.infResolutions.single())
+        assertTrue(result.notes.any { it.contains("P0A1F") && it.contains("battery control") })
+        assertTrue(result.notes.any { it.contains("P3000") && it.contains("battery control") })
+    }
+
+    @Test
+    fun readerRetainsSharedAliasResolutionAndEveryRawOccurrence() {
+        val t =
+            FakeTransport(
+                gen2Base(
+                    mapOf(
+                        "21C7" to "61C7" + payload(29 to 0x02, 30 to 0x64),
+                        "21CA" to "61CA" + payload(29 to 0x02, 30 to 0x64),
+                    ),
+                ),
+                byHeader =
+                    mapOf(
+                        "7E2/13B0" to "530230090AA6",
+                        "7E3/1380" to "5300",
+                        "7E0/13B0" to "5300",
+                    ),
+            )
+        val result = awaitBlocking { reader(t, VehicleModel.GEN2).read() }
+
+        assertEquals(listOf(612, 612), result.infCodes.map { it.code })
+        val shared = result.infResolutions.single() as InfMeaning.Resolution.Shared
+        assertEquals(linkedSetOf("P3009", "P0AA6"), shared.dtcs)
+        assertEquals(612, shared.inf)
+    }
+
+    @Test
+    fun readerRetainsConflictingInf123AsUnresolved() {
+        val t =
+            FakeTransport(
+                gen2Base(mapOf("21C7" to "61C7" + payload(29 to 0x00, 30 to 0x7B))),
+                byHeader =
+                    mapOf(
+                        "7E2/13B0" to "53020A1F3000",
+                        "7E3/1380" to "5300",
+                        "7E0/13B0" to "5300",
+                    ),
+            )
+        val result = awaitBlocking { reader(t, VehicleModel.GEN2).read() }
+
+        assertEquals(InfMeaning.Resolution.Unresolved(123), result.infResolutions.single())
+        assertEquals(listOf(123), result.infCodes.map { it.code })
+        assertFalse(result.notes.any { it.contains("source mismatch") })
+    }
+
+    @Test
+    fun unrelatedBatteryCodeDoesNotProduceSourceMismatchNote() {
+        val t =
+            FakeTransport(
+                gen2Base(),
+                byHeader =
+                    mapOf(
+                        "7E2/13B0" to "5300",
+                        "7E3/1380" to "53010A80",
+                        "7E0/13B0" to "5300",
+                    ),
+            )
+        val result = awaitBlocking { reader(t, VehicleModel.GEN2).read() }
+
+        assertFalse(result.notes.any { it.contains("source mismatch") })
     }
 
     @Test

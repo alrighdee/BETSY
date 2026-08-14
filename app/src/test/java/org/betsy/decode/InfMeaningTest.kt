@@ -1,6 +1,7 @@
 package org.betsy.decode
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -34,16 +35,6 @@ class InfMeaningTest {
     }
 
     /**
-     * The pack-failure codes are the ones BETSY exists for and they are not documented yet.
-     * Pinned so that filling them in is a deliberate act with a test to update, rather than
-     * something that quietly half-happens.
-     */
-    @Test
-    fun `the pack failure code is still undocumented`() {
-        assertNull(InfMeaning.forCode("P0A80", 596))
-    }
-
-    /**
      * The insulation fault is documented under two trouble codes with the same sub-codes. Both
      * must answer, and both must answer identically: the areas do not differ between them, and
      * two wordings would imply they do.
@@ -63,6 +54,55 @@ class InfMeaningTest {
     @Test
     fun `lookup is case insensitive`() {
         assertEquals(InfMeaning.forCode("P0705", 571), InfMeaning.forCode("p0705", 571))
+    }
+
+    @Test
+    fun `one exact reported pair resolves`() {
+        val result = InfMeaning.resolve(listOf("P0AA6", "P0A80"), 612)
+        assertEquals(
+            InfMeaning.Resolution.Exact(
+                "P0AA6",
+                612,
+                InfMeaning.forCode("P0AA6", 612)!!,
+            ),
+            result,
+        )
+    }
+
+    @Test
+    fun `resolution normalizes case and deduplicates reported codes`() {
+        val expected = InfMeaning.resolve(listOf("P0AA6"), 612)
+        assertEquals(expected, InfMeaning.resolve(listOf("p0aa6", "P0AA6"), 612))
+    }
+
+    @Test
+    fun `unknown reported pair remains unresolved`() {
+        assertEquals(InfMeaning.Resolution.Unresolved(612), InfMeaning.resolve(listOf("P0A80"), 612))
+    }
+
+    @Test
+    fun `sub-code 123 resolves with one parent and not with both`() {
+        assertTrue(InfMeaning.resolve(listOf("P0A1F"), 123) is InfMeaning.Resolution.Exact)
+        assertEquals(
+            InfMeaning.Resolution.Unresolved(123),
+            InfMeaning.resolve(listOf("P0A1F", "P3000"), 123),
+        )
+    }
+
+    @Test
+    fun `insulation aliases resolve once as shared`() {
+        val result = InfMeaning.resolve(listOf("P3009", "P0AA6"), 612)
+        assertTrue(result is InfMeaning.Resolution.Shared)
+        result as InfMeaning.Resolution.Shared
+        assertEquals(linkedSetOf("P3009", "P0AA6"), result.dtcs)
+        assertEquals(InfMeaning.forCode("P0AA6", 612), result.detail)
+    }
+
+    @Test
+    fun `documented parent membership is read only`() {
+        assertTrue(InfMeaning.isDocumentedParent("p0a1f"))
+        assertTrue(InfMeaning.isDocumentedParent("P3000"))
+        assertFalse(InfMeaning.isDocumentedParent("P0A80"))
     }
 
     /**

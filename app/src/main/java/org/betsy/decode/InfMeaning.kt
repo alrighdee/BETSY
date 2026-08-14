@@ -1,5 +1,7 @@
 package org.betsy.decode
 
+import java.util.Locale
+
 /**
  * What an INF sub-code narrows a trouble code down to, written for the person who owns the car.
  *
@@ -17,13 +19,12 @@ package org.betsy.decode
  * collision in 277 known pairs is exactly the kind of near-rule that reads as safe and silently
  * produces a wrong diagnosis on the one case it does not cover, so the key is the pair.
  *
- * ### Deliberately incomplete
+ * ### Deliberately scoped
  *
- * This covers a fraction of the sub-codes a Toyota hybrid can report, and the gaps are not evenly
- * spread: the codes for a *failing pack* specifically are still missing, which is the family this
- * app most wants to explain. [forCode] returns null for anything not listed and the UI shows the
- * bare number, because a confident wrong explanation is worse than none. Someone might replace a
- * battery on the strength of it.
+ * This covers documented pairs from the hybrid-control INF facility. Battery-ECU pack codes such
+ * as `P0A80` are outside that facility rather than missing rows in this table. [forCode] returns
+ * null for anything not listed and the UI shows the bare number, because a confident wrong
+ * explanation is worse than none. Someone might replace a battery on the strength of it.
  *
  * Adding an entry is the whole extension mechanism. There is no fallback that guesses.
  */
@@ -41,6 +42,30 @@ object InfMeaning {
         /** Where to look. Empty when the source names no component beyond the code itself. */
         val area: String = "",
     )
+
+    /** A documented relationship retained with the completed diagnostic sweep. */
+    sealed interface Resolution {
+        val inf: Int
+
+        /** Exactly one reported parent has the documented pair. */
+        data class Exact(
+            val dtc: String,
+            override val inf: Int,
+            val detail: Detail,
+        ) : Resolution
+
+        /** Several reported aliases have the same complete meaning. */
+        data class Shared(
+            val dtcs: Set<String>,
+            override val inf: Int,
+            val detail: Detail,
+        ) : Resolution
+
+        /** No reported parent matches, or matching parents disagree. */
+        data class Unresolved(
+            override val inf: Int,
+        ) : Resolution
+    }
 
     // Shared between the two trouble codes that carry this fault, so the wording cannot drift
     // apart and imply the areas differ between them.
@@ -200,9 +225,8 @@ object InfMeaning {
             // High-voltage insulation breakdown: something live is leaking to the car's body.
             //
             // The car stores 526 first, having detected a leak without knowing where. It then runs
-            // a sequence to isolate the area and stores one of 611..614 instead, so 526 and the
-            // others are not stored together. 526 with nothing else means the isolation step has
-            // not run or did not conclude.
+            // a sequence to isolate the area and can retain 526 alongside one of 611..614. 526
+            // with nothing else means the isolation step has not run or did not conclude.
             //
             // Carried under two trouble codes. Earlier documentation files this fault as P3009 and
             // later documentation as P0AA6, with the same sub-code numbers and the same areas, so
@@ -438,8 +462,46 @@ object InfMeaning {
     fun forCode(
         dtc: String,
         inf: Int,
-    ): Detail? = table[dtc.uppercase() to inf]
+    ): Detail? = table[normalize(dtc) to inf]
+
+    /**
+     * Resolves [inf] only against exact documented pairs whose parents were actually reported.
+     * Input order, page number, and display labels are deliberately irrelevant.
+     */
+    fun resolve(
+        reportedDtcs: Collection<String>,
+        inf: Int,
+    ): Resolution {
+        val matches =
+            reportedDtcs
+                .asSequence()
+                .map(::normalize)
+                .filter { it.isNotEmpty() }
+                .distinct()
+                .mapNotNull { dtc -> table[dtc to inf]?.let { detail -> dtc to detail } }
+                .toList()
+
+        if (matches.isEmpty()) return Resolution.Unresolved(inf)
+        if (matches.size == 1) {
+            val (dtc, detail) = matches.single()
+            return Resolution.Exact(dtc, inf, detail)
+        }
+
+        val detail = matches.first().second
+        return if (matches.all { it.second == detail }) {
+            Resolution.Shared(matches.mapTo(linkedSetOf()) { it.first }, inf, detail)
+        } else {
+            Resolution.Unresolved(inf)
+        }
+    }
+
+    /** Whether [dtc] is a parent of at least one documented pair. */
+    fun isDocumentedParent(dtc: String): Boolean = normalize(dtc) in parentCodes
 
     /** How many pairs are documented. Exposed so a capture can record coverage at read time. */
     val size: Int get() = table.size
+
+    private val parentCodes: Set<String> by lazy { table.keys.mapTo(hashSetOf()) { it.first } }
+
+    private fun normalize(dtc: String): String = dtc.uppercase(Locale.ROOT)
 }

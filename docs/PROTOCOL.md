@@ -60,9 +60,9 @@ Select the target with `ATSH<header>` before each command group.
 | `7E2` | HV / power management | DTCs, INF freeze pages; battery data on Gen3 and the `7E2` Gen2 layout |
 | `7E3` | HV battery (Gen2) | block voltages, temps, current, SOC, internal resistance |
 | `7E0` | Engine (ECM) | engine DTCs via KWP2000 `13B0` / `0A` on Gen2–Gen3 (*inferred*) |
-| `7D2` | Hybrid vehicle control (Gen4) | recognised, not supported |
-| `747` | HV/EV battery, Gen4.5 | recognised, not supported |
-| `7E7` | GM two-mode | recognised, not supported |
+| `7D2` | Hybrid vehicle control (Gen4) | recognised, not yet supported |
+| `747` | HV/EV battery, Gen4.5 | recognised, not yet supported |
+| `7E7` | GM two-mode | recognised, not yet supported |
 
 On Gen2 the **battery** ECU is `7E3`, not `7E2`, this is stated backwards in a lot of
 circulating material. Use physical addressing throughout; never send any of this to the
@@ -111,8 +111,8 @@ positive tag; a miss falls through. Do not ask the user which car they have.
 | 1 | Gen3 | `7E2` | `2181` | `6181` | |
 | 2 | **Gen2, battery on `7E3`** | `7E3` | `21CE` | `61CE` | measured |
 | 3 | **Gen2-era, battery on `7E2`** | `7E2` | `21CE` | `61CE` | capture only, never decoded |
-| 4 | Gen4 | `7D2` | `221809` | `621809` | not supported |
-| 5 | Gen4.5 | `747` | `221F9A` | `621F9A` | not supported |
+| 4 | Gen4 | `7D2` | `221809` | `621809` | not yet supported |
+| 5 | Gen4.5 | `747` | `221F9A` | `621F9A` | not yet supported |
 
 Steps 2 and 3 are the entire question for a Gen2-era car: identical command, different header, first to
 answer wins. *Measured:* a 2009 Gen2 returns `NO DATA` to `2181` on `7E2`, then `61CE` on `7E3`.
@@ -141,7 +141,7 @@ thing this project will not do. The capture is what would turn that branch into 
 
 ### 3.2 Gen1 sub-detection
 
-Gen1 uses ISO 9141-2 (`ATSP3`) and is recognised but not supported by this build. Block-count
+Gen1 uses ISO 9141-2 (`ATSP3`) and is recognised but not yet supported by this build. Block-count
 discovery there is *inferred*, unverified, and deliberately not relied on.
 
 ### 3.3 Block count and split packs

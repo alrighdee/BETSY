@@ -472,5 +472,4 @@ uses the hybrid-control freeze pages described in §7.4.1 and §7.4.2.
 
 ### 7.5 Clearing
 
-Not implemented, deliberately. Everything in this app is a read: nothing clears a code, runs an
-actuator test, or writes to an ECU.
+Not implemented in this build. The wire command itself would be straightforward to add, but clearing is deliberately omitted for now. Everything in this build is a read: nothing clears a code, runs an actuator test, or writes to an ECU.

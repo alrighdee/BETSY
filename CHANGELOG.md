@@ -8,7 +8,7 @@
 
 * **Toyota INF sub-code support.** BETSY reads the value transmitted in the vehicle's diagnostic freeze-page data and displays its meaning.
 * **Direct ELM327 access.** No laptop or proprietary dealer diagnostic software is required.
-* **249 documented explanations.** Added explanations for 249 DTC/sub-code combinations across 72 trouble codes, including the motor and generator phase-current sensors, where the sub-code separates a main sensor from its backup and says whether it died, disconnected, disagreed or drifted.
+* **294 documented explanations.** Added explanations for every DTC/sub-code combination this project has confirmed, 294 across 78 trouble codes. That includes the motor and generator phase-current sensors, where the sub-code separates a main sensor from its backup and says whether it died, disconnected, disagreed or drifted.
 * **Support for cars with multiple faults.** BETSY attributes values to documented parent trouble codes, shares genuinely equivalent explanations and leaves ambiguous combinations unresolved rather than guessing.
 * Plain-language explanations for battery-block, motor, generator, inverter and hybrid-control trouble codes.
 * Separate hybrid-control, battery-control, engine, generic stored and generic pending diagnostic observations.
@@ -20,7 +20,7 @@
 * Shared diagnostic captures include the app build, complete diagnostic sweep and freeze pages.
 
 ### Fixed
-
+* **Corrected sub-code P0A1D-142.** It was described as an internal hybrid-controller fault, which pointed a repair at the controller. It means the controller is still being told to run after the power switch is off, and the fault is in the wiring or the power source control unit.
 * Multiple stored faults no longer suppress every explanation or cause one sub-code to be attached to unrelated trouble codes.
 * Isolation sub-code `526` correctly coexists with a later localising value such as `611`, `612`, `613` or `614`.
 * Ambiguous sub-code `123` is not assigned without enough evidence.

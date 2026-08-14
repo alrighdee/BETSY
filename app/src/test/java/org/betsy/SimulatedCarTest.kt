@@ -1,5 +1,6 @@
 package org.betsy
 
+import org.betsy.decode.InfMeaning
 import org.betsy.detect.VehicleInfo
 import org.betsy.detect.VehicleModel
 import org.betsy.dtc.DtcReader
@@ -42,6 +43,10 @@ class SimulatedCarTest {
         // is P0571's documented 115. Not a constant in the fixture; decoded out of the page.
         assertEquals(listOf(115), result.infCodes.map { it.code })
         assertEquals("Detail Code 2", result.infCodes.single().tableLabel)
+        val resolution = result.infResolutions.single() as InfMeaning.Resolution.Exact
+        assertEquals("P0571", resolution.dtc)
+        assertEquals(115, resolution.inf)
+        assertEquals(InfMeaning.forCode("P0571", 115), resolution.detail)
 
         // The bytes still travel beside the interpretation so the decoder can be checked again.
         assertTrue(result.rawResponses.getValue("7E2/21C7").contains("61C7"))

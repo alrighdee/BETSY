@@ -8,7 +8,7 @@
 
 * **Toyota INF sub-code support.** BETSY reads the value transmitted in the vehicle's diagnostic freeze-page data and displays its meaning.
 * **Direct ELM327 access.** No laptop or proprietary dealer diagnostic software is required.
-* **203 documented explanations.** Added explanations for 203 DTC/sub-code combinations across 59 trouble codes.
+* **204 documented explanations.** Added explanations for 204 DTC/sub-code combinations across 60 trouble codes.
 * **Support for cars with multiple faults.** BETSY attributes values to documented parent trouble codes, shares genuinely equivalent explanations and leaves ambiguous combinations unresolved rather than guessing.
 * Plain-language explanations for battery-block, motor, generator, inverter and hybrid-control trouble codes.
 * Separate hybrid-control, battery-control, engine, generic stored and generic pending diagnostic observations.

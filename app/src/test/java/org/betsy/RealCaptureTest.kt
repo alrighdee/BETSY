@@ -2,7 +2,9 @@ package org.betsy
 
 import org.betsy.decode.InfDecoder
 import org.betsy.decode.InfLayout
+import org.betsy.decode.InfMeaning
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
@@ -27,5 +29,12 @@ class RealCaptureTest {
         assertEquals("exactly one sub-code from the whole sweep", 1, found.size)
         assertEquals(115, found[0].code)
         assertEquals("Detail Code 2", found[0].tableLabel)
+
+        val detail = InfMeaning.forCode("P0571", found.single().code)
+        assertTrue("the captured pair has an owner-readable explanation", detail != null)
+        assertEquals(
+            InfMeaning.Resolution.Exact("P0571", 115, detail!!),
+            InfMeaning.resolve(listOf("P0571"), found.single().code),
+        )
     }
 }

@@ -8,6 +8,13 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class InfMeaningTest {
+    @Test
+    fun `the retained real fault pair has an explanation`() {
+        val detail = InfMeaning.forCode("P0571", 115)
+        assertNotNull(detail)
+        assertTrue(detail!!.narrows.contains("both brake-switch signals", ignoreCase = true))
+    }
+
     /**
      * The reason the table is keyed by pair rather than by sub-code alone.
      *

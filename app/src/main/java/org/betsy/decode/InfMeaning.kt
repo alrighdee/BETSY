@@ -142,6 +142,13 @@ object InfMeaning {
      */
     private val table: Map<Pair<String, Int>, Detail> =
         mapOf(
+            // Both halves of the stop-lamp switch should never read low together. This is the
+            // pair carried by the project's retained real fault capture.
+            ("P0571" to 115) to
+                Detail(
+                    "The hybrid controller saw both brake-switch signals low at the same time for at least half a second.",
+                    "Stop lamp switch, its wiring or the hybrid controller",
+                ),
             // Gear selector position sensors. Four circuits, two failure modes each: broken or
             // earthed reads as nothing, shorted to battery positive reads as stuck full-scale.
             ("P0705" to 571) to Detail("The main shift sensor's wiring is broken or touching earth.", "Selector lever"),

@@ -185,8 +185,10 @@ class DtcActivity : Activity() {
 
     /**
      * Status sheet: liveness, KWP2000 groups, generic $03/$07, INF k/5, then detail.
-     * Never collapses a completed sweep into "No DTCs or INF detail codes."
-     * (openspec gen2-diagnostics R5).
+     *
+     * Never collapses a completed sweep into "No DTCs or INF detail codes." Each category is
+     * reported on its own, because a single blanket line cannot distinguish an ECU that answered
+     * and had nothing to report from one that never answered at all.
      */
     private fun render(result: DtcReadResult) {
         lastResult = result

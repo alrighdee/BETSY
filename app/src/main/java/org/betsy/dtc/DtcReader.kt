@@ -78,7 +78,9 @@ data class DtcReadResult(
 
     /**
      * True when a KWP2000 group reported stored DTCs. Generic OBD $03/$07 are deliberately
-     * excluded (openspec gen2-diagnostics R3).
+     * excluded: a clean $03/$07 does not establish that the HV ECU holds no Toyota DTCs, and a
+     * car reporting only generic codes must not be filed as an HV fault. The generic results
+     * stay available in their own fields either way.
      */
     val hasStoredDtcs: Boolean
         get() = groups.any { it.codes.isNotEmpty() }

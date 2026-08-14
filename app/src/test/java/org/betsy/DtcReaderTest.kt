@@ -16,7 +16,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * DTC/INF read sequencing per PROTOCOL.md §7.1/§7.4 and openspec gen2-7e2-diagnostics.
+ * DTC/INF read sequencing per PROTOCOL.md §7.1/§7.4.
  */
 class DtcReaderTest {
     private class FakeTransport(

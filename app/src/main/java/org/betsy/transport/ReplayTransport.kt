@@ -111,7 +111,7 @@ object SimulatedCar {
             "21D0" to "61D00E000000000000000085DF0385F6051313131313131313131313131313",
             "21CED0CF" to CE_D0_CF,
             "010C0D" to "410C00000D00",
-            // Liveness + generic OBD (openspec gen2-7e2-diagnostics)
+            // Liveness + generic OBD (PROTOCOL.md §7.1.1, §7.1.2)
             "0100" to "4100FFE0FFE0",
             // Mode 02 freeze frame: frame 00 exists, frame 01 is declined, matching the
             // an on-car read measurement where the car held two frames and refused the third.

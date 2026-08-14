@@ -169,6 +169,9 @@ object InfMeaning {
             ("P3102" to 582) to Detail("The park signal contradicts itself, so the car cannot trust which gear it is in."),
             ("P3102" to 597) to Detail("The park signal wire is touching earth."),
             ("P3102" to 598) to Detail("The park signal wire is touching battery positive."),
+            ("P3102" to 524) to Detail("The transmission control unit has stopped talking on the car's internal network."),
+            ("P3102" to 525) to Detail("The transmission control unit is mishandling the shutdown request at key-off."),
+            ("P3102" to 599) to Detail("The park signal is arriving, but its pulses are malformed."),
             // Engine start failures reported to the hybrid side by the engine control unit. The
             // fuel variants matter to an owner far more than the others: nothing is broken.
             ("P0A0F" to 204) to Detail("The engine control unit reports the engine is not producing normal power.", "Engine control unit"),
@@ -212,6 +215,65 @@ object InfMeaning {
             ("P0A4B" to 253) to Detail("Two phases of the generator's position sensor are shorted together.", "Generator"),
             ("P0A4C" to 513) to Detail("The generator's position sensor reads outside its normal range.", "Generator"),
             ("P0A4D" to 255) to Detail("The generator's position-sensor wiring is broken or shorted.", "Generator"),
+            // The trouble code names the motor's current sensor, but this sub-code puts the fault
+            // inside the controller reading it. That is the difference between replacing a sensor
+            // and replacing the ECU, and the bare code alone points at the wrong one.
+            ("P0A51" to 174) to
+                Detail("The fault is inside the hybrid controller, not in the motor's current sensor.", "Hybrid controller"),
+            // Motor phase-current sensing. Each phase carries a main sensor and a backup, and the
+            // sub-code says which one and how it failed: dead, disconnected, disagreeing, or
+            // drifted. The trouble code alone says only "phase V" or "phase W", which is four
+            // different repairs wearing one number.
+            //
+            // These measure the sensors, not the high-voltage system itself. Reading them as a
+            // high-voltage fault would send someone after the wrong thing entirely.
+            ("P0A60" to 288) to Detail("The backup current sensor on the motor's V phase has failed.", "Wiring and inverter assembly"),
+            ("P0A60" to 289) to
+                Detail("The backup current sensor on the motor's V phase has lost its connection.", "Wiring and inverter assembly"),
+            ("P0A60" to 290) to Detail("The main current sensor on the motor's V phase has failed.", "Wiring and inverter assembly"),
+            ("P0A60" to 292) to
+                Detail("The main current sensor on the motor's V phase has lost its connection.", "Wiring and inverter assembly"),
+            ("P0A60" to 294) to
+                Detail("Both current sensors on the motor's V phase disagree about what they measure.", "Wiring and inverter assembly"),
+            ("P0A60" to 501) to
+                Detail("Both current sensors on the motor's V phase have drifted away from zero.", "Wiring and inverter assembly"),
+            ("P0A63" to 296) to Detail("The backup current sensor on the motor's W phase has failed.", "Wiring and inverter assembly"),
+            ("P0A63" to 297) to
+                Detail("The backup current sensor on the motor's W phase has lost its connection.", "Wiring and inverter assembly"),
+            ("P0A63" to 298) to Detail("The main current sensor on the motor's W phase has failed.", "Wiring and inverter assembly"),
+            ("P0A63" to 300) to
+                Detail("The main current sensor on the motor's W phase has lost its connection.", "Wiring and inverter assembly"),
+            ("P0A63" to 302) to
+                Detail("Both current sensors on the motor's W phase disagree about what they measure.", "Wiring and inverter assembly"),
+            ("P0A63" to 502) to
+                Detail("Both current sensors on the motor's W phase have drifted away from zero.", "Wiring and inverter assembly"),
+            // The generator side of the same arrangement, failing the same four ways per phase.
+            // Worded to match the motor entries above so the only thing that reads differently
+            // between them is the part that actually differs: which machine it is.
+            ("P0A72" to 326) to
+                Detail("The backup current sensor on the generator's V phase has failed.", "Wiring and inverter assembly"),
+            ("P0A72" to 327) to
+                Detail("The backup current sensor on the generator's V phase has lost its connection.", "Wiring and inverter assembly"),
+            ("P0A72" to 328) to
+                Detail("The main current sensor on the generator's V phase has failed.", "Wiring and inverter assembly"),
+            ("P0A72" to 330) to
+                Detail("The main current sensor on the generator's V phase has lost its connection.", "Wiring and inverter assembly"),
+            ("P0A72" to 333) to
+                Detail("Both current sensors on the generator's V phase disagree about what they measure.", "Wiring and inverter assembly"),
+            ("P0A72" to 515) to
+                Detail("Both current sensors on the generator's V phase have drifted away from zero.", "Wiring and inverter assembly"),
+            ("P0A75" to 334) to
+                Detail("The backup current sensor on the generator's W phase has failed.", "Wiring and inverter assembly"),
+            ("P0A75" to 335) to
+                Detail("The backup current sensor on the generator's W phase has lost its connection.", "Wiring and inverter assembly"),
+            ("P0A75" to 336) to
+                Detail("The main current sensor on the generator's W phase has failed.", "Wiring and inverter assembly"),
+            ("P0A75" to 338) to
+                Detail("The main current sensor on the generator's W phase has lost its connection.", "Wiring and inverter assembly"),
+            ("P0A75" to 341) to
+                Detail("Both current sensors on the generator's W phase disagree about what they measure.", "Wiring and inverter assembly"),
+            ("P0A75" to 516) to
+                Detail("Both current sensors on the generator's W phase have drifted away from zero.", "Wiring and inverter assembly"),
             // Motor temperature sensing. These are SENSOR faults, not overheating: the car cannot
             // read the temperature. Wording this as "too hot" would be a different fault and a
             // different repair.
@@ -273,6 +335,13 @@ object InfMeaning {
             ("P0A1F" to 129) to Detail("The high-voltage battery voltage circuit is faulty.", "High-voltage fuse"),
             ("P0A1F" to 593) to Detail("The battery unit's ignition signal circuit is faulty.", "Battery ECU"),
             ("P0560" to 117) to Detail("The 12 volt supply signal is faulty.", "HEV fuse"),
+            // Engine speed reaching the hybrid controller two different ways, and disagreeing.
+            // The sub-code says which route was wrong, which decides whether to suspect the
+            // sensors or the network carrying their reading.
+            ("P0336" to 137) to
+                Detail("The engine speed reported over the car's network does not match.", "Crank and cam sensors, and their wiring"),
+            ("P0340" to 532) to
+                Detail("The engine speed pulses arriving directly do not match.", "Crank and cam sensors, and their wiring"),
             ("P3000" to 125) to Detail("The computer that looks after the hybrid battery has failed.", "Battery ECU"),
             ("P3004" to 131) to Detail("The high voltage supply side of the hybrid system has failed.", "High voltage supply"),
             // The hybrid controller failing one of its own charge-management checks.
@@ -281,6 +350,8 @@ object InfMeaning {
             // DC/DC converter: makes the 12 V supply. When it fails the car eventually stops,
             // which owners usually describe as a flat 12 V battery.
             ("P0A08" to 264) to Detail("The DC/DC converter, which charges the 12 V battery, has failed.", "Inverter assembly"),
+            ("P0A09" to 265) to
+                Detail("A DC/DC converter signal wire is broken or touching earth.", "Wiring and inverter assembly"),
             ("P0A10" to 263) to Detail("A DC/DC converter signal wire is touching battery positive.", "Inverter assembly"),
             ("P0A10" to 592) to Detail("A DC/DC converter output signal wire is touching battery positive.", "Inverter assembly"),
             ("P0A94" to 442) to Detail("The boost converter's output voltage is wrong.", "Boost converter"),
@@ -302,10 +373,18 @@ object InfMeaning {
                 Detail("The boost converter's over-voltage warning line is broken or touching earth.", "Wiring and inverter assembly"),
             ("P0A94" to 546) to
                 Detail("The boost converter's over-voltage warning line is touching battery positive.", "Wiring and inverter assembly"),
+            ("P0A94" to 557) to Detail("The boost converter's fault warning circuit is faulty.", "Wiring and inverter assembly"),
             ("P0A94" to 551) to
                 Detail("The boost converter's fault warning line is broken or touching earth.", "Wiring and inverter assembly"),
             ("P0A94" to 552) to
                 Detail("The boost converter's fault warning line is touching battery positive.", "Wiring and inverter assembly"),
+            // One over-voltage, three sub-codes, and the only thing separating them is which part
+            // the car blames for it. That is the entire diagnostic value here: the trouble code
+            // says the converter saw too much voltage, and the sub-code says where it came from.
+            ("P0A94" to 547) to
+                Detail("The boost converter saw excessive voltage, caused by the hybrid controller failing.", "Hybrid controller"),
+            ("P0A94" to 548) to
+                Detail("The boost converter saw excessive voltage, caused by the inverter assembly failing.", "Inverter assembly"),
             ("P0A94" to 549) to
                 Detail("The boost converter saw excessive voltage, caused by the transaxle failing.", "Transaxle and inverter assembly"),
             ("P0A94" to 558) to Detail("The boost converter's shutdown line is touching earth.", "Wiring and inverter assembly"),
@@ -326,6 +405,9 @@ object InfMeaning {
                     "The airbag unit or the crash sensor reported an impact, so the high-voltage system shut itself down.",
                     "Airbag system, crash disconnect sensor",
                 ),
+            ("P0A78" to 304) to
+                Detail("The motor inverter's shutdown line is broken or touching battery positive.", "Wiring and inverter assembly"),
+            ("P0A78" to 305) to Detail("The motor inverter's shutdown line is touching earth.", "Wiring and inverter assembly"),
             ("P0A78" to 507) to Detail("The drive inverter's shutdown signal wire is broken.", "Inverter assembly"),
             ("P0A78" to 508) to Detail("The drive inverter's shutdown signal is faulty.", "Inverter assembly"),
             ("P0A78" to 510) to Detail("The drive inverter's switching stage has failed.", "Inverter assembly"),
@@ -347,6 +429,10 @@ object InfMeaning {
             // the sub-code is the only thing naming which component caused it. 284 is a real
             // overheat, unlike the temperature-sensor codes above.
             ("P0A78" to 284) to Detail("The drive motor's inverter overheated.", "Inverter cooling system"),
+            // The cooling system itself, rather than something it failed to cool. The sub-code
+            // names which half stopped working, and they are different parts to replace.
+            ("P0A93" to 346) to Detail("The inverter's coolant pump has stopped working.", "Inverter cooling system"),
+            ("P0A93" to 347) to Detail("The inverter's cooling fans have stopped working.", "Inverter cooling system"),
             ("P0A78" to 287) to
                 Detail("Too much current flowed in the drive inverter, because the inverter assembly itself failed.", "Inverter assembly"),
             ("P0A78" to 505) to
@@ -364,6 +450,10 @@ object InfMeaning {
             // overheat.
             ("P3212" to 275) to
                 Detail("The drive inverter's temperature sensor wiring is broken or touching earth.", "Wiring and inverter assembly"),
+            ("P3221" to 314) to
+                Detail("The generator inverter's temperature reading jumped abruptly.", "Inverter cooling system"),
+            ("P3221" to 315) to
+                Detail("The generator inverter's temperature reading has drifted away from what is plausible.", "Inverter cooling system"),
             ("P3222" to 313) to
                 Detail("The generator inverter's temperature sensor wiring is broken or touching earth.", "Wiring and inverter assembly"),
             ("P3223" to 312) to
@@ -379,6 +469,10 @@ object InfMeaning {
             ("P0A7A" to 522) to Detail("The generator inverter's switching stage has failed.", "Inverter assembly"),
             ("P0A7A" to 324) to Detail("The generator inverter's fault detection circuit is faulty.", "Inverter assembly"),
             ("P0A7A" to 520) to Detail("The generator inverter's shutdown signal line is faulty.", "Inverter assembly"),
+            ("P0A7A" to 342) to
+                Detail("The generator inverter's shutdown line is broken or touching battery positive.", "Wiring and inverter assembly"),
+            ("P0A7A" to 343) to Detail("The generator inverter's shutdown line is touching earth.", "Wiring and inverter assembly"),
+            ("P0A7A" to 519) to Detail("The generator inverter's shutdown line is broken.", "Wiring and inverter assembly"),
             ("P0A7A" to 321) to
                 Detail("The generator inverter's fault warning line is touching battery positive.", "Wiring and inverter assembly"),
             ("P0A7A" to 323) to
@@ -412,6 +506,13 @@ object InfMeaning {
                     "Service plug, inverter cover",
                 ),
             ("P3137" to 348) to Detail("The crash disconnect sensor's wiring is touching earth.", "Crash disconnect sensor"),
+            ("P3138" to 349) to
+                Detail("The crash disconnect sensor's wiring is broken or touching battery positive.", "Crash disconnect sensor"),
+            // The interlock proves the high-voltage covers are shut. Losing it while moving is
+            // not the same as never having it, so this reads as a connection that opened rather
+            // than one that was never made.
+            ("P3143" to 351) to
+                Detail("The high-voltage safety interlock opened while the car was driving.", "Battery plug and inverter interlocks"),
             // Air conditioning, which on this car runs off the high-voltage system.
             ("P3108" to 535) to Detail("The air-conditioning link has a communication fault.", "Air conditioning"),
             ("P3108" to 536) to Detail("The air-conditioning inverter has failed.", "Air conditioning"),

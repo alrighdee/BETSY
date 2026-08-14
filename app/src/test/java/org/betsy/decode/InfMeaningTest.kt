@@ -145,6 +145,29 @@ class InfMeaningTest {
         }
     }
 
+    /**
+     * The four phase-current entries per machine differ only in main-versus-backup and in how the
+     * sensor failed, and the two machines differ only in being motor or generator. Twenty-four
+     * near-identical sentences written to one pattern is exactly where a copied line survives
+     * unnoticed, and a collapsed pair would send someone to the wrong sensor with full confidence.
+     */
+    @Test
+    fun `phase current sensor entries stay distinct across phase and machine`() {
+        val entries =
+            mapOf(
+                "P0A60" to listOf(288, 289, 290, 292, 294, 501),
+                "P0A63" to listOf(296, 297, 298, 300, 302, 502),
+                "P0A72" to listOf(326, 327, 328, 330, 333, 515),
+                "P0A75" to listOf(334, 335, 336, 338, 341, 516),
+            ).flatMap { (dtc, infs) -> infs.map { InfMeaning.forCode(dtc, it)!!.narrows } }
+
+        assertEquals(24, entries.size)
+        assertEquals(entries.size, entries.toSet().size)
+        // The motor and generator halves must not read as each other.
+        assertTrue(entries.count { it.contains("motor's") } == 12)
+        assertTrue(entries.count { it.contains("generator's") } == 12)
+    }
+
     @Test
     fun `every entry has a non-empty sentence that reads as one`() {
         for (inf in listOf(571, 578)) {

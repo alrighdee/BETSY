@@ -1,5 +1,40 @@
 # Changelog
 
+## 0.0.3
+
+**Toyota diagnostic sub-codes.** BETSY 0.0.3 is the first release that can read and explain the
+INF sub-code transmitted by a Gen 2 Prius. These sub-codes provide the detail behind a trouble
+code—for example, which area of the high-voltage system has an isolation fault.
+
+### Added
+
+* **Toyota INF sub-code support.** BETSY reads the sub-code from the vehicle's diagnostic
+  freeze-frame data and displays its meaning.
+* **203 documented explanations.** Added explanations for 203 DTC/sub-code combinations across
+  59 trouble codes.
+* **Support for cars with multiple faults.** BETSY attributes sub-codes to their documented parent
+  trouble codes, shares genuinely equivalent explanations, and leaves ambiguous combinations
+  unresolved rather than guessing.
+* Plain-language explanations for battery-block, motor, generator, inverter and hybrid-control
+  trouble codes.
+* Diagnostic results now distinguish hybrid-control, battery-control, engine, generic stored and
+  generic pending trouble-code observations.
+
+### Changed
+
+* Raw diagnostic pages remain available alongside the interpreted sub-code explanations.
+* Fault descriptions lead with what failed and what the result means for the owner.
+* Shared diagnostic captures include the app build, diagnostic sweep and freeze-frame pages while
+  removing vehicle-identifying information before the data can leave the phone.
+
+### Fixed
+
+* Multiple stored faults no longer suppress every sub-code explanation or cause one sub-code to be
+  attached to unrelated trouble codes.
+* Isolation sub-code `526` can correctly coexist with a later localising sub-code such as `611`,
+  `612`, `613` or `614`.
+* Ambiguous sub-code `123` is not assigned without enough evidence.
+
 ## [0.0.2](https://github.com/alrighdee/BETSY/compare/v0.0.1...v0.0.2) (2026-08-10)
 
 

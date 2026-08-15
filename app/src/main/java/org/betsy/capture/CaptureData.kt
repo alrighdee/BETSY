@@ -66,6 +66,13 @@ data class CaptureData(
      * thing that turns a capture into an answer.
      */
     val ownerNotes: String = "",
+    /**
+     * True only for a scripted demo capture. Never a vehicle identifier; it is provenance. The
+     * uploader refuses these locally rather than treating the flag as a reason to send, so a
+     * fixture cannot reach the worker even when retried from a pending capture after the demo
+     * session has ended.
+     */
+    val demo: Boolean = false,
 ) {
     /**
      * Serialize for upload.
@@ -100,6 +107,9 @@ data class CaptureData(
             // harnesses can mark their own submissions, which keeps a healthy real car filed as
             // a real capture instead of beside a curl probe.
             .put("synthetic", false)
+            // Demo captures are refused locally, so this never reaches the worker. It exists so a
+            // fixture held as a pending capture is still recognisable after the session ends.
+            .put("demo", demo)
             .toString()
 
     companion object {

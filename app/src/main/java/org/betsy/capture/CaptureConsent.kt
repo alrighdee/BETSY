@@ -30,6 +30,18 @@ object CaptureConsent {
     }
 
     /**
+     * Undoes [accept] so the disclosure can be reviewed again. Debug-only in practice, and the
+     * only way to see the first-share screen twice on one install.
+     */
+    fun clear(context: Context) {
+        context
+            .getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+            .edit()
+            .remove(KEY_ACCEPTED)
+            .apply()
+    }
+
+    /**
      * What the disclosure promises, kept next to the flag so the two cannot drift apart.
      *
      * The IP entry is about the service rather than the payload: the app sends nothing

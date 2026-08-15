@@ -102,7 +102,7 @@ class CaptureShareDialog(
             Button(activity).apply {
                 text = if (data.dtcs.isEmpty()) "SEND TEST CAPTURE" else "SHARE SCAN"
                 setTextColor(DesignTokens.GRAY_1)
-                background = Surfaces.rounded(activity, DesignTokens.BRAND_SOLID, DesignTokens.RADIUS_2)
+                background = Surfaces.ripple(activity, DesignTokens.BRAND_SOLID, DesignTokens.RADIUS_2)
                 setOnClickListener {
                     val notes = if (::notesField.isInitialized) notesField.text.toString().trim() else ""
                     onSubmit(notes)

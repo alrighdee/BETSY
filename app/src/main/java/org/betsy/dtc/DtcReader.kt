@@ -31,6 +31,45 @@ data class DtcGroup(
 )
 
 /**
+ * The five fixed phases of a DTC/INF sweep, in the order the reader runs them. Each phase owns a
+ * known number of steps (per vehicle layout), so a caller can render "x/y" within a phase and a
+ * whole-sweep percentage without watching the wire.
+ */
+enum class SweepPhase(
+    val label: String,
+) {
+    LIVENESS("Liveness"),
+    STORED_DTCS("Stored DTCs"),
+    GENERIC_OBD("Generic OBD"),
+    FREEZE_FRAME("Freeze frame"),
+    INF_CODES("INF detail codes"),
+}
+
+/** One completed sweep step: where it sits in its phase and in the whole sweep. */
+data class SweepStep(
+    val phase: SweepPhase,
+    /** 1-based position within [phase]. */
+    val step: Int,
+    /** Total steps in [phase]. */
+    val phaseSteps: Int,
+    /** 1-based position across the whole sweep. */
+    val totalStep: Int,
+    /** Grand total of steps across all phases. */
+    val totalSteps: Int,
+    /** What this step actually reads, e.g. "HV ECU (7E2)". */
+    val label: String,
+)
+
+/**
+ * Optional progress reporter for [DtcReader.read]. Fired once per step, in order, so a slow read
+ * can show what it is doing and how far it has left to go. Null (the default) keeps every
+ * existing caller valid.
+ */
+fun interface SweepProgress {
+    fun onStep(step: SweepStep)
+}
+
+/**
  * Result of the 7E2 liveness probe (`0100`). [responding] is true only when the ECU itself
  * answered: positive mode-01 (`41…`) or a negative response (`7F…`). Adapter text and unexpected
  * hex are not "alive."
@@ -104,8 +143,64 @@ class DtcReader(
         val commands: List<Pair<String, (String) -> List<Dtc>>>,
     )
 
+    /** Set at the top of [read]; null when no progress reporter was supplied. */
+    private var progress: SweepProgress? = null
+
+    /** Steps per phase, computed up front from the vehicle layout so totals are known in advance. */
+    private var phaseTotals: Map<SweepPhase, Int> = emptyMap()
+    private var stepCounts: MutableMap<SweepPhase, Int> = mutableMapOf()
+    private var totalStep = 0
+    private var totalSteps = 0
+
+    private fun stage(
+        phase: SweepPhase,
+        label: String,
+    ) {
+        val done = stepCounts.getOrDefault(phase, 0) + 1
+        stepCounts[phase] = done
+        totalStep += 1
+        progress?.onStep(
+            SweepStep(
+                phase = phase,
+                step = done,
+                phaseSteps = phaseTotals[phase] ?: 1,
+                totalStep = totalStep,
+                totalSteps = totalSteps,
+                label = label,
+            ),
+        )
+    }
+
+    /** The step layout this vehicle model will sweep, so totals are known before the first read. */
+    private fun planPhaseTotals(): Map<SweepPhase, Int> {
+        val gen2Family = info.model == VehicleModel.GEN2 || info.model == VehicleModel.GEN2_7E2
+        val groupCount =
+            when (info.model) {
+                VehicleModel.GEN3 -> 2 // hybrid control + engine, no battery ECU
+                VehicleModel.GEN2, VehicleModel.GEN2_7E2 -> 3 // hybrid, battery, engine
+                else -> 0
+            }
+        val totals = linkedMapOf<SweepPhase, Int>()
+        if (gen2Family) totals[SweepPhase.LIVENESS] = 1
+        totals[SweepPhase.STORED_DTCS] = groupCount
+        if (gen2Family) {
+            totals[SweepPhase.GENERIC_OBD] = 2
+            // The freeze frame is the frame-00 mask plus its twelve PIDs. It is by far the
+            // slowest single phase, so it is broken out per read rather than reported as one
+            // step that would freeze the progress bar for seconds.
+            totals[SweepPhase.FREEZE_FRAME] = 1 + FREEZE_FRAME_PIDS.size
+        }
+        totals[SweepPhase.INF_CODES] = InfLayout.tables.size
+        return totals
+    }
+
     /** Runs the HV + engine DTC reads for this generation, then the INF pages, and decodes both. */
-    suspend fun read(): DtcReadResult {
+    suspend fun read(progress: SweepProgress? = null): DtcReadResult {
+        this.progress = progress
+        this.phaseTotals = planPhaseTotals()
+        this.stepCounts = mutableMapOf()
+        this.totalStep = 0
+        this.totalSteps = phaseTotals.values.sum()
         val groups = mutableListOf<DtcGroup>()
         val notes = mutableListOf<String>()
         val raws = linkedMapOf<String, String>()
@@ -120,6 +215,7 @@ class DtcReader(
 
         val gen2Family = info.model == VehicleModel.GEN2 || info.model == VehicleModel.GEN2_7E2
         if (gen2Family) {
+            stage(SweepPhase.LIVENESS, "Liveness (7E2)")
             liveness = checkLiveness(raws)
             CaptureLog.log("DTC", "liveness 7E2: responding=${liveness.responding} ${liveness.detail}")
         }
@@ -322,6 +418,7 @@ class DtcReader(
     ): List<Dtc> {
         return try {
             session.withEcu(header) {
+                stage(SweepPhase.GENERIC_OBD, "Generic DTCs (\$$cmd)")
                 session.rawCommand("ATH1")
                 try {
                     val raw = session.rawCommand(cmd)
@@ -401,6 +498,11 @@ class DtcReader(
             session.withEcu(header) {
                 for (frame in 0..MAX_FREEZE_FRAMES) {
                     val fr = "%02X".format(frame)
+                    // Frame 00 is the freeze frame that carries the fault snapshot; later frames
+                    // are discovered, not part of the fixed checklist. Its mask and each PID are
+                    // reported as their own step so the slow walk keeps the progress bar moving.
+                    val first = frame == 0
+                    if (first) stage(SweepPhase.FREEZE_FRAME, "Freeze frame")
                     val mask =
                         try {
                             session.rawCommand("0200$fr").also { raws[rawKey(header, "0200$fr")] = it }
@@ -408,11 +510,10 @@ class DtcReader(
                             notes += "Freeze frame $fr: ${e.message ?: e.toString()}"
                             return@withEcu
                         }
-                    val supported = Normalize.normalize(mask)
-                    // A frame that does not exist answers 7F or nothing; stop rather than
-                    // hammering the bus for frames the ECU has already declined.
-                    if (!supported.startsWith("4200")) return@withEcu
+                    val exists = Normalize.normalize(mask).startsWith("4200")
                     for (pid in FREEZE_FRAME_PIDS) {
+                        if (first) stage(SweepPhase.FREEZE_FRAME, "Freeze frame · PID $pid")
+                        if (!exists) continue
                         val cmd = "02$pid$fr"
                         try {
                             val raw = session.rawCommand(cmd)
@@ -424,6 +525,9 @@ class DtcReader(
                             // disagree with it. Silence here keeps notes about real problems.
                         }
                     }
+                    // A frame that does not exist answers 7F or nothing; stop rather than
+                    // hammering the bus for frames the ECU has already declined.
+                    if (!exists) return@withEcu
                 }
             }
         } catch (e: Exception) {
@@ -488,6 +592,7 @@ class DtcReader(
         try {
             session.withEcu(header) {
                 for (read in reads) {
+                    stage(SweepPhase.STORED_DTCS, read.label)
                     val codes = mutableListOf<Dtc>()
                     for ((cmd, parse) in read.commands) {
                         codes +=
@@ -551,6 +656,7 @@ class DtcReader(
         try {
             session.withEcu("7E2") {
                 for (table in InfLayout.tables) {
+                    stage(SweepPhase.INF_CODES, "INF ${table.request}")
                     try {
                         val raw = session.command(table.request)
                         raws[rawKey("7E2", table.request)] = raw

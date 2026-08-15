@@ -1,6 +1,7 @@
 package org.betsy.capture
 
 import org.betsy.debug.CaptureLog
+import org.betsy.debug.DemoMode
 import java.io.BufferedReader
 import java.net.HttpURLConnection
 import java.net.URL
@@ -30,14 +31,27 @@ object CaptureUploader {
     private const val CONNECT_TIMEOUT_MS = 15_000
     private const val READ_TIMEOUT_MS = 20_000
 
+    /** Short pause before a demo submit answers, so the "Sending…" state is visible. */
+    private const val DEMO_SUBMIT_MS = 250L
+
+    /** The `"demo":true` field a demo capture serializes, so a cold-start retry is recognised. */
+    private const val DEMO_MARKER = "\"demo\":true"
+
     /** Blocking; call from a background thread. */
-    fun submit(data: CaptureData): UploadResult = submitJson(data.toJson())
+    fun submit(data: CaptureData): UploadResult {
+        if (DemoMode.active() || data.demo) return demoResult()
+        return submitJson(data.toJson())
+    }
 
     /**
      * Sends an already-serialised payload. This is what a retry uses: a capture held on disk is
      * resent exactly as it was collected, so recovering one never involves the car.
      */
     fun submitJson(json: String): UploadResult {
+        // A demo session never leaves the device. The worker URL stays a compile-time constant
+        // used only by the real path; a fixture must not land in the public repository under any
+        // flag, so the short-circuit returns a local result after a short wait and opens nothing.
+        if (DemoMode.active() || json.contains(DEMO_MARKER)) return demoResult()
         val body = json.toByteArray(Charsets.UTF_8)
         CaptureLog.log("CAPTURE", "submitting ${body.size} bytes")
         var conn: HttpURLConnection? = null
@@ -73,6 +87,21 @@ object CaptureUploader {
             UploadResult.Failed(describeOffline(e.message ?: e.javaClass.simpleName))
         } finally {
             conn?.disconnect()
+        }
+    }
+
+    /**
+     * The local answer for a demo capture: no connection, and the success/error surface still
+     * renders. A demo capture retried outside a live demo session is refused outright rather than
+     * sent under any flag.
+     */
+    private fun demoResult(): UploadResult {
+        Thread.sleep(DEMO_SUBMIT_MS)
+        CaptureLog.log("CAPTURE", "demo submit short-circuited, shareFails=${DemoMode.shareFails()}")
+        return when {
+            !DemoMode.active() -> UploadResult.Failed("This is a demo scan; it is not sent.")
+            DemoMode.shareFails() -> UploadResult.Failed("Demo: the capture service could not be reached.")
+            else -> UploadResult.Ok("demo://accepted")
         }
     }
 

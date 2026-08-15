@@ -6,8 +6,10 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.view.Gravity
+import android.view.View
 import android.widget.Button
 import android.widget.LinearLayout
+import android.widget.ProgressBar
 import android.widget.ScrollView
 import android.widget.TextView
 import org.betsy.BuildConfig
@@ -17,8 +19,12 @@ import org.betsy.capture.CaptureUploader
 import org.betsy.capture.PendingCapture
 import org.betsy.capture.UploadResult
 import org.betsy.debug.CaptureLog
+import org.betsy.debug.DemoMode
 import org.betsy.dtc.DtcReadResult
 import org.betsy.dtc.DtcReader
+import org.betsy.dtc.SweepPhase
+import org.betsy.dtc.SweepProgress
+import org.betsy.dtc.SweepStep
 import org.betsy.transport.awaitBlocking
 import org.betsy.ui.theme.applyBetsyTheme
 
@@ -36,6 +42,12 @@ class DtcActivity : Activity() {
     private lateinit var bodyText: TextView
     private lateinit var statusText: TextView
     private lateinit var shareButton: Button
+    private lateinit var scanSpinner: ProgressBar
+    private lateinit var sweepPanel: LinearLayout
+    private val phaseLabels = mutableMapOf<SweepPhase, TextView>()
+    private val phaseStates = mutableMapOf<SweepPhase, TextView>()
+    private lateinit var sweepBar: ProgressBar
+    private lateinit var sweepPercent: TextView
 
     /** The sweep on screen. Sharing submits this rather than reading the car a second time. */
     private var lastResult: DtcReadResult? = null
@@ -50,21 +62,88 @@ class DtcActivity : Activity() {
 
     private fun read() {
         CaptureLog.log("UI", "DtcActivity read/refresh")
+        // A refresh starts from a clean slate: the previous result is cleared so the screen does
+        // not keep showing stale codes while the new sweep runs, and SHARE is disabled until it
+        // returns a fresh result. The phase checklist is reset and shown in place of the body.
+        bodyText.text = ""
+        bodyText.visibility = View.GONE
+        lastResult = null
+        shareButton.isEnabled = false
+        scanSpinner.visibility = View.VISIBLE
+        sweepPanel.visibility = View.VISIBLE
+        for (phase in SweepPhase.entries) {
+            phaseLabels[phase]?.setTextColor(Color.GRAY)
+            phaseStates[phase]?.apply {
+                text = "·"
+                setTextColor(Color.GRAY)
+            }
+        }
+        sweepBar.progress = 0
+        sweepPercent.text = "0%"
         statusText.text = "Reading DTC / INF codes…"
         statusText.setTextColor(Color.GRAY)
         Thread {
             if (!running) return@Thread
             try {
-                val result = awaitBlocking { DtcReader(SessionHolder.session(), SessionHolder.info()).read() }
+                val result =
+                    awaitBlocking {
+                        DtcReader(SessionHolder.session(), SessionHolder.info()).read(
+                            progress =
+                                SweepProgress { step ->
+                                    handler.post { onSweepStep(step) }
+                                },
+                        )
+                    }
                 handler.post { render(result) }
             } catch (e: Exception) {
                 CaptureLog.logThrowable("UI", e)
                 handler.post {
+                    scanSpinner.visibility = View.GONE
+                    sweepPanel.visibility = View.GONE
+                    bodyText.visibility = View.VISIBLE
                     statusText.text = "DTC read failed: ${e.message}"
                     statusText.setTextColor(Color.RED)
                 }
             }
         }.start()
+    }
+
+    /** Advances the phase checklist: prior phases tick, the active one shows x/y, and the total
+     * bar and "N to go" count track the whole sweep. */
+    private fun onSweepStep(step: SweepStep) {
+        val activeIndex = SweepPhase.entries.indexOf(step.phase)
+        SweepPhase.entries.forEachIndexed { index, phase ->
+            val label = phaseLabels[phase]
+            val state = phaseStates[phase]
+            when {
+                index < activeIndex -> {
+                    label?.setTextColor(Color.GRAY)
+                    state?.apply {
+                        text = "✓"
+                        setTextColor(Color.GREEN)
+                    }
+                }
+                index == activeIndex -> {
+                    label?.setTextColor(Color.WHITE)
+                    state?.apply {
+                        text = if (step.step >= step.phaseSteps) "✓" else "${step.step}/${step.phaseSteps}"
+                        setTextColor(if (step.step >= step.phaseSteps) Color.GREEN else Color.WHITE)
+                    }
+                }
+                else -> {
+                    label?.setTextColor(Color.GRAY)
+                    state?.apply {
+                        text = "·"
+                        setTextColor(Color.GRAY)
+                    }
+                }
+            }
+        }
+        val pct = step.totalStep * 100 / step.totalSteps
+        sweepBar.progress = pct
+        sweepPercent.text = "$pct%"
+        statusText.text = "Reading ${step.label}"
+        statusText.setTextColor(Color.GRAY)
     }
 
     private fun buildUi(): ScrollView {
@@ -111,6 +190,9 @@ class DtcActivity : Activity() {
         actionsLp.topMargin = dp(8)
         column.addView(actions, actionsLp)
 
+        sweepPanel = buildSweepPanel()
+        column.addView(sweepPanel)
+
         bodyText =
             TextView(this).apply {
                 text = ""
@@ -121,18 +203,91 @@ class DtcActivity : Activity() {
             }
         column.addView(bodyText)
 
+        val statusRow =
+            LinearLayout(this).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = Gravity.CENTER_VERTICAL
+                setPadding(0, dp(16), 0, 0)
+            }
+        scanSpinner =
+            ProgressBar(this, null, android.R.attr.progressBarStyleSmall).apply {
+                isIndeterminate = true
+                visibility = View.GONE
+            }
+        statusRow.addView(scanSpinner, LinearLayout.LayoutParams(dp(22), dp(22)))
         statusText =
             TextView(this).apply {
                 text = ""
                 textSize = 13f
                 setTextColor(Color.GRAY)
-                setPadding(0, dp(16), 0, 0)
+                setPadding(dp(10), 0, 0, 0)
             }
-        column.addView(statusText)
+        statusRow.addView(statusText)
+        column.addView(statusRow)
 
         root.addView(column)
         return root
     }
+
+    /**
+     * The five-phase checklist shown while a sweep runs: each phase names what it reads, with a
+     * "·" pending, "x/y" while active, and "✓" once done, plus a total bar and "N to go". Hidden
+     * once the result renders.
+     */
+    private fun buildSweepPanel(): LinearLayout =
+        LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            visibility = View.GONE
+            setPadding(0, dp(18), 0, 0)
+            for (phase in SweepPhase.entries) {
+                val row =
+                    LinearLayout(this@DtcActivity).apply {
+                        orientation = LinearLayout.HORIZONTAL
+                        gravity = Gravity.CENTER_VERTICAL
+                        setPadding(0, dp(5), 0, dp(5))
+                    }
+                val label =
+                    TextView(this@DtcActivity).apply {
+                        text = phase.label
+                        textSize = 13f
+                        setTextColor(Color.GRAY)
+                    }
+                row.addView(label, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+                val state =
+                    TextView(this@DtcActivity).apply {
+                        text = "·"
+                        textSize = 13f
+                        setTextColor(Color.GRAY)
+                        setTypeface(android.graphics.Typeface.MONOSPACE)
+                    }
+                row.addView(state)
+                phaseLabels[phase] = label
+                phaseStates[phase] = state
+                addView(row)
+            }
+            val barRow =
+                LinearLayout(this@DtcActivity).apply {
+                    orientation = LinearLayout.HORIZONTAL
+                    gravity = Gravity.CENTER_VERTICAL
+                    setPadding(0, dp(10), 0, 0)
+                }
+            sweepBar =
+                ProgressBar(this@DtcActivity, null, android.R.attr.progressBarStyleHorizontal).apply {
+                    max = 100
+                    progress = 0
+                }
+            barRow.addView(sweepBar, LinearLayout.LayoutParams(0, dp(6), 1f))
+            sweepPercent =
+                TextView(this@DtcActivity).apply {
+                    text = "0%"
+                    textSize = 13f
+                    setTextColor(Color.WHITE)
+                    setTypeface(android.graphics.Typeface.MONOSPACE)
+                    setPadding(dp(10), 0, 0, 0)
+                }
+            barRow.addView(sweepPercent)
+            addView(barRow)
+        }
 
     /**
      * Offers the sweep already on screen to the project. Routed through the disclosure on first
@@ -145,13 +300,14 @@ class DtcActivity : Activity() {
             return
         }
         val data =
-            CaptureData.from(
-                result = result,
-                info = SessionHolder.info(),
-                elm = SessionHolder.session().adapterBanner,
-                version = BuildConfig.VERSION_NAME,
-                build = BuildConfig.GIT_HASH,
-            )
+            CaptureData
+                .from(
+                    result = result,
+                    info = SessionHolder.info(),
+                    elm = SessionHolder.session().adapterBanner,
+                    version = BuildConfig.VERSION_NAME,
+                    build = BuildConfig.GIT_HASH,
+                ).copy(demo = DemoMode.active())
         val dialog =
             CaptureShareDialog(this, data) { ownerNotes ->
                 submit(data.copy(ownerNotes = ownerNotes))
@@ -164,7 +320,11 @@ class DtcActivity : Activity() {
         val dialog = pendingDialog ?: return
         dialog.setBusy(true)
         // Persisted before the attempt, so a send that dies with the process is still recoverable.
-        PendingCapture.save(this, data.toJson())
+        // A demo share that is not demonstrating the failure path never touches the pending slot,
+        // so it cannot clobber a real capture held on disk.
+        if (!DemoMode.active() || DemoMode.shareFails()) {
+            PendingCapture.save(this, data.toJson())
+        }
         Thread {
             val outcome = CaptureUploader.submit(data)
             handler.post {
@@ -193,6 +353,9 @@ class DtcActivity : Activity() {
     private fun render(result: DtcReadResult) {
         lastResult = result
         shareButton.isEnabled = true
+        scanSpinner.visibility = View.GONE
+        sweepPanel.visibility = View.GONE
+        bodyText.visibility = View.VISIBLE
         val sb = StringBuilder()
 
         result.liveness?.let { live ->

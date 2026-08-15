@@ -1,7 +1,10 @@
 package org.betsy.ui.theme
 
 import android.content.Context
+import android.content.res.ColorStateList
+import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
+import android.graphics.drawable.RippleDrawable
 import android.view.View
 
 /**
@@ -24,6 +27,25 @@ object Surfaces {
             cornerRadius = dp(context, radiusDp).toFloat()
             if (strokeColor != null) setStroke(dp(context, strokeDp), strokeColor)
         }
+
+    /**
+     * [rounded] wrapped in a ripple, for anything pressable. A bare [rounded] background is a
+     * static drawable with no pressed state, so a tap gives no feedback; this masks the ripple to
+     * the rounded rect and lets it tint the surface while the finger is down. The mask is opaque
+     * regardless of [fill], so even a transparent option row still shows a clipped ripple.
+     */
+    fun ripple(
+        context: Context,
+        fill: Int,
+        radiusDp: Float,
+        strokeColor: Int? = null,
+        strokeDp: Float = 1.5f,
+    ): RippleDrawable {
+        val content = rounded(context, fill, radiusDp, strokeColor, strokeDp)
+        val mask = rounded(context, Color.WHITE, radiusDp)
+        val tint = if (DesignTokens.palette.isDark) Color.argb(51, 255, 255, 255) else Color.argb(36, 13, 27, 62)
+        return RippleDrawable(ColorStateList.valueOf(tint), content, mask)
+    }
 
     /** Circle fill, used by the step dots and the selected-adapter check. */
     fun circle(

@@ -7,6 +7,7 @@ import android.view.View
 import android.widget.LinearLayout
 import android.widget.PopupWindow
 import android.widget.TextView
+import org.betsy.BuildConfig
 import org.betsy.ui.theme.DesignTokens
 import org.betsy.ui.theme.Surfaces
 import org.betsy.ui.theme.TextStyles
@@ -15,6 +16,9 @@ import org.betsy.ui.theme.TextStyles
 enum class Transport {
     BLUETOOTH,
     WIFI,
+
+    /** Debug-only scripted transport. Never offered on a release build. */
+    DEMO,
 }
 
 /**
@@ -62,7 +66,12 @@ class TransportSelect(
 
     fun select(value: Transport) {
         transport = value
-        label.text = if (value == Transport.WIFI) "Wi-Fi" else "Bluetooth"
+        label.text =
+            when (value) {
+                Transport.WIFI -> "Wi-Fi"
+                Transport.DEMO -> "Demo"
+                Transport.BLUETOOTH -> "Bluetooth"
+            }
     }
 
     private fun toggle() {
@@ -79,6 +88,7 @@ class TransportSelect(
                     Surfaces.rounded(context, DesignTokens.menuFill, DesignTokens.RADIUS_CARD, DesignTokens.cardBorder)
                 addView(option("Bluetooth", Transport.BLUETOOTH))
                 addView(option("Wi-Fi", Transport.WIFI))
+                if (BuildConfig.DEBUG) addView(option("Demo", Transport.DEMO))
             }
         popup =
             PopupWindow(menu, width, LayoutParams.WRAP_CONTENT, true).apply {
@@ -100,7 +110,7 @@ class TransportSelect(
             minimumHeight = Surfaces.dp(context, 44f)
             setPadding(Surfaces.dp(context, 12f), 0, Surfaces.dp(context, 12f), 0)
             background =
-                Surfaces.rounded(
+                Surfaces.ripple(
                     context,
                     if (selected) DesignTokens.optionSelected else Color.TRANSPARENT,
                     9f,

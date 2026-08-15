@@ -2,7 +2,6 @@ package org.betsy.ui
 
 import android.Manifest
 import android.app.Activity
-import android.app.Dialog
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.content.Intent
@@ -12,21 +11,17 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
-import android.view.Gravity
-import android.view.View
-import android.view.Window
-import android.widget.Button
-import android.widget.LinearLayout
 import android.widget.Toast
-import org.betsy.capture.CaptureConsent
-import org.betsy.capture.CaptureUploader
-import org.betsy.capture.PendingCapture
-import org.betsy.capture.UploadResult
+import org.betsy.BuildConfig
 import org.betsy.debug.CaptureLog
+import org.betsy.debug.DEMO_DELAY
+import org.betsy.debug.DemoMode
+import org.betsy.debug.DemoScenario
 import org.betsy.detect.VehicleDetector
 import org.betsy.elm.ElmSession
 import org.betsy.transport.BluetoothTransport
 import org.betsy.transport.ElmTransport
+import org.betsy.transport.ReplayTransport
 import org.betsy.transport.TransportException
 import org.betsy.transport.WifiTransport
 import org.betsy.transport.awaitBlocking
@@ -39,9 +34,6 @@ import org.betsy.ui.connect.ConnectUiState
 import org.betsy.ui.connect.Reachability
 import org.betsy.ui.connect.Transport
 import org.betsy.ui.connect.WifiEndpoint
-import org.betsy.ui.theme.DesignTokens
-import org.betsy.ui.theme.Surfaces
-import org.betsy.ui.theme.TextStyles
 import org.betsy.ui.theme.applyBetsyTheme
 import java.net.InetSocketAddress
 import java.net.Socket
@@ -95,86 +87,7 @@ class ConnectActivity :
      * out and read the car twice.
      */
     private fun offerPendingCapture() {
-        if (!CaptureConsent.isAccepted(this)) return
-        val json = PendingCapture.load(this) ?: return
-        CaptureLog.log("CAPTURE", "pending capture found, offering to resend")
-
-        val dialog = Dialog(this)
-        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
-        val pad = Surfaces.dp(this, 20)
-        val column =
-            LinearLayout(this).apply {
-                orientation = LinearLayout.VERTICAL
-                setPadding(pad, pad, pad, pad)
-            }
-        column.addView(TextStyles.body(this, "One scan is waiting to be sent", DesignTokens.TEXT_4, DesignTokens.GRAY_12, bold = true))
-        column.addView(
-            TextStyles
-                .body(this, "It was read from your car but could not be uploaded at the time. Sending it does not need the adapter.")
-                .apply { setPadding(0, Surfaces.dp(context, 10), 0, 0) },
-        )
-        val status =
-            TextStyles.body(this, "", DesignTokens.TEXT_1, DesignTokens.GRAY_10).apply {
-                setPadding(0, Surfaces.dp(context, 12), 0, 0)
-                visibility = View.GONE
-            }
-        column.addView(status)
-
-        val row =
-            LinearLayout(this).apply {
-                orientation = LinearLayout.HORIZONTAL
-                gravity = Gravity.END
-                setPadding(0, Surfaces.dp(context, 16), 0, 0)
-            }
-        val discard =
-            Button(this).apply {
-                text = "DISCARD"
-                setTextColor(DesignTokens.GRAY_10)
-                background = null
-                setOnClickListener {
-                    PendingCapture.clear(this@ConnectActivity)
-                    CaptureLog.log("CAPTURE", "pending capture discarded by user")
-                    dialog.dismiss()
-                }
-            }
-        val send =
-            Button(this).apply {
-                text = "SEND NOW"
-                setTextColor(DesignTokens.GRAY_1)
-                background = Surfaces.rounded(this@ConnectActivity, DesignTokens.BRAND_SOLID, DesignTokens.RADIUS_2)
-            }
-        send.setOnClickListener {
-            send.isEnabled = false
-            status.visibility = View.VISIBLE
-            status.text = "Sending…"
-            Thread {
-                val outcome = CaptureUploader.submitJson(json)
-                handler.post {
-                    when (outcome) {
-                        is UploadResult.Ok -> {
-                            PendingCapture.clear(this)
-                            dialog.dismiss()
-                            Toast.makeText(this, "Scan sent. Thank you.", Toast.LENGTH_LONG).show()
-                        }
-                        is UploadResult.Failed -> {
-                            // Kept, not discarded: a second failure is not a reason to lose it.
-                            send.isEnabled = true
-                            status.text = outcome.reason
-                            status.setTextColor(DesignTokens.RED_TEXT)
-                        }
-                    }
-                }
-            }.start()
-        }
-        row.addView(discard)
-        row.addView(send)
-        column.addView(row)
-
-        dialog.setContentView(column)
-        dialog.window?.setBackgroundDrawable(
-            Surfaces.rounded(this, DesignTokens.GRAY_2, DesignTokens.RADIUS_4),
-        )
-        dialog.show()
+        PendingCaptureDialog(this).show()
     }
 
     // ── ConnectScreen.Callbacks ──
@@ -205,6 +118,7 @@ class ConnectActivity :
         pendingTransport?.close()
         pendingTransport = null
         connecting = false
+        DemoMode.deactivate()
         render()
     }
 
@@ -224,6 +138,17 @@ class ConnectActivity :
      * TCP reachability probe against it.
      */
     private fun rescan() {
+        if (transport == Transport.DEMO) {
+            reachability = Reachability.UNKNOWN
+            // A fixture is a script, not a device: no Bluetooth permission, no TCP probe. Each
+            // scenario becomes one card, with a cached banner so it grades GOOD rather than
+            // "Firmware unknown".
+            candidates = DemoScenario.entries.map { demoCandidate(it) }
+            selectedId = candidates.firstOrNull { it.lastUsed }?.id ?: candidates.firstOrNull()?.id
+            scanning = false
+            render()
+            return
+        }
         if (transport == Transport.BLUETOOTH) {
             reachability = Reachability.UNKNOWN
             if (!refreshBluetoothDevices()) return
@@ -288,6 +213,15 @@ class ConnectActivity :
         )
     }
 
+    private fun demoCandidate(scenario: DemoScenario): AdapterCandidate =
+        AdapterCandidate(
+            id = "demo:${scenario.name}",
+            name = scenario.title,
+            address = scenario.description,
+            firmware = "ELM327 v2.2",
+            lastUsed = memory.lastUsedId == "demo:${scenario.name}",
+        )
+
     private fun probeReachability(endpoint: WifiEndpoint) {
         Thread {
             val reachable =
@@ -311,7 +245,11 @@ class ConnectActivity :
 
     private fun startAttempt(target: AdapterCandidate) {
         val wifi = transport == Transport.WIFI
-        val progress = ConnectProgress(wifi)
+        val demo = transport == Transport.DEMO
+        // A real connect ends any demo: the demo flag dies when its transport is replaced. The
+        // demo branch re-activates it in openTransport(), so only the real path needs clearing.
+        if (!demo) DemoMode.deactivate()
+        val progress = ConnectProgress(wifi, linkLabel = if (demo) "Opening the demo session" else null)
         var phase = ConnectPhase.LINK
 
         Thread {
@@ -336,6 +274,7 @@ class ConnectActivity :
 
                 if (!info.supported && !info.captureOnly) {
                     CaptureLog.log("UI", "${info.model.label} detected but unsupported")
+                    DemoMode.deactivate()
                     handler.post {
                         Toast
                             .makeText(
@@ -384,6 +323,7 @@ class ConnectActivity :
                 }
             } catch (e: Exception) {
                 CaptureLog.logThrowable("UI", e)
+                DemoMode.deactivate()
                 progress.fail(phase)
                 val snapshot = progress.snapshot()
                 val reason =
@@ -422,16 +362,30 @@ class ConnectActivity :
     }
 
     private fun openTransport(target: AdapterCandidate): ElmTransport =
-        if (transport == Transport.WIFI) {
-            val endpoint = WifiEndpoint.parse(screen.wifiAddress())
-            CaptureLog.log("UI", "connecting: wifi ${endpoint.host}:${endpoint.port}")
-            WifiTransport(endpoint.host, endpoint.port)
-        } else {
-            val device =
-                pairedDevices.firstOrNull { it.address == target.id }
-                    ?: throw TransportException("adapter ${target.address} is no longer paired")
-            CaptureLog.log("UI", "connecting: bluetooth ${target.address}")
-            BluetoothTransport(device)
+        when {
+            transport == Transport.DEMO && BuildConfig.DEBUG -> {
+                val scenario =
+                    DemoScenario.byId(target.id)
+                        ?: throw TransportException("unknown demo fixture ${target.id}")
+                DemoMode.activate(scenario)
+                CaptureLog.log("UI", "demo: ${scenario.title}")
+                // A real link phase is a socket connect; the scripted one has no I/O, so a short
+                // pause stands in for it and keeps the LINK row from reading "0 ms".
+                Thread.sleep(DEMO_LINK_MS)
+                ReplayTransport(scenario.script, delay = DEMO_DELAY)
+            }
+            transport == Transport.WIFI -> {
+                val endpoint = WifiEndpoint.parse(screen.wifiAddress())
+                CaptureLog.log("UI", "connecting: wifi ${endpoint.host}:${endpoint.port}")
+                WifiTransport(endpoint.host, endpoint.port)
+            }
+            else -> {
+                val device =
+                    pairedDevices.firstOrNull { it.address == target.id }
+                        ?: throw TransportException("adapter ${target.address} is no longer paired")
+                CaptureLog.log("UI", "connecting: bluetooth ${target.address}")
+                BluetoothTransport(device)
+            }
         }
 
     // ── Bluetooth permission + enumeration ──
@@ -489,5 +443,8 @@ class ConnectActivity :
 
         /** Long enough for the spinner to register as a scan, short enough not to feel stalled. */
         const val RESCAN_FEEDBACK_MS = 450L
+
+        /** Stands in for a demo link establishment, which has no real socket to connect. */
+        const val DEMO_LINK_MS = 250L
     }
 }

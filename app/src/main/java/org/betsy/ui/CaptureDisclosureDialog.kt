@@ -96,7 +96,7 @@ class CaptureDisclosureDialog(
             Button(activity).apply {
                 text = "COUNT ME IN"
                 setTextColor(DesignTokens.GRAY_1)
-                background = Surfaces.rounded(activity, DesignTokens.BRAND_SOLID, DesignTokens.RADIUS_2)
+                background = Surfaces.ripple(activity, DesignTokens.BRAND_SOLID, DesignTokens.RADIUS_2)
                 setOnClickListener {
                     CaptureConsent.accept(activity)
                     dismiss()

@@ -141,7 +141,7 @@ class AdapterCardView(
             }
 
         background =
-            Surfaces.rounded(
+            Surfaces.ripple(
                 context,
                 if (selected) DesignTokens.cardFillSelected else DesignTokens.cardFill,
                 DesignTokens.RADIUS_4,

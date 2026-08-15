@@ -44,6 +44,8 @@ data class ConnectSnapshot(
  */
 class ConnectProgress(
     private val wifi: Boolean,
+    /** Overrides the LINK step label; a demo session has no Bluetooth or Wi-Fi link to name. */
+    private val linkLabel: String? = null,
 ) {
     private val elapsed = LinkedHashMap<ConnectPhase, Long>()
     private var active: ConnectPhase? = null
@@ -96,7 +98,8 @@ class ConnectProgress(
 
     private fun label(phase: ConnectPhase): String =
         when (phase) {
-            ConnectPhase.LINK -> if (wifi) "Saying hello over Wi-Fi" else "Saying hello over Bluetooth"
+            ConnectPhase.LINK ->
+                linkLabel ?: if (wifi) "Saying hello over Wi-Fi" else "Saying hello over Bluetooth"
             ConnectPhase.ADAPTER -> banner?.let { "Checking the adapter \u00b7 $it" } ?: "Checking the adapter"
             ConnectPhase.HANDSHAKE -> "ISO 15765-4 handshake"
             ConnectPhase.VEHICLE -> "Reading your car details"

@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
+import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Rect
 import android.graphics.Typeface
@@ -45,9 +46,23 @@ class LogoHeaderView(
             if (DesignTokens.palette.isDark) R.drawable.logo_header_night else R.drawable.logo_header_day,
         )
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
-    private val labelPaint =
+    private val labelOutlinePaint =
+        labelPaint(Color.BLACK).apply {
+            style = Paint.Style.STROKE
+            strokeWidth =
+                TypedValue.applyDimension(
+                    TypedValue.COMPLEX_UNIT_DIP,
+                    1.2f,
+                    resources.displayMetrics,
+                )
+        }
+    private val labelPaint = labelPaint(Color.WHITE)
+    private val buildLabel: String = BuildConfig.BUILD_LABEL
+
+    /** Shared setup for the two label passes (outline + fill), so the two never drift apart. */
+    private fun labelPaint(color: Int): Paint =
         Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = DesignTokens.GRAY_10
+            this.color = color
             typeface = Typeface.MONOSPACE
             textAlign = Paint.Align.RIGHT
             textSize =
@@ -56,10 +71,7 @@ class LogoHeaderView(
                     10f,
                     resources.displayMetrics,
                 )
-            // Slight shadow so the label stays readable on both day (pale) and night (dark) art.
-            setShadowLayer(3f, 0f, 1f, 0x99000000.toInt())
         }
-    private val buildLabel: String = BuildConfig.BUILD_LABEL
 
     override fun onMeasure(
         widthMeasureSpec: Int,
@@ -76,6 +88,10 @@ class LogoHeaderView(
         canvas.drawBitmap(art, null, Rect(0, 0, width, height), paint)
         val pad = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 10f, resources.displayMetrics)
         // Baseline near the bottom edge; monospace keeps hash columns stable across builds.
-        canvas.drawText(buildLabel, width - pad, height - pad, labelPaint)
+        // Outline drawn under the fill so the white text keeps a black edge on either artwork.
+        val x = width - pad
+        val y = height - pad
+        canvas.drawText(buildLabel, x, y, labelOutlinePaint)
+        canvas.drawText(buildLabel, x, y, labelPaint)
     }
 }

@@ -1,14 +1,26 @@
 package org.betsy.ui
 
 import android.app.Activity
+import android.graphics.Color
 import android.graphics.Typeface
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.view.Gravity
 import android.view.View
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
+import android.widget.Toast
 import org.betsy.BuildConfig
+import org.betsy.capture.CaptureConsent
+import org.betsy.capture.CaptureData
+import org.betsy.capture.CaptureUploader
+import org.betsy.capture.PendingCapture
+import org.betsy.capture.UploadResult
+import org.betsy.debug.DemoFixtures
+import org.betsy.debug.DemoMode
+import org.betsy.debug.DemoScenario
 import org.betsy.ui.theme.DesignTokens
 import org.betsy.ui.theme.Surfaces
 import org.betsy.ui.theme.TextStyles
@@ -25,6 +37,8 @@ import org.betsy.ui.theme.applyBetsyTheme
  * Android behaviour for a theme switch and keeps every view free of a theme listener.
  */
 class SettingsActivity : Activity() {
+    private val handler = Handler(Looper.getMainLooper())
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         applyBetsyTheme()
@@ -81,6 +95,10 @@ class SettingsActivity : Activity() {
         )
 
         column.addView(section("About Betsy", aboutCard()))
+
+        if (BuildConfig.DEBUG) {
+            column.addView(section("Developer", developerCard()))
+        }
 
         val scroll = ScrollView(this).apply { addView(column) }
         root.addView(
@@ -149,10 +167,12 @@ class SettingsActivity : Activity() {
                         gravity = Gravity.CENTER
                         setTypeface(Typeface.DEFAULT_BOLD)
                         setTextColor(if (on) DesignTokens.GRAY_12 else DesignTokens.GRAY_11)
-                        if (on) {
-                            background =
-                                Surfaces.rounded(context, DesignTokens.BRAND_TINT, DesignTokens.RADIUS_PILL)
-                        }
+                        background =
+                            Surfaces.ripple(
+                                context,
+                                if (on) DesignTokens.BRAND_TINT else Color.TRANSPARENT,
+                                DesignTokens.RADIUS_PILL,
+                            )
                         val v = Surfaces.dp(context, 9)
                         setPadding(0, v, 0, v)
                         setOnClickListener { onPick(value) }
@@ -176,7 +196,7 @@ class SettingsActivity : Activity() {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
             background =
-                Surfaces.rounded(context, DesignTokens.GRAY_2, DesignTokens.RADIUS_CARD, DesignTokens.cardBorder)
+                Surfaces.ripple(context, DesignTokens.GRAY_2, DesignTokens.RADIUS_CARD, DesignTokens.cardBorder)
             val p = Surfaces.dp(context, 16)
             setPadding(p, p, p, p)
             addView(
@@ -228,4 +248,117 @@ class SettingsActivity : Activity() {
                 },
             )
         }
+
+    // ── Developer (debug builds only) ──
+
+    /**
+     * Opens every share surface without a session, on fixture [CaptureData]. Each action builds the
+     * fixture by running detection and a sweep over a zero-delay replay, so the dialogs show the
+     * production render of real script bytes rather than hand-written placeholders.
+     */
+    private fun developerCard(): View {
+        val gap = Surfaces.dp(this, 10)
+        val actions =
+            listOf(
+                "Reset disclosure" to { CaptureConsent.clear(this) },
+                "Open disclosure" to { CaptureDisclosureDialog(this) {}.show() },
+                "Share sheet · no codes" to { showSharePreview(DemoScenario.GEN2_HEALTHY) },
+                "Share sheet · decoder miss" to { showSharePreview(DemoScenario.DECODER_MISS) },
+                "Share sheet · decoded" to { showSharePreview(DemoScenario.GEN2_STORED_FAULT) },
+                "Open pending-retry dialog" to { showPendingPreview() },
+                "Simulate send success" to { simulateSend(DemoScenario.GEN2_STORED_FAULT) },
+                "Simulate send failure" to { simulateSend(DemoScenario.SHARE_FAIL) },
+            )
+        return LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            actions.forEachIndexed { index, (label, onClick) ->
+                val lp =
+                    LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.MATCH_PARENT,
+                        LinearLayout.LayoutParams.WRAP_CONTENT,
+                    )
+                if (index > 0) lp.topMargin = gap
+                addView(devRow(label, onClick), lp)
+            }
+        }
+    }
+
+    private fun devRow(
+        label: String,
+        onClick: () -> Unit,
+    ): View =
+        TextStyles.body(this, label, DesignTokens.TEXT_2, DesignTokens.GRAY_12).apply {
+            background =
+                Surfaces.ripple(context, DesignTokens.GRAY_2, DesignTokens.RADIUS_CARD, DesignTokens.cardBorder)
+            val p = Surfaces.dp(context, 16)
+            setPadding(p, p, p, p)
+            setOnClickListener { onClick() }
+        }
+
+    private fun showSharePreview(scenario: DemoScenario) {
+        Thread {
+            val data = DemoFixtures.capture(scenario)
+            handler.post {
+                var dialog: CaptureShareDialog? = null
+                dialog =
+                    CaptureShareDialog(this, data) { notes ->
+                        dialog?.let { submitPreview(it, data.copy(ownerNotes = notes), scenario) }
+                    }
+                dialog.show()
+            }
+        }.start()
+    }
+
+    /** Runs a preview submit through the demo stub so the sending/error surfaces render locally. */
+    private fun submitPreview(
+        dialog: CaptureShareDialog,
+        data: CaptureData,
+        scenario: DemoScenario,
+    ) {
+        dialog.setBusy(true)
+        DemoMode.activate(scenario)
+        Thread {
+            val outcome = CaptureUploader.submit(data)
+            handler.post {
+                DemoMode.deactivate()
+                when (outcome) {
+                    is UploadResult.Ok -> {
+                        dialog.dismiss()
+                        Toast.makeText(this, "Demo: send succeeded.", Toast.LENGTH_LONG).show()
+                    }
+                    is UploadResult.Failed -> dialog.showError(outcome.reason)
+                }
+            }
+        }.start()
+    }
+
+    private fun showPendingPreview() {
+        Thread {
+            val data = DemoFixtures.capture(DemoScenario.GEN2_STORED_FAULT)
+            PendingCapture.save(this, data.toJson())
+            handler.post {
+                // Demo stays active for the life of the dialog so SEND NOW short-circuits; a
+                // fixture must never be POSTed by a preview.
+                DemoMode.activate(DemoScenario.GEN2_STORED_FAULT)
+                PendingCaptureDialog(this, onDismiss = { DemoMode.deactivate() }).show()
+            }
+        }.start()
+    }
+
+    private fun simulateSend(scenario: DemoScenario) {
+        Thread {
+            val data = DemoFixtures.capture(scenario)
+            DemoMode.activate(scenario)
+            val outcome = CaptureUploader.submit(data)
+            DemoMode.deactivate()
+            handler.post {
+                val message =
+                    when (outcome) {
+                        is UploadResult.Ok -> "Demo: send succeeded."
+                        is UploadResult.Failed -> "Demo: send failed — ${outcome.reason}"
+                    }
+                Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+            }
+        }.start()
+    }
 }

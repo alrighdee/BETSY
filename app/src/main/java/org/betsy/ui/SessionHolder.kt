@@ -1,5 +1,6 @@
 package org.betsy.ui
 
+import org.betsy.debug.DemoMode
 import org.betsy.detect.VehicleInfo
 import org.betsy.elm.ElmSession
 import org.betsy.transport.ElmTransport
@@ -32,5 +33,8 @@ object SessionHolder {
         transport = null
         session = null
         info = null
+        // The demo flag dies with the session that carried it, so a later real connect or a cold
+        // start never mistakes a live capture for a scripted one.
+        DemoMode.deactivate()
     }
 }

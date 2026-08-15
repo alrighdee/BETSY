@@ -163,7 +163,7 @@ class ConnectScreen(
             TextStyles.body(context, "Connect", 17f, Color.WHITE, bold = true).apply {
                 gravity = Gravity.CENTER
                 background =
-                    Surfaces.rounded(
+                    Surfaces.ripple(
                         context,
                         DesignTokens.BRAND_SOLID,
                         DesignTokens.RADIUS_CARD,
@@ -265,7 +265,7 @@ class ConnectScreen(
                     val h = Surfaces.dp(context, 13f)
                     setPadding(h, 0, h, 0)
                     background =
-                        Surfaces.rounded(
+                        Surfaces.ripple(
                             context,
                             DesignTokens.badgeFillSelected,
                             DesignTokens.RADIUS_4,
@@ -318,6 +318,7 @@ class ConnectScreen(
 
     fun render(state: ConnectUiState) {
         val wifi = state.transport == Transport.WIFI
+        val demo = state.transport == Transport.DEMO
         transportSelect.select(state.transport)
 
         // A scan in progress is not an empty result. Without the scanning term, clearing the list
@@ -331,12 +332,17 @@ class ConnectScreen(
         // a dead control competing with the empty state's own primary action, so it is hidden there.
         connectButton.visibility = if (!state.connecting && state.candidates.isNotEmpty()) VISIBLE else GONE
 
-        listTitle.text = if (wifi) "On this network" else "Paired devices"
+        listTitle.text =
+            when {
+                wifi -> "On this network"
+                demo -> "Demo fixtures"
+                else -> "Paired devices"
+            }
         listHint.text =
-            if (wifi) {
-                "Anything answering on the adapter network."
-            } else {
-                "Select your adapter."
+            when {
+                wifi -> "Anything answering on the adapter network."
+                demo -> "A scripted car, no dongle needed."
+                else -> "Select your adapter."
             }
         renderScanning(state.scanning)
         renderReachability(state.reachability)

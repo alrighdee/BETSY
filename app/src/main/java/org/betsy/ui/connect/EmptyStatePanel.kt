@@ -56,7 +56,7 @@ class EmptyStatePanel(
             TextStyles.body(context, "Open Bluetooth settings", 17f, Color.WHITE, bold = true).apply {
                 gravity = Gravity.CENTER
                 background =
-                    Surfaces.rounded(
+                    Surfaces.ripple(
                         context,
                         DesignTokens.BRAND_SOLID,
                         DesignTokens.RADIUS_CARD,
@@ -76,7 +76,7 @@ class EmptyStatePanel(
             TextStyles.body(context, "Use a Wi-Fi adapter instead", DesignTokens.TEXT_2, DesignTokens.GRAY_11).apply {
                 gravity = Gravity.CENTER
                 background =
-                    Surfaces.rounded(context, Color.TRANSPARENT, DesignTokens.RADIUS_3, DesignTokens.ghostBorder, 1f)
+                    Surfaces.ripple(context, Color.TRANSPARENT, DesignTokens.RADIUS_3, DesignTokens.ghostBorder, 1f)
                 setOnClickListener { onUseWifi() }
             }
         addView(

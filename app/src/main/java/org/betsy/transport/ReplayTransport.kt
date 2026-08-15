@@ -1,6 +1,23 @@
 package org.betsy.transport
 
 /**
+ * Per-command delay profile for a [ReplayTransport]. A single delay for every send is the wrong
+ * shape: the monitor polls two commands at 2 Hz, connect is a handful of `AT*` plus a few probes,
+ * and a Gen2 sweep is forty-plus exchanges. One number either stutters the bars or makes the sweep
+ * instant. Any field left at 0 means no sleep for that kind.
+ */
+data class ReplayDelay(
+    /** Adapter-local `AT*` commands, acknowledged quickly regardless of the car. */
+    val atMs: Long = 0,
+    /** A scripted, answering non-AT request. */
+    val hitMs: Long = 0,
+    /** A miss: fallback / `NO DATA`. */
+    val missMs: Long = 0,
+    /** Multi-frame pages (`21C6`–`21CA`, `21CED0CF`), which a car answers slowly. */
+    val longMs: Long = 0,
+)
+
+/**
  * An [ElmTransport] that answers from a fixed script instead of a car (PROTOCOL.md §7.4).
  *
  * This exists because a healthy vehicle returns empty freeze pages, so the path a transmitted INF
@@ -16,6 +33,8 @@ class ReplayTransport(
     private val script: Map<String, String>,
     /** Reply for anything the script does not cover, a silent ECU, as a real one would be. */
     private val fallback: String = "NO DATA",
+    /** Optional wall-clock delay per command; defaults to zero so tests stay instant. */
+    private val delay: ReplayDelay = ReplayDelay(),
 ) : ElmTransport {
     override var readTimeoutMs: Int = 2500
 
@@ -24,16 +43,45 @@ class ReplayTransport(
 
     private var closed = false
 
+    /**
+     * The last `ATSH` header set, tracked so a script can answer one request differently per ECU
+     * (`"7E2/21CE"` vs `"7E3/21CE"`). Plain keys still work: a header-qualified key is only an
+     * override, looked up before the bare command.
+     */
+    private var header: String? = null
+
     override suspend fun send(cmd: String): String {
         if (closed) throw TransportException("replay transport is closed (cmd=$cmd)")
         sent += cmd
-        // AT configuration is adapter-local; a real ELM327 acknowledges it regardless of the car.
-        if (cmd.startsWith("AT")) return script[cmd] ?: "OK"
-        return script[cmd] ?: fallback
+        if (cmd.startsWith("ATSH")) header = cmd.removePrefix("ATSH")
+
+        val at = cmd.startsWith("AT")
+        val keyed = header?.let { script["$it/$cmd"] }
+        val plain = script[cmd]
+        val reply =
+            when {
+                at -> plain ?: "OK"
+                keyed != null -> keyed
+                else -> plain ?: fallback
+            }
+
+        val sleepMs =
+            when {
+                at -> delay.atMs
+                cmd in LONG_PAGES -> delay.longMs
+                keyed != null || plain != null -> delay.hitMs
+                else -> delay.missMs
+            }
+        if (sleepMs > 0) Thread.sleep(sleepMs)
+        return reply
     }
 
     override fun close() {
         closed = true
+    }
+
+    private companion object {
+        val LONG_PAGES = setOf("21C6", "21C7", "21C8", "21C9", "21CA", "21CED0CF")
     }
 }
 
@@ -104,6 +152,9 @@ object SimulatedCar {
      */
     val gen2WithStoredFault: Map<String, String> =
         mapOf(
+            // adapter phase: ATZ must name the firmware or ElmSession.reset() aborts before the
+            // car is ever asked anything.
+            "ATZ" to "ELM327 v2.2",
             // detection: Gen3 probe misses, Gen2 probe hits (§3)
             "2181" to "NO DATA",
             "21CE" to "61CE6D810B85ED85EB85E285DF85F085F685F185F385F485F385EB85E585E485E1",
@@ -155,4 +206,35 @@ object SimulatedCar {
                 "21C9" to EMPTY_PAGE_C9,
                 "21CA" to EMPTY_PAGE_CA,
             )
+
+    /**
+     * A stored DTC whose freeze pages carry no sub-code: `13B0` reports `P0571` but every
+     * `21C6`–`21CA` page is empty, so the sweep has stored codes and no readable INF value. That
+     * is the "sub-code not recognised" share sheet, and it is worth showing because a fault with
+     * no readable value is exactly the data the project needs.
+     */
+    val gen2DecoderMiss: Map<String, String> =
+        gen2WithStoredFault +
+            mapOf(
+                "21C6" to EMPTY_PAGE_C6,
+                "21C7" to EMPTY_PAGE_C7,
+                "21C8" to EMPTY_PAGE_C8,
+                "21C9" to EMPTY_PAGE_C9,
+                "21CA" to EMPTY_PAGE_CA,
+            )
+
+    /**
+     * A Gen2-era layout whose battery data answers on `7E2` instead of `7E3`. `21CE` misses on
+     * `7E3` and hits on `7E2`, which detection files as capture-only. The header-qualified keys
+     * are what let one script answer the same request differently per ECU header.
+     */
+    val gen2CaptureOnly: Map<String, String> =
+        gen2WithStoredFault +
+            mapOf(
+                "7E3/21CE" to "NO DATA",
+                "7E2/21CE" to "61CE6D810B85ED85EB85E285DF85F085F685F185F385F485F385EB85E585E485E1",
+            )
+
+    /** A demo connect that never reaches the car: ATZ answers nothing a real adapter would. */
+    val connectFail: Map<String, String> = mapOf("ATZ" to "")
 }

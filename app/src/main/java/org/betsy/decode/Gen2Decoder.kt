@@ -94,7 +94,9 @@ object Gen2Decoder {
         val end = if (n > 17) i + 72 else i + 4 + n * 4
         val d = Normalize.requireTag(r, "D0", end) // IR section
         val c = Normalize.requireTag(r, "CF", d + 2 + n * 2) // spillover/limits/temps section
-        Normalize.requireLength(r, c + 38, "21CED0CF")
+        // 21CF payload is 16 bytes: aux, three limits, ΔSOC, then TB1–TB3 (u16) ending at byte 15.
+        // The measured acceptance fixture (PROTOCOL.md §5.2) is 34 chars here, tag included.
+        Normalize.requireLength(r, c + 34, "21CED0CF")
 
         m.soc = Normalize.u8(r, i + 4) / 2f
         m.currentAmps = Normalize.u16(r, i + 6) / 100f - 327.68f

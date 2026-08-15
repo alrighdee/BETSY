@@ -2,6 +2,7 @@ package org.betsy
 
 import org.betsy.decode.Gen2Decoder
 import org.betsy.model.BatteryModel
+import org.betsy.transport.SimulatedCar
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -33,10 +34,11 @@ class Gen2DecoderTest {
 
         // 21CF section. Non-15 layout: aux/limits/delta at hex-char k+6/k+8/k+10/k+12, temps at
         // k+20/k+24/k+28. Fifteen layout: scalars 4 hex chars earlier (k+2/k+4/k+6/k+8), temps
-        // stay at k+20. 18 bytes so the combined decoder's requireLength(c+38) passes.
+        // stay at k+20. 16 bytes, matching the measured acceptance fixture (PROTOCOL.md §5.2):
+        // the combined decoder's requireLength(c+34) covers the tag plus the 16-byte payload.
         // k+6 → byte 3, k+8 → byte 4, k+10 → byte 5, k+12 → byte 6, k+20 → byte 10 (u16)
         val s = if (fifteen) 2 else 6
-        val bytes = ByteArray(18)
+        val bytes = ByteArray(16)
         bytes[s / 2] = 192.toByte() // aux12V: 192 * 0.2 - 25.6 = 12.8 V
         bytes[s / 2 + 1] = 178.toByte() // maxChg: (178/2 - 64) * 1.34 = 33.5 HP
         bytes[s / 2 + 2] = 170.toByte() // maxDis: (170/2 - 64) * 1.34 = 28.14 HP
@@ -109,5 +111,26 @@ class Gen2DecoderTest {
         Gen2Decoder.decodeD0(r, m)
         assertEquals(listOf(25, 25, 25), m.internalResistance.take(3))
         assertEquals(14, m.internalResistance.size)
+    }
+
+    /**
+     * The measured parked-and-charging fixture that drives the demo monitor. Its 21CF section is
+     * the real 16 bytes, so this pins that the combined decoder's length guard accepts what a car
+     * actually answers, not just the synthetic 18-byte fixture above.
+     */
+    @Test
+    fun measuredParkedAndChargingFixtureDecodes() {
+        val r = SimulatedCar.gen2WithStoredFault.getValue("21CED0CF")
+        val m = BatteryModel(blockCount = 14)
+        Gen2Decoder.decodeCombined(r, m, fifteenBlockVariant = false)
+
+        assertEquals(54.5f, m.soc, 0.01f)
+        assertEquals(2.67f, m.currentAmps, 0.01f)
+        assertEquals(13.8f, m.aux12V, 0.01f)
+        assertEquals(listOf(19, 19, 19), m.internalResistance.take(3))
+        assertEquals(14, m.blockVolts.size)
+        assertEquals(31.45f, m.temps[0], 0.01f)
+        assertEquals(30.99f, m.temps[1], 0.01f)
+        assertEquals(31.56f, m.temps[2], 0.01f)
     }
 }

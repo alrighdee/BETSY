@@ -62,7 +62,13 @@ class DebugDemoTest {
                 DtcReader(ElmSession(ReplayTransport(SimulatedCar.gen2WithStoredFault)), gen2).read()
             }
         assertEquals(listOf("HV ECU (7E2)"), result.groups.map { it.label })
-        assertEquals(listOf("P0571"), result.groups.single().codes.map { it.code })
+        assertEquals(
+            listOf("P0571"),
+            result.groups
+                .single()
+                .codes
+                .map { it.code },
+        )
         assertEquals("5300", result.rawResponses.getValue("7E0/13B0"))
     }
 

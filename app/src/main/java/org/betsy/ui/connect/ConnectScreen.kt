@@ -19,6 +19,7 @@ import android.widget.TextView
 import org.betsy.ui.theme.DesignTokens
 import org.betsy.ui.theme.Surfaces
 import org.betsy.ui.theme.TextStyles
+import org.betsy.update.UpdateStatus
 
 /** Whether the configured Wi-Fi endpoint answered a TCP probe. */
 enum class Reachability {
@@ -60,6 +61,12 @@ class ConnectScreen(
         fun onOpenBluetoothSettings()
 
         fun onWifiAddressChanged()
+
+        fun onOpenSettings()
+
+        fun onViewUpdate(url: String)
+
+        fun onDismissUpdate()
     }
 
     private val transportSelect = TransportSelect(context) { callbacks.onTransportChanged(it) }
@@ -82,6 +89,9 @@ class ConnectScreen(
     private val emptyPanel: EmptyStatePanel
     private val connectingPanel: ConnectingPanel
     private val connectButton: TextView
+    private val updateBanner: LinearLayout
+    private val updateLabel: TextView
+    private var update: UpdateStatus.Available? = null
     private var radar: ValueAnimator? = null
 
     init {
@@ -97,6 +107,21 @@ class ConnectScreen(
                 val h = Surfaces.dp(context, 20f)
                 setPadding(h, Surfaces.dp(context, 8f), h, h)
             }
+
+        updateLabel = TextStyles.body(context, "", DesignTokens.TEXT_3, DesignTokens.GRAY_12, bold = true)
+        updateBanner = buildUpdateBanner()
+        column.addView(
+            updateBanner,
+            LayoutParams(MATCH_PARENT, WRAP_CONTENT).apply { bottomMargin = Surfaces.dp(context, 16f) },
+        )
+
+        column.addView(
+            TextStyles.body(context, "Settings", DesignTokens.TEXT_1, DesignTokens.BRAND_SOLID, bold = true).apply {
+                gravity = Gravity.END
+                setOnClickListener { callbacks.onOpenSettings() }
+            },
+            LayoutParams(MATCH_PARENT, WRAP_CONTENT).apply { bottomMargin = Surfaces.dp(context, 8f) },
+        )
 
         // Label and control share one row, so the two read as a single sentence: the dropdown
         // already says Bluetooth or Wi-Fi, and the label only has to name what is being chosen.
@@ -347,6 +372,71 @@ class ConnectScreen(
         renderScanning(state.scanning)
         renderReachability(state.reachability)
         renderCards(state, wifi)
+        applyUpdateVisibility(state.connecting)
+    }
+
+    /**
+     * Offers a newer published release. Hidden while connecting: that panel already owns the
+     * screen, and a banner competing with Cancel is the wrong interruption.
+     */
+    fun setUpdate(available: UpdateStatus.Available?) {
+        update = available
+        if (available != null) {
+            updateLabel.text = "BETSY ${available.version} is out"
+        }
+        applyUpdateVisibility(connectingPanel.visibility == VISIBLE)
+    }
+
+    fun currentUpdate(): UpdateStatus.Available? = update
+
+    private fun applyUpdateVisibility(connecting: Boolean) {
+        updateBanner.visibility = if (!connecting && update != null) VISIBLE else GONE
+    }
+
+    private fun buildUpdateBanner(): LinearLayout {
+        val view =
+            TextStyles.body(context, "View", DesignTokens.TEXT_2, DesignTokens.GRAY_1, bold = true).apply {
+                gravity = Gravity.CENTER
+                background = Surfaces.ripple(context, DesignTokens.BRAND_SOLID, DesignTokens.RADIUS_PILL)
+                val h = Surfaces.dp(context, 14f)
+                val v = Surfaces.dp(context, 8f)
+                setPadding(h, v, h, v)
+                setOnClickListener { update?.let { callbacks.onViewUpdate(it.url) } }
+            }
+        val dismiss =
+            TextStyles.body(context, "Not now", DesignTokens.TEXT_2, DesignTokens.GRAY_11).apply {
+                gravity = Gravity.CENTER
+                val h = Surfaces.dp(context, 10f)
+                setPadding(h, Surfaces.dp(context, 8f), 0, Surfaces.dp(context, 8f))
+                setOnClickListener { callbacks.onDismissUpdate() }
+            }
+        return LinearLayout(context).apply {
+            orientation = VERTICAL
+            visibility = GONE
+            background =
+                Surfaces.rounded(context, DesignTokens.GRAY_2, DesignTokens.RADIUS_CARD, DesignTokens.cardBorder)
+            val p = Surfaces.dp(context, 16f)
+            setPadding(p, p, p, p)
+            addView(updateLabel)
+            addView(
+                TextStyles
+                    .body(
+                        context,
+                        "A newer release is on GitHub.",
+                        DesignTokens.TEXT_2,
+                        DesignTokens.GRAY_11,
+                    ).apply { setPadding(0, Surfaces.dp(context, 4f), 0, 0) },
+            )
+            addView(
+                LinearLayout(context).apply {
+                    orientation = HORIZONTAL
+                    gravity = Gravity.END or Gravity.CENTER_VERTICAL
+                    setPadding(0, Surfaces.dp(context, 12f), 0, 0)
+                    addView(dismiss)
+                    addView(view)
+                },
+            )
+        }
     }
 
     private fun renderScanning(scanning: Boolean) {

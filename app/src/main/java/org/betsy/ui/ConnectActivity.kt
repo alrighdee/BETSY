@@ -6,6 +6,7 @@ import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
@@ -35,6 +36,9 @@ import org.betsy.ui.connect.Reachability
 import org.betsy.ui.connect.Transport
 import org.betsy.ui.connect.WifiEndpoint
 import org.betsy.ui.theme.applyBetsyTheme
+import org.betsy.update.UpdateCache
+import org.betsy.update.UpdateChecker
+import org.betsy.update.UpdateStatus
 import java.net.InetSocketAddress
 import java.net.Socket
 
@@ -76,6 +80,7 @@ class ConnectActivity :
         setContentView(screen)
         rescan()
         offerPendingCapture()
+        checkForUpdate()
     }
 
     /**
@@ -128,6 +133,67 @@ class ConnectActivity :
 
     override fun onWifiAddressChanged() {
         if (transport == Transport.WIFI) rescan()
+    }
+
+    override fun onOpenSettings() {
+        startActivity(Intent(this, SettingsActivity::class.java))
+    }
+
+    override fun onViewUpdate(url: String) {
+        openRelease(url)
+    }
+
+    override fun onDismissUpdate() {
+        val shown = screen.currentUpdate() ?: return
+        UpdateCache(this).dismiss(shown.version)
+        screen.setUpdate(null)
+    }
+
+    /**
+     * Looks up the latest published release. Uses the 24-hour cache when it is still fresh so a
+     * garage full of phones does not burn GitHub's unauthenticated budget. Failures stay silent:
+     * this screen is for connecting to a car, not for diagnosing GitHub.
+     */
+    private fun checkForUpdate() {
+        Thread {
+            val cache = UpdateCache(this)
+            val status =
+                if (cache.isFresh()) {
+                    val latest = cache.latest()
+                    val url = cache.url()
+                    if (latest != null && url != null) {
+                        UpdateChecker.evaluate(latest, url, BuildConfig.VERSION_NAME)
+                    } else {
+                        UpdateStatus.Unknown("empty cache")
+                    }
+                } else {
+                    UpdateChecker.fetch().also { remember(cache, it) }
+                }
+            val banner = UpdateChecker.visibleBanner(status, cache.dismissed())
+            handler.post {
+                if (isFinishing || isDestroyed) return@post
+                screen.setUpdate(banner)
+            }
+        }.start()
+    }
+
+    private fun remember(
+        cache: UpdateCache,
+        status: UpdateStatus,
+    ) {
+        when (status) {
+            is UpdateStatus.Available -> cache.remember(status.version, status.url)
+            is UpdateStatus.Current -> cache.touch()
+            is UpdateStatus.Unknown -> Unit
+        }
+    }
+
+    private fun openRelease(url: String) {
+        try {
+            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+        } catch (_: Exception) {
+            Toast.makeText(this, "Couldn't open the release page.", Toast.LENGTH_SHORT).show()
+        }
     }
 
     // ── Scanning ──

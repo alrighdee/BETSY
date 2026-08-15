@@ -1,8 +1,10 @@
 package org.betsy.ui
 
 import android.app.Activity
+import android.content.Intent
 import android.graphics.Color
 import android.graphics.Typeface
+import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -28,6 +30,9 @@ import org.betsy.ui.theme.ThemeMode
 import org.betsy.ui.theme.ThemePrefs
 import org.betsy.ui.theme.UnitPrefs
 import org.betsy.ui.theme.applyBetsyTheme
+import org.betsy.update.UpdateCache
+import org.betsy.update.UpdateChecker
+import org.betsy.update.UpdateStatus
 
 /**
  * Settings, from `BETSY.dc.html`: Appearance, Temperature, Keep the screen awake, About.
@@ -247,7 +252,81 @@ class SettingsActivity : Activity() {
                     layoutParams = lp
                 },
             )
+            addView(updateRow())
         }
+
+    /**
+     * On-demand check, ignores the 24-hour cache age. Available is tappable to the release page;
+     * a dismissed connect banner is still named here.
+     */
+    private fun updateRow(): View {
+        val status =
+            TextStyles.body(this, "Check", DesignTokens.TEXT_2, DesignTokens.BRAND_SOLID, bold = true)
+        var latestUrl: String? = null
+        var checking = false
+        val row =
+            LinearLayout(this).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = Gravity.CENTER_VERTICAL
+                val lp =
+                    LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.MATCH_PARENT,
+                        LinearLayout.LayoutParams.WRAP_CONTENT,
+                    )
+                lp.topMargin = Surfaces.dp(context, 14)
+                layoutParams = lp
+                addView(
+                    TextStyles.body(context, "Check for update", DesignTokens.TEXT_3, DesignTokens.GRAY_12).apply {
+                        layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+                    },
+                )
+                addView(status)
+            }
+        row.setOnClickListener {
+            val url = latestUrl
+            if (url != null) {
+                openRelease(url)
+                return@setOnClickListener
+            }
+            if (checking) return@setOnClickListener
+            checking = true
+            status.text = "Checking…"
+            Thread {
+                val result = UpdateChecker.fetch()
+                when (result) {
+                    is UpdateStatus.Available -> UpdateCache(this).remember(result.version, result.url)
+                    is UpdateStatus.Current -> UpdateCache(this).touch()
+                    is UpdateStatus.Unknown -> Unit
+                }
+                handler.post {
+                    checking = false
+                    when (result) {
+                        is UpdateStatus.Available -> {
+                            latestUrl = result.url
+                            status.text = "${result.version} is out"
+                        }
+                        is UpdateStatus.Current -> {
+                            latestUrl = null
+                            status.text = "You're on ${result.installed}"
+                        }
+                        is UpdateStatus.Unknown -> {
+                            latestUrl = null
+                            status.text = result.reason
+                        }
+                    }
+                }
+            }.start()
+        }
+        return row
+    }
+
+    private fun openRelease(url: String) {
+        try {
+            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+        } catch (_: Exception) {
+            Toast.makeText(this, "Couldn't open the release page.", Toast.LENGTH_SHORT).show()
+        }
+    }
 
     // ── Developer (debug builds only) ──
 

@@ -35,8 +35,11 @@ class SimulatedCarTest {
     fun aStoredFaultIsReadAndItsTablesCapturedVerbatim() {
         val (_, result) = read(SimulatedCar.gen2WithStoredFault)
 
-        // ReplayTransport answers the same 13B0 for HV and engine, so both groups see P0571.
-        assertEquals(listOf("P0571", "P0571"), result.groups.flatMap { g -> g.codes.map { it.code } })
+        // P0571 is a hybrid-control code. Engine answers clean; a bare 13B0 key used to
+        // duplicate it under 7E0 and make the demo look like two ECUs stored the same fault.
+        assertEquals(listOf("HV ECU (7E2)"), result.groups.map { it.label })
+        assertEquals(listOf("P0571"), result.groups.flatMap { g -> g.codes.map { it.code } })
+        assertEquals("5300", result.rawResponses.getValue("7E0/13B0"))
         assertTrue(result.hasStoredDtcs)
 
         // The payoff, on bytes a real car transmitted: one populated page, one sub-code, and it
@@ -199,7 +202,8 @@ class SimulatedCarTest {
 
         assertTrue(result.hasStoredDtcs)
         assertEquals(emptyList<Int>(), result.infCodes.map { it.code })
-        assertEquals(listOf("P0571", "P0571"), result.groups.flatMap { g -> g.codes.map { it.code } })
+        assertEquals(listOf("P0571"), result.groups.flatMap { g -> g.codes.map { it.code } })
+        assertEquals(listOf("HV ECU (7E2)"), result.groups.map { it.label })
     }
 
     /**
@@ -250,7 +254,7 @@ class SimulatedCarTest {
     fun aSecondFaultedCarStillYieldsUsableEvidence() {
         val twoFaults =
             SimulatedCar.gen2WithStoredFault +
-                mapOf("13B0" to "53020571 0AA6".replace(" ", ""))
+                mapOf("7E2/13B0" to "53020571 0AA6".replace(" ", ""))
         val (_, result) = read(twoFaults)
 
         assertEquals(

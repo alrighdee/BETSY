@@ -52,6 +52,18 @@ class DebugDemoTest {
         val result = awaitBlocking { DtcReader(ElmSession(t), gen2).read() }
         assertTrue(result.hasStoredDtcs)
         assertEquals(emptyList<Int>(), result.infCodes.map { it.code })
+        assertEquals(listOf("HV ECU (7E2)"), result.groups.map { it.label })
+    }
+
+    @Test
+    fun storedFaultLivesOnlyOnTheHybridControlEcu() {
+        val result =
+            awaitBlocking {
+                DtcReader(ElmSession(ReplayTransport(SimulatedCar.gen2WithStoredFault)), gen2).read()
+            }
+        assertEquals(listOf("HV ECU (7E2)"), result.groups.map { it.label })
+        assertEquals(listOf("P0571"), result.groups.single().codes.map { it.code })
+        assertEquals("5300", result.rawResponses.getValue("7E0/13B0"))
     }
 
     @Test

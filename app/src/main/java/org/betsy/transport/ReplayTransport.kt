@@ -176,10 +176,11 @@ object SimulatedCar {
             // Generic $03 with one stored code; $07 clean (supplemental)
             "03" to "7EA 04 43 01 0A A6 ",
             "07" to "7EA 02 47 00 ",
-            // DTC read (§7.1): one stored code on the HV ECU; battery and engine clean
-            // (engine uses the same 13B0 command on 7E0; ReplayTransport is not call-order
-            // aware, so both ECUs see P0AA6 unless overridden. Healthy fixture zeros 13B0.)
-            "13B0" to "53010571",
+            // DTC read (§7.1): one stored code on the HV ECU; battery and engine clean.
+            // `13B0` is the same command on 7E2 and 7E0, so the keys must be header-qualified
+            // or the engine group inherits the HV mask and a demo shows P0571 twice.
+            "7E2/13B0" to "53010571",
+            "7E0/13B0" to "5300",
             "1380" to "5300",
             // Freeze pages, verbatim from the car (§7.4.2). Page 2 carries the sub-code at
             // bytes 29-30; the rest are untouched because only one DTC is stored.
@@ -194,7 +195,8 @@ object SimulatedCar {
     val gen2Healthy: Map<String, String> =
         gen2WithStoredFault +
             mapOf(
-                "13B0" to "5300",
+                "7E2/13B0" to "5300",
+                "7E0/13B0" to "5300",
                 "03" to "7EA 02 43 00 ",
                 "07" to "7EA 02 47 00 ",
                 // Every page zero. Must be spelled out: this map is built from the faulted one,

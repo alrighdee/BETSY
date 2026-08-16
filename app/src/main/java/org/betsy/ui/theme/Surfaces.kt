@@ -40,10 +40,13 @@ object Surfaces {
         radiusDp: Float,
         strokeColor: Int? = null,
         strokeDp: Float = 1.5f,
+        rippleColor: Int? = null,
     ): RippleDrawable {
         val content = rounded(context, fill, radiusDp, strokeColor, strokeDp)
         val mask = rounded(context, Color.WHITE, radiusDp)
-        val tint = if (DesignTokens.palette.isDark) Color.argb(51, 255, 255, 255) else Color.argb(36, 13, 27, 62)
+        val tint =
+            rippleColor
+                ?: if (DesignTokens.palette.isDark) Color.argb(51, 255, 255, 255) else Color.argb(36, 13, 27, 62)
         return RippleDrawable(ColorStateList.valueOf(tint), content, mask)
     }
 

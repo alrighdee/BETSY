@@ -7,7 +7,7 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.view.Gravity
-import android.widget.Button
+import android.view.View
 import android.widget.LinearLayout
 import android.widget.TextView
 import org.betsy.debug.CaptureLog
@@ -19,6 +19,7 @@ import org.betsy.transport.awaitBlocking
 import org.betsy.ui.theme.DesignTokens
 import org.betsy.ui.theme.Surfaces
 import org.betsy.ui.theme.TextStyles
+import org.betsy.ui.theme.UnitPrefs
 import org.betsy.ui.theme.applyBetsyTheme
 
 /**
@@ -35,7 +36,6 @@ class BatteryActivity : Activity() {
     private val model = BatteryModel()
     private var running = true
 
-    private lateinit var infoText: TextView
     private lateinit var socText: TextView
     private lateinit var currentText: TextView
     private lateinit var packText: TextView
@@ -73,6 +73,7 @@ class BatteryActivity : Activity() {
                         handler.post {
                             statusText.text = "Adapter disconnected."
                             statusText.setTextColor(Color.RED)
+                            statusText.visibility = View.VISIBLE
                         }
                         running = false
                         break
@@ -80,7 +81,10 @@ class BatteryActivity : Activity() {
                 } catch (e: Exception) {
                     if (++consecutiveFailures >= 3) {
                         CaptureLog.logThrowable("UI", e)
-                        handler.post { statusText.text = "Polling error: ${e.message}" }
+                        handler.post {
+                            statusText.text = "Polling error: ${e.message}"
+                            statusText.visibility = View.VISIBLE
+                        }
                         running = false
                         break
                     }
@@ -101,11 +105,8 @@ class BatteryActivity : Activity() {
         val body =
             LinearLayout(this).apply {
                 orientation = LinearLayout.VERTICAL
-                setPadding(dp(16), dp(16), dp(16), dp(16))
+                setPadding(dp(18), dp(12), dp(18), dp(12))
             }
-
-        infoText = sectionLabel("")
-        body.addView(infoText)
 
         val stats =
             LinearLayout(this).apply {
@@ -114,7 +115,7 @@ class BatteryActivity : Activity() {
             }
         socText = statColumn(stats, "SOC")
         currentText = statColumn(stats, "CURRENT")
-        root.addView(stats)
+        body.addView(stats)
 
         val stats2 =
             LinearLayout(this).apply {
@@ -122,7 +123,7 @@ class BatteryActivity : Activity() {
             }
         packText = statColumn(stats2, "PACK V")
         diffText = statColumn(stats2, "VOLT DIFF")
-        root.addView(stats2)
+        body.addView(stats2)
 
         val stats3 =
             LinearLayout(this).apply {
@@ -131,68 +132,63 @@ class BatteryActivity : Activity() {
         auxText = statColumn(stats3, "12V AUX")
         chargeText = statColumn(stats3, "MAX CHG")
         dischargeText = statColumn(stats3, "MAX DIS")
-        root.addView(stats3)
+        body.addView(stats3)
 
         tempsText = sectionLabel("BATT TEMP")
-        root.addView(tempsText)
+        body.addView(tempsText)
 
         speedText = sectionLabel("SPEED / RPM")
-        root.addView(speedText)
+        body.addView(speedText)
 
         barsView = BlockBarView(this, model)
-        root.addView(
+        body.addView(
             barsView,
-            LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                0,
-                1f,
-            ),
+            LinearLayout
+                .LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    0,
+                    1f,
+                ).apply { topMargin = dp(10) },
         )
 
         statusText =
             TextView(this).apply {
-                text = "Monitoring…"
+                text = ""
                 textSize = 13f
                 setTextColor(Color.GRAY)
+                visibility = View.GONE
             }
-        root.addView(statusText)
+        body.addView(statusText)
 
-        val dtcButton =
-            Button(this).apply {
-                text = "READ DTC / INF CODES"
-                setOnClickListener {
-                    startActivity(Intent(this@BatteryActivity, DtcActivity::class.java))
-                }
-            }
         val dtcLp =
             LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT,
+                dp(52),
             )
-        dtcLp.topMargin = dp(12)
-        root.addView(dtcButton, dtcLp)
+        dtcLp.topMargin = dp(8)
+        body.addView(
+            actionButton("READ DTC / INF CODES") {
+                startActivity(Intent(this@BatteryActivity, DtcActivity::class.java))
+            },
+            dtcLp,
+        )
+        body.addView(
+            actionButton("DEBUG LOG") {
+                startActivity(Intent(this@BatteryActivity, DebugLogActivity::class.java))
+            },
+            LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(52)).apply {
+                topMargin = dp(8)
+            },
+        )
 
-        val debugButton =
-            Button(this).apply {
-                text = "DEBUG LOG"
-                setOnClickListener {
-                    startActivity(Intent(this@BatteryActivity, DebugLogActivity::class.java))
-                }
-            }
-        root.addView(debugButton)
-
-        root.addView(body)
+        root.addView(
+            body,
+            LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f),
+        )
         return root
     }
 
-    /**
-     * Battery-screen header: app-icon avatar, title, vehicle summary and a live pill.
-     *
-     * The avatar is the launcher artwork as a **rounded square**, not a circular crop, the design
-     * moved away from a cropped face so the icon reads as the same mark everywhere. `#f4f8ff` sits
-     * behind it because the artwork's own backdrop is that colour, so the tile looks solid rather
-     * than like a photo on a card.
-     */
+    /** Battery-screen header: title, vehicle summary and a live pill. */
     private fun batteryHeader(): LinearLayout =
         LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
@@ -201,26 +197,9 @@ class BatteryActivity : Activity() {
             setPadding(dp(18), dp(14), dp(18), dp(14))
 
             addView(
-                android.widget.ImageView(context).apply {
-                    setImageResource(org.betsy.R.drawable.betsy_icon)
-                    setBackgroundColor(0xFFF4F8FF.toInt())
-                    val r = Surfaces.dp(context, 13).toFloat()
-                    outlineProvider =
-                        object : android.view.ViewOutlineProvider() {
-                            override fun getOutline(
-                                v: android.view.View,
-                                outline: android.graphics.Outline,
-                            ) = outline.setRoundRect(0, 0, v.width, v.height, r)
-                        }
-                    clipToOutline = true
-                    layoutParams = LinearLayout.LayoutParams(dp(44), dp(44))
-                },
-            )
-
-            addView(
                 LinearLayout(context).apply {
                     orientation = LinearLayout.VERTICAL
-                    setPadding(dp(12), 0, dp(12), 0)
+                    setPadding(0, 0, dp(12), 0)
                     addView(
                         TextView(context).apply {
                             text = "Battery health"
@@ -270,7 +249,7 @@ class BatteryActivity : Activity() {
         val column =
             LinearLayout(this).apply {
                 orientation = LinearLayout.VERTICAL
-                setPadding(0, dp(8), dp(16), dp(8))
+                setPadding(0, dp(2), dp(16), dp(6))
             }
         column.addView(
             TextView(this).apply {
@@ -290,12 +269,30 @@ class BatteryActivity : Activity() {
         return value
     }
 
+    private fun actionButton(
+        label: String,
+        onClick: () -> Unit,
+    ): TextView =
+        TextStyles.body(this, label, DesignTokens.TEXT_3, DesignTokens.GRAY_12, bold = true).apply {
+            gravity = Gravity.CENTER
+            includeFontPadding = false
+            background =
+                Surfaces.ripple(
+                    context,
+                    DesignTokens.GRAY_2,
+                    DesignTokens.RADIUS_CARD,
+                    DesignTokens.cardBorder,
+                    rippleColor = DesignTokens.BRAND_SOLID,
+                )
+            setOnClickListener { onClick() }
+        }
+
     private fun sectionLabel(text: String): TextView =
         TextView(this).apply {
             this.text = text
             textSize = 13f
             setTextColor(Color.GRAY)
-            setPadding(0, dp(16), 0, dp(4))
+            setPadding(0, dp(8), 0, 0)
         }
 
     private fun render() {
@@ -306,9 +303,16 @@ class BatteryActivity : Activity() {
         auxText.text = String.format("%.2f V", model.aux12V)
         chargeText.text = String.format("%.1f HP", model.maxChargeHp)
         dischargeText.text = String.format("%.1f HP", model.maxDischargeHp)
-        tempsText.text = "BATT TEMP  " + model.temps.joinToString("  ") { String.format("%.1f°F", it * 9f / 5f + 32f) }
-        speedText.text = "SPEED ${String.format("%.0f mph", model.speedMph)}   RPM ${model.rpm}"
-        barsView.invalidate()
+        val tempUnit = if (UnitPrefs.fahrenheit(this)) "F" else "C"
+        tempsText.text =
+            "BATT TEMP  " +
+            model.temps.joinToString("  ") {
+                String.format("%.1f%s", UnitPrefs.temperature(this, it), tempUnit)
+            }
+        val kmh = model.speedMph / 0.625f
+        speedText.text =
+            "SPEED ${String.format("%.0f %s", UnitPrefs.speed(this, kmh), UnitPrefs.speedUnit(this))}   RPM ${model.rpm}"
+        barsView.syncFromModel()
     }
 
     override fun onDestroy() {

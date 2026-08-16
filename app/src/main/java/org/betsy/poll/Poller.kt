@@ -43,9 +43,11 @@ class Poller(
         // One critical section: the combined read and the §5.6 speed/RPM read both depend on this
         // header, and speedRpm sends no ATSH of its own.
         session.withEcu(header) {
-            decode(session.command(cmd))
+            // Count has to be on the model before decode: the combined reply is sliced
+            // by N, and a first poll with N still 0 paints an empty pack.
             m.blockCount = info.blockCount
             m.cellCount = info.cellCount
+            decode(session.command(cmd))
             speedRpm(m)
         }
         CaptureLog.log(

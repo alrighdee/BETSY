@@ -13,8 +13,6 @@ car has changed.
   faster than it falls, and the waiting state says it is waiting instead of showing an empty grid.
 * **A code screen that leads with the answer.** The trouble code and its sub-code come first, then
   what the controller actually saw, what to look at, and how urgent it is.
-* **A demo that moves.** The scripted demo replayed one frozen frame forever. The pack now wanders
-  the way a real one does, so the demo shows what a live monitor looks like.
 
 ### Fixed
 

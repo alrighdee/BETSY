@@ -171,6 +171,13 @@ class DtcActivity : Activity() {
             }
         actions.addView(
             Button(this).apply {
+                text = "BACK"
+                contentDescription = "Back"
+                setOnClickListener { finish() }
+            },
+        )
+        actions.addView(
+            Button(this).apply {
                 text = "REFRESH"
                 setOnClickListener { read() }
             },

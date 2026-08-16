@@ -394,20 +394,26 @@ class ConnectScreen(
     }
 
     private fun buildUpdateBanner(): LinearLayout {
+        val buttonH = Surfaces.dp(context, 40f)
+        val gap = Surfaces.dp(context, 10f)
         val view =
             TextStyles.body(context, "View", DesignTokens.TEXT_2, DesignTokens.GRAY_1, bold = true).apply {
                 gravity = Gravity.CENTER
+                includeFontPadding = false
                 background = Surfaces.ripple(context, DesignTokens.BRAND_SOLID, DesignTokens.RADIUS_PILL)
-                val h = Surfaces.dp(context, 14f)
-                val v = Surfaces.dp(context, 8f)
-                setPadding(h, v, h, v)
                 setOnClickListener { update?.let { callbacks.onViewUpdate(it.url) } }
             }
         val dismiss =
-            TextStyles.body(context, "Not now", DesignTokens.TEXT_2, DesignTokens.GRAY_11).apply {
+            TextStyles.body(context, "Not now", DesignTokens.TEXT_2, DesignTokens.GRAY_12, bold = true).apply {
                 gravity = Gravity.CENTER
-                val h = Surfaces.dp(context, 10f)
-                setPadding(h, Surfaces.dp(context, 8f), 0, Surfaces.dp(context, 8f))
+                includeFontPadding = false
+                background =
+                    Surfaces.ripple(
+                        context,
+                        Color.TRANSPARENT,
+                        DesignTokens.RADIUS_PILL,
+                        DesignTokens.ghostBorder,
+                    )
                 setOnClickListener { callbacks.onDismissUpdate() }
             }
         return LinearLayout(context).apply {
@@ -430,10 +436,13 @@ class ConnectScreen(
             addView(
                 LinearLayout(context).apply {
                     orientation = HORIZONTAL
-                    gravity = Gravity.END or Gravity.CENTER_VERTICAL
-                    setPadding(0, Surfaces.dp(context, 12f), 0, 0)
-                    addView(dismiss)
-                    addView(view)
+                    gravity = Gravity.CENTER_VERTICAL
+                    setPadding(0, Surfaces.dp(context, 14f), 0, 0)
+                    addView(
+                        dismiss,
+                        LayoutParams(0, buttonH, 1f).apply { marginEnd = gap },
+                    )
+                    addView(view, LayoutParams(0, buttonH, 1f))
                 },
             )
         }

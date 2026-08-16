@@ -2,26 +2,33 @@
 
 ## [0.0.5](https://github.com/alrighdee/BETSY/compare/v0.0.4...v0.0.5) (2026-08-16)
 
+**Mostly a UX release.** BETSY already read the car correctly. It just did not show it well. The
+battery monitor and the code screen have both been redrawn, and nothing about what is read from the
+car has changed.
 
 ### Added
 
-* make the demo monitor move like a live pack ([c4d11a1](https://github.com/alrighdee/BETSY/commit/c4d11a1e63222b74eb41a8de036078f9f481b303))
-* redraw the battery monitor and the code screen ([70b8373](https://github.com/alrighdee/BETSY/commit/70b837389e5aa3b220573d760290289a56ab365a))
-
+* **A battery monitor you can read at a glance.** Bars grow from the floor and scale to the current
+  spread, so a few millivolts between blocks is visible rather than implied. The live bar rises
+  faster than it falls, and the waiting state says it is waiting instead of showing an empty grid.
+* **A code screen that leads with the answer.** The trouble code and its sub-code come first, then
+  what the controller actually saw, what to look at, and how urgent it is.
+* **A demo that moves.** The scripted demo replayed one frozen frame forever. The pack now wanders
+  the way a real one does, so the demo shows what a live monitor looks like.
 
 ### Fixed
 
-* add a Back control on the DTC screen and align the update banner actions ([3fe7382](https://github.com/alrighdee/BETSY/commit/3fe7382423b595054966b02154e160ba72c343d9))
-* add a Done control on the settings screen ([2280bca](https://github.com/alrighdee/BETSY/commit/2280bca38645a4985ebdec346ec981d80f81ae05))
-* paint the pack on the first poll ([5d3c996](https://github.com/alrighdee/BETSY/commit/5d3c996ddf44996f2bb6d101a1048eafefd6a6d6))
-* quote the pairing codes these adapters actually use ([5d5875d](https://github.com/alrighdee/BETSY/commit/5d5875d2ae5aeb86923f2009027c602ed901ec39))
-* stamp debug builds as 0.0.5-pre-release ([54cb805](https://github.com/alrighdee/BETSY/commit/54cb8052d4db58e14470e46d1f698807b0e3388f))
-
+* The monitor no longer opens on an empty pack. The first reply was sliced before the block count
+  was known, so the first second of every session showed nothing.
+* A Back control on the code screen and a Done control on settings, with the update banner's actions
+  aligned.
+* The pairing hint offers `1234` or `0000`, the codes these adapters actually ship with. It offered
+  `6789`, which came from a mockup rather than a dongle.
+* Connecting no longer flashes the start screen underneath the screen it just opened.
 
 ### Documentation
 
-* rename the share control in the probe plan ([9267237](https://github.com/alrighdee/BETSY/commit/92672379efe60015759fecb956a76aa5c523606d))
-* show a run of the app and a decoded sub-code in the readme ([ccdfcb4](https://github.com/alrighdee/BETSY/commit/ccdfcb45438df153d2cda772065fc61b799de859))
+* The README shows a run of the app and a code with its sub-code explained.
 
 ## [0.0.4](https://github.com/alrighdee/BETSY/compare/v0.0.3...v0.0.4) (2026-08-15)
 

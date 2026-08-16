@@ -115,7 +115,8 @@ class SettingsActivity : Activity() {
 
     private fun header(): View =
         LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
             setBackgroundColor(DesignTokens.GRAY_2)
             val p = Surfaces.dp(context, 18)
             setPadding(p, Surfaces.dp(context, 20), p, Surfaces.dp(context, 18))
@@ -125,6 +126,17 @@ class SettingsActivity : Activity() {
                     textSize = DesignTokens.TEXT_5
                     setTextColor(DesignTokens.GRAY_12)
                     setTypeface(Typeface.DEFAULT_BOLD)
+                },
+                LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f),
+            )
+            addView(
+                TextStyles.body(context, "Done", DesignTokens.TEXT_3, DesignTokens.BRAND_SOLID, bold = true).apply {
+                    gravity = Gravity.CENTER
+                    includeFontPadding = false
+                    contentDescription = "Close settings"
+                    val h = Surfaces.dp(context, 12)
+                    setPadding(h, Surfaces.dp(context, 8), 0, Surfaces.dp(context, 8))
+                    setOnClickListener { finish() }
                 },
             )
         }

@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.6](https://github.com/alrighdee/BETSY/compare/v0.0.5...v0.0.6) (2026-08-16)
+
+
+### Documentation
+
+* drop the demo from the 0.0.5 notes ([11511c9](https://github.com/alrighdee/BETSY/commit/11511c9c9e8ac989cdff629d5f55f797296b14ff))
+
 ## [0.0.5](https://github.com/alrighdee/BETSY/compare/v0.0.4...v0.0.5) (2026-08-16)
 
 **Mostly a UX release.** BETSY already read the car correctly. It just did not show it well. The

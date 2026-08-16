@@ -22,7 +22,7 @@ val keystoreProps =
 // The one place the version is written. release-please rewrites the literal below when it cuts a
 // release, the trailing marker is how it finds the line, so do not move or reword it. versionCode
 // is derived from it so there is never a second number to remember to bump.
-val betsyVersionName = "0.0.5" // x-release-please-version
+val betsyVersionName = "0.0.6" // x-release-please-version
 
 val betsyVersionCode =
     betsyVersionName.substringBefore("-").split(".").let { (major, minor, patch) ->

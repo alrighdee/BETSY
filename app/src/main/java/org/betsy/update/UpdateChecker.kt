@@ -87,19 +87,21 @@ object UpdateChecker {
     }
 
     /**
-     * Dotted integer segments. A missing segment is 0 (`0.0` equals `0.0.0`). A segment that is
-     * not an integer is older than one that is, so a junk tag cannot outrank a real one.
+     * Dotted integer segments, then an optional `-` pre-release suffix. `0.0.5-pre-release` is
+     * newer than `0.0.4` and older than `0.0.5`. A missing segment is 0 (`0.0` equals `0.0.0`).
+     * A segment that is not an integer is older than one that is, so a junk tag cannot outrank
+     * a real one.
      */
     fun compare(
         a: String,
         b: String,
     ): Int {
-        val left = normalize(a).split('.')
-        val right = normalize(b).split('.')
-        val n = maxOf(left.size, right.size)
+        val left = parse(a)
+        val right = parse(b)
+        val n = maxOf(left.core.size, right.core.size)
         for (i in 0 until n) {
-            val l = segment(left.getOrNull(i))
-            val r = segment(right.getOrNull(i))
+            val l = if (i < left.core.size) left.core[i] else 0
+            val r = if (i < right.core.size) right.core[i] else 0
             when {
                 l != null && r != null -> {
                     val c = l.compareTo(r)
@@ -110,7 +112,25 @@ object UpdateChecker {
                 else -> return 1
             }
         }
-        return 0
+        return when {
+            left.pre == null && right.pre == null -> 0
+            left.pre == null -> 1
+            right.pre == null -> -1
+            else -> left.pre.compareTo(right.pre)
+        }
+    }
+
+    private data class Parsed(
+        val core: List<Int?>,
+        val pre: String?,
+    )
+
+    private fun parse(raw: String): Parsed {
+        val name = normalize(raw)
+        val dash = name.indexOf('-')
+        val corePart = if (dash >= 0) name.substring(0, dash) else name
+        val pre = if (dash >= 0) name.substring(dash + 1).ifEmpty { null } else null
+        return Parsed(corePart.split('.').map { segment(it) }, pre)
     }
 
     private fun segment(raw: String?): Int? {

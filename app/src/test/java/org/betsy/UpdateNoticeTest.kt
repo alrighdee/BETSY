@@ -51,6 +51,24 @@ class UpdateNoticeTest {
     }
 
     @Test
+    fun preReleaseOutranksPreviousRelease() {
+        assertTrue(UpdateChecker.compare("0.0.5-pre-release", "0.0.4") > 0)
+        assertEquals(
+            UpdateStatus.Current("0.0.5-pre-release"),
+            UpdateChecker.evaluate("v0.0.4", URL, "0.0.5-pre-release"),
+        )
+    }
+
+    @Test
+    fun preReleaseLosesToTheSameNumbersReleased() {
+        assertTrue(UpdateChecker.compare("0.0.5", "0.0.5-pre-release") > 0)
+        val status = UpdateChecker.evaluate("v0.0.5", URL5, "0.0.5-pre-release")
+        val available = status as UpdateStatus.Available
+        assertEquals("0.0.5", available.version)
+        assertEquals(URL5, available.url)
+    }
+
+    @Test
     fun dismissedVersionStaysQuietUntilANewerTag() {
         val four = UpdateStatus.Available("0.0.4", URL)
         assertNull(UpdateChecker.visibleBanner(four, "0.0.4"))
@@ -85,5 +103,6 @@ class UpdateNoticeTest {
 
     private companion object {
         const val URL = "https://github.com/alrighdee/BETSY/releases/tag/v0.0.4"
+        const val URL5 = "https://github.com/alrighdee/BETSY/releases/tag/v0.0.5"
     }
 }

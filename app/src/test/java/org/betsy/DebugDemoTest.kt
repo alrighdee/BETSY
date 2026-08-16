@@ -5,6 +5,7 @@ import org.betsy.capture.UploadResult
 import org.betsy.debug.DemoFixtures
 import org.betsy.debug.DemoMode
 import org.betsy.debug.DemoScenario
+import org.betsy.decode.Gen2Decoder
 import org.betsy.detect.VehicleDetector
 import org.betsy.detect.VehicleInfo
 import org.betsy.detect.VehicleModel
@@ -13,11 +14,13 @@ import org.betsy.dtc.SweepPhase
 import org.betsy.dtc.SweepProgress
 import org.betsy.dtc.SweepStep
 import org.betsy.elm.ElmSession
+import org.betsy.model.BatteryModel
 import org.betsy.transport.ReplayTransport
 import org.betsy.transport.SimulatedCar
 import org.betsy.transport.awaitBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -27,6 +30,27 @@ import org.junit.Test
  */
 class DebugDemoTest {
     private val gen2 = VehicleInfo(VehicleModel.GEN2, supported = true, blockCount = 14, cellCount = 28)
+
+    @Test
+    fun livePollMovesEveryCycleAndStaysDecodable() {
+        val frozen = ReplayTransport(SimulatedCar.gen2Healthy)
+        val live = ReplayTransport(SimulatedCar.gen2Healthy, live = true)
+        val a = awaitBlocking { live.send("21CED0CF") }
+        val b = awaitBlocking { live.send("21CED0CF") }
+        val still = awaitBlocking { frozen.send("21CED0CF") }
+        assertEquals(still, awaitBlocking { frozen.send("21CED0CF") })
+        assertNotEquals(a, b)
+        assertTrue(a.startsWith("61CE"))
+
+        val ma = BatteryModel(blockCount = 14).also { Gen2Decoder.decodeCombined(a, it, false) }
+        val mb = BatteryModel(blockCount = 14).also { Gen2Decoder.decodeCombined(b, it, false) }
+        assertEquals(54.5f, ma.soc)
+        assertEquals(14, ma.blockVolts.size)
+        assertNotEquals(ma.blockVolts, mb.blockVolts)
+        assertTrue(ma.blockVolts.all { it in 14.8f..15.6f })
+        assertTrue(ma.currentAmps in 2.0f..3.5f)
+        assertTrue(ma.packVolts() in 210f..215f)
+    }
 
     @Test
     fun scriptsCarryAnAtzBannerSoSessionInitSucceeds() {

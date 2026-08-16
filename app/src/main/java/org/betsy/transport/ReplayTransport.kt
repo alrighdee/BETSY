@@ -35,6 +35,11 @@ class ReplayTransport(
     private val fallback: String = "NO DATA",
     /** Optional wall-clock delay per command; defaults to zero so tests stay instant. */
     private val delay: ReplayDelay = ReplayDelay(),
+    /**
+     * When true, each `21CED0CF` poll is a new frame so the demo monitor is visibly
+     * alive. Off by default so tests see the exact captured bytes.
+     */
+    private val live: Boolean = false,
 ) : ElmTransport {
     override var readTimeoutMs: Int = 2500
 
@@ -49,6 +54,9 @@ class ReplayTransport(
      * override, looked up before the bare command.
      */
     private var header: String? = null
+
+    /** Poll count used only when [live] is on, so each `21CED0CF` is a new sample. */
+    private var liveTick = 0
 
     override suspend fun send(cmd: String): String {
         if (closed) throw TransportException("replay transport is closed (cmd=$cmd)")
@@ -73,15 +81,71 @@ class ReplayTransport(
                 else -> delay.missMs
             }
         if (sleepMs > 0) Thread.sleep(sleepMs)
-        return reply
+        return if (live && cmd == "21CED0CF") livePoll(reply) else reply
     }
 
     override fun close() {
         closed = true
     }
 
+    /**
+     * Demo-only millivolt wander on the captured poll. The chart auto-scales to the
+     * spread, so this is enough to make the bars move the way a live pack does.
+     */
+    private fun livePoll(reply: String): String {
+        if (!reply.startsWith("61CE") || reply.length < 20) return reply
+        val d0 = reply.indexOf("D0", 10)
+        if (d0 < 10 || d0 % 2 != 0) return reply
+        val tick = liveTick++
+        val chars = StringBuilder(reply)
+        setU16(chars, 3, u16(reply, 3) + wander(tick, 10, 35))
+        var byte = 5
+        var i = 0
+        while (byte * 2 + 4 <= d0) {
+            setU16(chars, byte, u16(reply, byte) + wander(tick + i * 3, 7 + i % 4, 4))
+            byte += 2
+            i++
+        }
+        return chars.toString()
+    }
+
     private companion object {
         val LONG_PAGES = setOf("21C6", "21C7", "21C8", "21C9", "21CA", "21CED0CF")
+
+        fun u16(
+            hex: String,
+            byteIndex: Int,
+        ): Int {
+            val i = byteIndex * 2
+            if (i + 4 > hex.length) return 0
+            return hex.substring(i, i + 4).toInt(16)
+        }
+
+        fun setU16(
+            hex: StringBuilder,
+            byteIndex: Int,
+            value: Int,
+        ) {
+            val i = byteIndex * 2
+            if (i + 4 > hex.length) return
+            hex.replace(i, i + 4, "%04X".format(value.coerceIn(0, 0xFFFF)))
+        }
+
+        /** Triangle wave, integer counts. Period and amplitude are in samples / LSB. */
+        fun wander(
+            tick: Int,
+            period: Int,
+            amplitude: Int,
+        ): Int {
+            if (amplitude <= 0 || period < 2) return 0
+            val phase = tick.mod(period)
+            val half = period / 2
+            return if (phase < half) {
+                -amplitude + (2 * amplitude * phase) / half
+            } else {
+                amplitude - (2 * amplitude * (phase - half)) / (period - half).coerceAtLeast(1)
+            }
+        }
     }
 }
 

@@ -69,6 +69,13 @@ class ConnectActivity :
     /** Live transport for the in-flight attempt; closing it is how Cancel unblocks a stuck read. */
     private var pendingTransport: ElmTransport? = null
 
+    /**
+     * Set just before starting the monitor or capture screen. [onResume] uses it to put the
+     * connect list back only after the user returns, so a successful attempt does not flash
+     * the start screen under the next activity.
+     */
+    private var leavingToSession = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         applyBetsyTheme()
@@ -123,8 +130,18 @@ class ConnectActivity :
         pendingTransport?.close()
         pendingTransport = null
         connecting = false
+        leavingToSession = false
         DemoMode.deactivate()
         render()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (leavingToSession) {
+            leavingToSession = false
+            connecting = false
+            render()
+        }
     }
 
     override fun onOpenBluetoothSettings() {
@@ -364,8 +381,7 @@ class ConnectActivity :
                     SessionHolder.set(link, session, info)
                     handler.post {
                         pendingTransport = null
-                        connecting = false
-                        render()
+                        leavingToSession = true
                         Toast
                             .makeText(
                                 this,
@@ -383,8 +399,7 @@ class ConnectActivity :
                 CaptureLog.log("UI", "session ready, launching monitor")
                 handler.post {
                     pendingTransport = null
-                    connecting = false
-                    render()
+                    leavingToSession = true
                     startActivity(Intent(this, BatteryActivity::class.java))
                 }
             } catch (e: Exception) {
@@ -438,7 +453,7 @@ class ConnectActivity :
                 // A real link phase is a socket connect; the scripted one has no I/O, so a short
                 // pause stands in for it and keeps the LINK row from reading "0 ms".
                 Thread.sleep(DEMO_LINK_MS)
-                ReplayTransport(scenario.script, delay = DEMO_DELAY)
+                ReplayTransport(scenario.script, delay = DEMO_DELAY, live = true)
             }
             transport == Transport.WIFI -> {
                 val endpoint = WifiEndpoint.parse(screen.wifiAddress())

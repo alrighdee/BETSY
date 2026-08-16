@@ -12,6 +12,15 @@
 [![Build](https://img.shields.io/github/actions/workflow/status/alrighdee/BETSY/ci.yml?branch=main&style=for-the-badge&label=build)](https://github.com/alrighdee/BETSY/actions/workflows/ci.yml)
 [![Licence](https://img.shields.io/github/license/alrighdee/BETSY?style=for-the-badge&label=licence)](LICENSE)
 
+## See it run
+
+A scan on a 2009 Prius, from picking the adapter through to the codes and their sub-codes. Sped up
+through the connection wait, no audio.
+
+<video src="https://github.com/alrighdee/BETSY/raw/main/docs/assets/betsy-demo.mp4" width="320" controls muted playsinline></video>
+
+[Download the clip](docs/assets/betsy-demo.mp4) if the player does not load.
+
 ## Volunteers wanted: two minutes with your hybrid
 
 **Every capture helps, and it takes about two minutes.** Any Prius from roughly 2004 to 2015. You
@@ -32,7 +41,7 @@ data, but the app has never met an actual one. Yours would be the first.
 1. **[Install the app](https://github.com/alrighdee/BETSY/releases/latest)**
 2. Connect your ELM327 adapter
 3. Open **DTC / INF codes** and let the scan finish
-4. Tap **SHARE THIS SCAN**
+4. Tap **Contribute scan data**
 
 No account, no sign-up, no typing hex into a forum post. The app shows you exactly what it will
 send before it sends anything, and everything it does is a read: it never clears a code, runs an
@@ -122,6 +131,10 @@ anything not distributed through Google Play, and you only have to allow it once
 Yes, on the confirmed Gen2 path. BETSY reads the transmitted INF value and explains documented
 DTC/sub-code pairs. If a value is unknown or could belong to more than one reported DTC, the raw
 value remains visible and BETSY does not guess.
+
+<img src="docs/assets/betsy-sub-code.png" width="320" alt="A code screen showing P0571 with sub-code 115, what the controller saw, what to look at, and how urgent it is">
+
+`P0571` with its sub-code, what the controller actually saw, and what to look at first.
 
 ### What gets uploaded when I share a scan?
 

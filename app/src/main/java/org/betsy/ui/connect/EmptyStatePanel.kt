@@ -100,12 +100,12 @@ class EmptyStatePanel(
         )
     }
 
-    /** Reproduces the mockup's inline monospace runs around the two common pairing codes. */
+    /** The two PINs cheap ELM327 dongles actually ship with. */
     private fun pairingHint(): CharSequence {
         val builder = SpannableStringBuilder("Pairing code is usually ")
         appendCode(builder, "1234")
         builder.append(" or ")
-        appendCode(builder, "6789")
+        appendCode(builder, "0000")
         builder.append(". Clones below ELM327 v1.5 cannot read Toyota battery blocks.")
         return builder
     }

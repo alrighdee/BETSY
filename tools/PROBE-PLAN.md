@@ -13,7 +13,7 @@ the freeze page and its INF value.
 2. Connect BETSY to the paired ELM327 adapter.
 3. Open **DTC / INF codes** and let the sweep finish.
 4. Check that hybrid-control, battery-control and engine observations are visible.
-5. Tap **SHARE THIS SCAN**.
+5. Tap **Contribute scan data**.
 6. If available, add the independent diagnosis or symptoms in the optional notes.
 
 The capture retains every raw response beside the decoded values. Unknown and ambiguous values are

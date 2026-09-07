@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.0.6](https://github.com/alrighdee/BETSY/compare/v0.0.5...v0.0.6) (2026-09-07)
+
+**Ordinary codes now have a name.** A stored engine code such as `P0456` used to appear as a
+bare number. The codes screen now shows the generic OBD-II title. Hybrid explanations this
+project writes itself are unchanged.
+
+### Added
+
+* **Generic OBD titles for unexplained codes.** `P0456` reads as "EVAP System Leak Detected
+  (very small leak)" instead of a bare code. Hand-written hybrid paragraphs still win when both
+  exist.
+
 ## [0.0.5](https://github.com/alrighdee/BETSY/compare/v0.0.4...v0.0.5) (2026-08-16)
 
 **Mostly a UX release.** BETSY already read the car correctly. It just did not show it well. The

@@ -1,6 +1,7 @@
 package org.betsy.ui
 
 import org.betsy.decode.DtcMeaning
+import org.betsy.decode.GenericDtcCatalog
 import org.betsy.decode.InfMeaning
 import org.betsy.dtc.DtcGroup
 import org.betsy.model.Dtc
@@ -102,7 +103,8 @@ internal object DtcTextFormatter {
         sb: StringBuilder,
         dtc: Dtc,
     ) {
-        DtcMeaning.forWire(dtc.raw)?.let { meaning ->
+        val meaning = DtcMeaning.forWire(dtc.raw)
+        if (meaning != null) {
             val urgency =
                 when (meaning.severity) {
                     DtcMeaning.Severity.URGENT -> "Stop driving. "
@@ -115,6 +117,10 @@ internal object DtcTextFormatter {
                 .append(meaning.what)
                 .append("\n")
             sb.append("    ").append(meaning.usually).append("\n")
+        } else {
+            GenericDtcCatalog.title(dtc.code)?.let { title ->
+                sb.append("    ").append(title).append("\n")
+            }
         }
     }
 }

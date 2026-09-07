@@ -10,9 +10,10 @@ package org.betsy.decode
  * broke, what usually causes it, and how worried to be, in that order.
  *
  * Deliberately incomplete. A car can store hundreds of codes and this covers the ones a hybrid
- * battery scanner actually surfaces. An unknown code is shown as a bare code rather than guessed
- * at, because a confident wrong explanation is worse than none: someone might replace a battery on
- * the strength of it.
+ * battery scanner actually surfaces. Codes this table does not know still get a generic OBD title
+ * from [GenericDtcCatalog] (a system name, not a diagnosis). This table never invents a
+ * paragraph: a confident wrong explanation is worse than none, because someone might replace a
+ * battery on the strength of it.
  *
  * Nothing here is medical-grade. [Severity] is a hint about urgency, not a diagnosis, and the
  * wording says so where it matters.

@@ -1,5 +1,7 @@
 package org.betsy.ui
 
+import org.betsy.decode.DtcMeaning
+import org.betsy.decode.GenericDtcCatalog
 import org.betsy.decode.InfMeaning
 import org.betsy.dtc.DtcGroup
 import org.betsy.dtc.DtcSource
@@ -165,6 +167,27 @@ class DtcTextFormatterTest {
 
         assertTrue(standard.contains("P0AA6-612"))
         assertTrue(renamed.contains("P0AA6-612"))
+    }
+
+    @Test
+    fun aGenericEngineCodeGetsItsCatalogTitle() {
+        val groups = listOf(group(DtcSource.ENGINE, "Engine ECU (7E0)", 0x0456 to "P0456"))
+        val text = DtcTextFormatter.formatGroups(groups, emptyList())
+
+        assertTrue(text.contains("P0456"))
+        assertTrue(text.contains("EVAP System Leak Detected (very small leak)"))
+        assertFalse(text.contains("Stop driving"))
+    }
+
+    @Test
+    fun authoredMeaningBeatsTheCatalogTitle() {
+        val groups = listOf(group(DtcSource.HYBRID_CONTROL, "HV ECU (7E2)", 0x0AA6 to "P0AA6"))
+        val text = DtcTextFormatter.formatGroups(groups, emptyList())
+        val authored = DtcMeaning.forWire(0x0AA6)!!
+        val catalog = GenericDtcCatalog.title("P0AA6")!!
+
+        assertTrue(text.contains(authored.what))
+        assertFalse(text.contains(catalog))
     }
 
     private fun group(

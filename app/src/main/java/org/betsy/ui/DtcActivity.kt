@@ -20,6 +20,7 @@ import org.betsy.capture.UploadResult
 import org.betsy.debug.CaptureLog
 import org.betsy.debug.DemoMode
 import org.betsy.decode.DtcMeaning
+import org.betsy.decode.GenericDtcCatalog
 import org.betsy.decode.InfMeaning
 import org.betsy.dtc.DtcReadResult
 import org.betsy.dtc.DtcReader
@@ -478,9 +479,13 @@ class DtcActivity : Activity() {
             }
         }
 
-        meaning?.let {
-            card.addView(bodyLine("${it.severity.advice} ${it.what}".trim(), top = 12))
-            card.addView(bodyLine(it.usually, muted = true, top = 8))
+        if (meaning != null) {
+            card.addView(bodyLine("${meaning.severity.advice} ${meaning.what}".trim(), top = 12))
+            card.addView(bodyLine(meaning.usually, muted = true, top = 8))
+        } else {
+            GenericDtcCatalog.title(dtc.code)?.let { title ->
+                card.addView(bodyLine(title, muted = true, top = 12))
+            }
         }
         return wrapCard(card)
     }

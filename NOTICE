@@ -1,6 +1,18 @@
+Third-party notices
+===================
+
+generic_dtc.tsv
+---------------
+
+Generic OBD-II DTC titles shipped in
+app/src/main/resources/org/betsy/decode/generic_dtc.tsv
+are GENERIC English rows from:
+
+  https://github.com/Wal33D/dtc-database
+
 MIT License
 
-Copyright (c) 2026 BETSY
+Copyright (c) 2024 Wal33D (Waleed Judah)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -19,9 +31,3 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
----
-
-Generic OBD-II DTC titles in `app/src/main/resources/org/betsy/decode/generic_dtc.tsv`
-are from https://github.com/Wal33D/dtc-database. That project's MIT license
-text is reproduced in `NOTICE`.

@@ -12,6 +12,9 @@
 [![Build](https://img.shields.io/github/actions/workflow/status/alrighdee/BETSY/ci.yml?branch=main&style=for-the-badge&label=build)](https://github.com/alrighdee/BETSY/actions/workflows/ci.yml)
 [![Licence](https://img.shields.io/github/license/alrighdee/BETSY?style=for-the-badge&label=licence)](LICENSE)
 
+**Latest release: [0.0.7](https://github.com/alrighdee/BETSY/releases/tag/v0.0.7).** Every release is
+tagged with its signed APK; the [changelog](CHANGELOG.md) lists what changed.
+
 ## See it run
 
 A scan on a 2009 Prius, from picking the adapter through to the codes and their sub-codes. Sped up
@@ -175,6 +178,7 @@ Yes. The protocol notes, the decoder and the capture pipeline all take review, a
 | [Developing](docs/DEVELOPING.md) | Building from source, project layout, notes on adapters |
 | [Protocol](docs/PROTOCOL.md) | The wire spec. Read it before touching a decoder, the code cites its section numbers |
 | [Contributing](CONTRIBUTING.md) | Commit conventions, how releases are cut, what is in scope |
+| [Changelog](CHANGELOG.md) | What changed in each release, newest first |
 
 ## Not affiliated with Toyota
 

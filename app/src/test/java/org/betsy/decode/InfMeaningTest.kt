@@ -59,6 +59,29 @@ class InfMeaningTest {
     }
 
     @Test
+    fun `RM10Q0U codes match their legacy Toyota aliases`() {
+        val aliases =
+            listOf(
+                Triple("P0AE7", "P0AA1", 224),
+                Triple("P0AE6", "P0AA2", 225),
+                Triple("P0ADC", "P0AA1", 226),
+                Triple("P0ADB", "P0AA2", 227),
+                Triple("P0AE0", "P0AA4", 228),
+                Triple("P0ADF", "P0AA5", 229),
+                Triple("P0AF0", "P3213", 274),
+                Triple("P0AEF", "P3212", 275),
+                Triple("P0AEE", "P3211", 276),
+                Triple("P0AEE", "P3211", 277),
+                Triple("P0A0D", "P3140", 350),
+                Triple("P0A0D", "P3143", 351),
+            )
+
+        for ((current, legacy, inf) in aliases) {
+            assertEquals(InfMeaning.forCode(legacy, inf), InfMeaning.forCode(current, inf))
+        }
+    }
+
+    @Test
     fun `lookup is case insensitive`() {
         assertEquals(InfMeaning.forCode("P0705", 571), InfMeaning.forCode("p0705", 571))
     }

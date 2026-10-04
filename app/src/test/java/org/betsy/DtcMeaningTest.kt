@@ -88,4 +88,31 @@ class DtcMeaningTest {
     fun everyExplanationIsActuallyWritten() {
         assertTrue(DtcMeaning.explainedCount >= 30)
     }
+
+    @Test
+    fun launchMainProfilesInfParentsHaveAuthoredExplanations() {
+        val codes =
+            listOf(
+                0xA799,
+                0x3102,
+                0x3107,
+                0x3108,
+                0x3110,
+                0x3137,
+                0x3138,
+                0x3140,
+                0x3143,
+                0x3211,
+                0x3212,
+                0x3213,
+                0x3221,
+                0x3222,
+                0x3223,
+                0x3226,
+            )
+
+        for (code in codes) {
+            assertNotNull(code.toString(16), DtcMeaning.forWire(code))
+        }
+    }
 }

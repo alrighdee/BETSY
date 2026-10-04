@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+* Added 12 documented Toyota DTC/INF aliases so the same faults are explained under both their
+  current and legacy trouble-code names.
+* Added plain-language main-code explanations for 16 Gen2 immobiliser, transmission, crash-signal,
+  high-voltage interlock, relay and inverter-temperature faults that previously showed only a code.
+
 ## [0.0.6](https://github.com/alrighdee/BETSY/compare/v0.0.5...v0.0.6) (2026-09-07)
 
 **Ordinary codes now have a name.** Codes this project has not written a paragraph for used to

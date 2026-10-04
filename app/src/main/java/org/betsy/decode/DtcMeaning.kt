@@ -360,6 +360,125 @@ object DtcMeaning {
                                 "else is stored before deciding.",
                         severity = Severity.SERIOUS,
                     ),
+                // --- Toyota Gen2 control, interlock and inverter sensor codes ---
+                0xA799 to
+                    Meaning(
+                        what = "The immobiliser and hybrid computer could not complete the key-authorisation check.",
+                        usually =
+                            "The key, immobiliser wiring, immobiliser unit, or hybrid controller. " +
+                                "The sub-code narrows down which part of the exchange failed.",
+                        severity = Severity.SERIOUS,
+                    ),
+                0x3102 to
+                    Meaning(
+                        what = "The transmission control unit cannot reliably select or report Park.",
+                        usually =
+                            "The transmission control unit, its wiring, or the Park-position signal. " +
+                                "The sub-code distinguishes the communication, power-down and signal faults.",
+                        severity = Severity.SERIOUS,
+                    ),
+                0x3107 to
+                    Meaning(
+                        what = "The hybrid computer cannot trust the crash signal from the airbag computer.",
+                        usually =
+                            "The wiring between the two computers, the centre airbag sensor, or the hybrid controller. " +
+                                "That signal is used to shut the high-voltage system down after a collision.",
+                        severity = Severity.URGENT,
+                    ),
+                0x3108 to
+                    Meaning(
+                        what = "The hybrid computer cannot communicate correctly with the air-conditioning system.",
+                        usually =
+                            "The communication wiring, air-conditioning amplifier, or the electric compressor's inverter. " +
+                                "The sub-code identifies which side reported the failure.",
+                        severity = Severity.SERIOUS,
+                    ),
+                0x3110 to
+                    Meaning(
+                        what = "A relay supplying the hybrid control system is stuck or reporting an impossible state.",
+                        usually =
+                            "The IGCT or IG2 relay in the integration relay, its wiring, or the hybrid controller. " +
+                                "The sub-code distinguishes a stuck relay from contradictory ignition signals.",
+                        severity = Severity.SERIOUS,
+                    ),
+                0x3137 to
+                    Meaning(
+                        what = "The collision-disconnect sensor circuit is stuck low.",
+                        usually =
+                            "A short to earth in the sensor wiring, its connector, or the collision-disconnect sensor itself.",
+                        severity = Severity.URGENT,
+                    ),
+                0x3138 to
+                    Meaning(
+                        what = "The collision-disconnect sensor circuit is stuck high.",
+                        usually =
+                            "An open wire, a short to battery positive, a poor connector, or the collision-disconnect sensor itself.",
+                        severity = Severity.URGENT,
+                    ),
+                0x3140 to
+                    Meaning(
+                        what = "The safety interlock on the high-voltage system is open.",
+                        usually =
+                            "The orange service plug is not seated or an inverter cover is loose after work on the car. " +
+                                "The interlock exists to prevent access to live parts.",
+                        severity = Severity.URGENT,
+                    ),
+                0x3143 to
+                    Meaning(
+                        what = "The high-voltage safety interlock opened while the car was moving.",
+                        usually =
+                            "A loose service plug, inverter cover, connector, or damaged interlock wiring. " +
+                                "Treat an intermittent connection as a real high-voltage safety fault.",
+                        severity = Severity.URGENT,
+                    ),
+                0x3211 to
+                    Meaning(
+                        what = "The drive inverter's temperature reading changes abruptly or disagrees with the expected temperature.",
+                        usually =
+                            "The temperature sensor inside the inverter power module, its wiring, or an inverter cooling problem. " +
+                                "The sub-code separates a sudden jump from a persistent mismatch.",
+                        severity = Severity.SERIOUS,
+                    ),
+                0x3212 to
+                    Meaning(
+                        what = "The drive inverter's temperature sensor circuit is open or shorted to earth.",
+                        usually = "The inverter power module, its sensor wiring, a connector, or the hybrid controller.",
+                        severity = Severity.SERIOUS,
+                    ),
+                0x3213 to
+                    Meaning(
+                        what = "The drive inverter's temperature sensor circuit is shorted to battery positive.",
+                        usually = "The inverter power module, its sensor wiring, a connector, or the hybrid controller.",
+                        severity = Severity.SERIOUS,
+                    ),
+                0x3221 to
+                    Meaning(
+                        what = "The generator inverter's temperature reading changes abruptly or disagrees with the expected temperature.",
+                        usually =
+                            "The temperature sensor inside the inverter power module, its wiring, or an inverter cooling problem. " +
+                                "The sub-code separates a sudden jump from a persistent mismatch.",
+                        severity = Severity.SERIOUS,
+                    ),
+                0x3222 to
+                    Meaning(
+                        what = "The generator inverter's temperature sensor circuit is open or shorted to earth.",
+                        usually = "The inverter power module, its sensor wiring, a connector, or the hybrid controller.",
+                        severity = Severity.SERIOUS,
+                    ),
+                0x3223 to
+                    Meaning(
+                        what = "The generator inverter's temperature sensor circuit is shorted to battery positive.",
+                        usually = "The inverter power module, its sensor wiring, a connector, or the hybrid controller.",
+                        severity = Severity.SERIOUS,
+                    ),
+                0x3226 to
+                    Meaning(
+                        what = "The boost converter's temperature reading changes abruptly or no longer looks plausible.",
+                        usually =
+                            "The temperature sensor inside the inverter power module, its wiring, or the inverter cooling system. " +
+                                "The sub-code separates a sudden jump from a persistent mismatch.",
+                        severity = Severity.SERIOUS,
+                    ),
                 0x0560 to
                     Meaning(
                         what = "The hybrid computer lost its permanent power supply.",

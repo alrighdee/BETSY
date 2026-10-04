@@ -342,6 +342,7 @@ object InfMeaning {
             // Main relays, the pair of contactors that connect the pack. Stuck closed is the one
             // that matters: the pack stays live when the car thinks it is isolated.
             ("P0AA1" to 224) to Detail("Main relay 1's circuit is broken or touching battery positive.", "System main relay 1"),
+            ("P0AE7" to 224) to Detail("Main relay 1's circuit is broken or touching battery positive.", "System main relay 1"),
             // High-voltage insulation breakdown: something live is leaking to the car's body.
             //
             // The car stores 526 first, having detected a leak without knowing where. It then runs
@@ -365,14 +366,19 @@ object InfMeaning {
             // the same here. Wording them differently would imply a distinction the source
             // does not make.
             ("P0AA1" to 226) to Detail("The pack's positive main relay has welded shut and will not open.", "System main relay 1"),
+            ("P0ADC" to 226) to Detail("The pack's positive main relay has welded shut and will not open.", "System main relay 1"),
             ("P0AA1" to 231) to Detail("The pack's positive main relay has welded shut and will not open.", "System main relay 1"),
             ("P0AA1" to 233) to
                 Detail("Both pack main relays have welded shut and will not open.", "System main relays"),
             ("P0AA2" to 225) to Detail("Main relay 1's circuit is touching earth.", "System main relay 1"),
+            ("P0AE6" to 225) to Detail("Main relay 1's circuit is touching earth.", "System main relay 1"),
             ("P0AA2" to 227) to Detail("The pack's positive main relay will not close.", "System main relay 1"),
+            ("P0ADB" to 227) to Detail("The pack's positive main relay will not close.", "System main relay 1"),
             ("P0AA4" to 228) to Detail("The pack's negative main relay has welded shut and will not open.", "System main relay 3"),
+            ("P0AE0" to 228) to Detail("The pack's negative main relay has welded shut and will not open.", "System main relay 3"),
             ("P0AA4" to 232) to Detail("The pack's negative main relay has welded shut and will not open.", "System main relay 3"),
             ("P0AA5" to 229) to Detail("The pack's negative main relay will not close.", "System main relay 3"),
+            ("P0ADF" to 229) to Detail("The pack's negative main relay will not close.", "System main relay 3"),
             // What the battery ECU is telling the hybrid controller. 123 here is the collision
             // case: the same number under P0A1F means something else.
             ("P3000" to 123) to Detail("The battery unit reports a fault in the high-voltage pack.", "Hybrid battery"),
@@ -527,11 +533,16 @@ object InfMeaning {
                     "Hybrid transaxle and inverter",
                 ),
             ("P3213" to 274) to Detail("The drive inverter's temperature sensor wiring is touching battery positive.", "Inverter assembly"),
+            ("P0AF0" to 274) to Detail("The drive inverter's temperature sensor wiring is touching battery positive.", "Inverter assembly"),
             // Sensor-circuit faults: the car cannot read the inverter temperature. Not an
             // overheat.
             ("P3212" to 275) to
                 Detail("The drive inverter's temperature sensor wiring is broken or touching earth.", "Wiring and inverter assembly"),
+            ("P0AEF" to 275) to
+                Detail("The drive inverter's temperature sensor wiring is broken or touching earth.", "Wiring and inverter assembly"),
             ("P3211" to 276) to
+                Detail("The motor inverter's temperature reading jumped abruptly.", "Inverter cooling system"),
+            ("P0AEE" to 276) to
                 Detail("The motor inverter's temperature reading jumped abruptly.", "Inverter cooling system"),
             ("P3226" to 562) to
                 Detail("The boost converter's temperature reading jumped abruptly.", "Inverter cooling system"),
@@ -549,6 +560,7 @@ object InfMeaning {
             ("P3223" to 312) to
                 Detail("The generator inverter's temperature sensor wiring is touching battery positive.", "Wiring and inverter assembly"),
             ("P3211" to 277) to Detail("The drive inverter's temperature sensor readings disagree.", "Inverter assembly"),
+            ("P0AEE" to 277) to Detail("The drive inverter's temperature sensor readings disagree.", "Inverter assembly"),
             // Inverter, generator side.
             ("P0A7A" to 309) to Detail("The generator's inverter switching circuit is faulty.", "Inverter assembly"),
             ("P0A7A" to 344) to
@@ -595,6 +607,11 @@ object InfMeaning {
                     "A high-voltage safety interlock is open, usually a service plug or inverter cover that is not properly fitted.",
                     "Service plug, inverter cover",
                 ),
+            ("P0A0D" to 350) to
+                Detail(
+                    "A high-voltage safety interlock is open, usually a service plug or inverter cover that is not properly fitted.",
+                    "Service plug, inverter cover",
+                ),
             ("P3137" to 348) to Detail("The crash disconnect sensor's wiring is touching earth.", "Crash disconnect sensor"),
             ("P3138" to 349) to
                 Detail("The crash disconnect sensor's wiring is broken or touching battery positive.", "Crash disconnect sensor"),
@@ -602,6 +619,8 @@ object InfMeaning {
             // not the same as never having it, so this reads as a connection that opened rather
             // than one that was never made.
             ("P3143" to 351) to
+                Detail("The high-voltage safety interlock opened while the car was driving.", "Battery plug and inverter interlocks"),
+            ("P0A0D" to 351) to
                 Detail("The high-voltage safety interlock opened while the car was driving.", "Battery plug and inverter interlocks"),
             // Air conditioning, which on this car runs off the high-voltage system.
             ("P3108" to 535) to Detail("The air-conditioning link has a communication fault.", "Air conditioning"),

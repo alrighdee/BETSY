@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.8](https://github.com/alrighdee/BETSY/compare/v0.0.7...v0.0.8) (2026-10-07)
+
+
+### Documentation
+
+* note the latest release and link the changelog ([3c49efb](https://github.com/alrighdee/BETSY/commit/3c49efb7bbe9bb98017d8164ff7c71c056667ca5))
+
 ## [0.0.7](https://github.com/alrighdee/BETSY/compare/v0.0.6...v0.0.7) (2026-10-04)
 
 **More of the car's codes, explained.** Legacy and current names for the same fault now read alike,

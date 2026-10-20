@@ -12,9 +12,6 @@ import org.betsy.model.BatteryModel
  * runs off the end of a minimal `410C00000D00` response and throws.
  */
 object SpeedRpmDecoder {
-    /** km/h → mph (0.6214), rounded up slightly, as §5.6 specifies. */
-    private const val MPH_PER_KMH = 0.625f
-
     fun decode(
         r: String,
         m: BatteryModel,
@@ -22,6 +19,6 @@ object SpeedRpmDecoder {
         val i = Normalize.requireTag(r, "410C")
         m.rpm = Normalize.u16(r, i + 4) / 4
         val j = Normalize.requireTag(r, "0D", i + 8)
-        m.speedMph = Normalize.u8(r, j + 2) * MPH_PER_KMH
+        m.speedKmh = Normalize.u8(r, j + 2).toFloat()
     }
 }

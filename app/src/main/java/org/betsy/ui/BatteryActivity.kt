@@ -309,9 +309,8 @@ class BatteryActivity : Activity() {
             model.temps.joinToString("  ") {
                 String.format("%.1f%s", UnitPrefs.temperature(this, it), tempUnit)
             }
-        val kmh = model.speedMph / 0.625f
         speedText.text =
-            "SPEED ${String.format("%.0f %s", UnitPrefs.speed(this, kmh), UnitPrefs.speedUnit(this))}   RPM ${model.rpm}"
+            "SPEED ${String.format("%.0f %s", UnitPrefs.speed(this, model.speedKmh), UnitPrefs.speedUnit(this))}   RPM ${model.rpm}"
         barsView.syncFromModel()
     }
 

@@ -233,6 +233,10 @@ two 7.2 V modules, so a wrong offset yields 340 V or 0.15 V, not a subtly wrong 
 
 `010C0D` returns both in one reply: `41 0C <rpm u16> 0D <speed u8>`.
 
+The model stores the speed byte directly in **km/h**. Imperial display uses
+`km/h * 0.6213712`; decoding never passes through an approximate mph intermediate.
+RPM uses unsigned integer division by 4, discarding the quarter-revolution remainder.
+
 **RPM is a u16 and must be divided by 4; speed is a single byte.** Reading `0x0D` as a u16 throws
 on every poll cycle and takes the whole live screen down with it. There is a regression fixture
 for exactly this, the payload `410C00000D00`, captured from a car, ran 172 times without

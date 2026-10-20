@@ -33,7 +33,7 @@ class Gen3DecoderTest {
 
         // 2198 section: current u16 at u+2, chg at u+6, dis at u+8, delta at u+10
         val scalars = u16BE(35268) + u8(178) + u8(170) + u8(100)
-        // current = 35268/100 - 327.68 = 25.0; chg (178/2-64)*1.34 = 33.5; dis 28.14; delta 50
+        // current = 35268/100 - 327.68 = 25.0; chg 178/2-64 = 25 kW; dis 21 kW; delta 50
 
         return soc + "81" + blocks + aux + packTotal +
             "95" + ir +
@@ -54,8 +54,8 @@ class Gen3DecoderTest {
         assertEquals(listOf(25, 25, 25), m.internalResistance.take(3))
         assertEquals(listOf(40.0f, 40.0f, 40.0f), m.temps)
         assertEquals(25.0f, m.currentAmps, 0.01f)
-        assertEquals(33.5f, m.maxChargeHp, 0.01f)
-        assertEquals(28.14f, m.maxDischargeHp, 0.01f)
+        assertEquals(25.0f, m.maxChargeKw, 0.01f)
+        assertEquals(21.0f, m.maxDischargeKw, 0.01f)
         assertEquals(50.0f, m.deltaSoc, 0.01f)
     }
 
@@ -102,8 +102,8 @@ class Gen3DecoderTest {
         val m = BatteryModel(blockCount = 14)
         Gen3Decoder.decodeScalars(r, m)
         assertEquals(25.0f, m.currentAmps, 0.01f)
-        assertEquals(33.5f, m.maxChargeHp, 0.01f)
-        assertEquals(28.14f, m.maxDischargeHp, 0.01f)
+        assertEquals(25.0f, m.maxChargeKw, 0.01f)
+        assertEquals(21.0f, m.maxDischargeKw, 0.01f)
         assertEquals(50.0f, m.deltaSoc, 0.01f)
     }
 }

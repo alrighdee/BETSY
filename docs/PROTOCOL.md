@@ -181,14 +181,14 @@ only, so a unit toggle can never alter a decoded value. Speed follows the same p
 Two containers recur:
 
 ```
-u16 offset-binary:  value = u16 / 100 - 327.68      (volts, and °C)
+u16 offset-binary:  value = u16 / 100 - 327.68      (volts, amps)
 u8  half-scale:     value = u8 / 2                  (percent)
 ```
 
 ### 5.1 Gen 3 (`ATSH7E2`)
 
 Block voltages from `2181`, internal resistance from `2195`. Temperatures use `u16 / 256 - 50`
-rather than the Gen2 offset-binary form. *Inferred*; this build supports it but it has not been
+rather than the NHW20 integer temperature form below. *Inferred*; this build supports it but it has not been
 measured here.
 
 ### 5.2 Gen 2, battery on `ATSH7E3` or `ATSH7E2`
@@ -213,7 +213,18 @@ identifier echo, which makes a full refresh one round trip.
 | Max charge (hp) | `k+4` | `(u8 / 2 - 64) * 1.34` |
 | Max discharge (hp) | `k+5` | `(u8 / 2 - 64) * 1.34` |
 | ΔSOC | `k+6` | `u8 * 0.01` |
-| Temps TB1–TB3 °C | `k+10`, `k+12`, `k+14` | `u16 / 100 - 327.68` |
+| Temps TB1–TB3 °C | `k+10`, `k+12`, `k+14` | `(floor(u16 / 10) - 3276) / 10` |
+
+**P4 CF temperatures.** Intake air and TB1–TB3 are unsigned 16-bit values.
+Divide the raw value by 10 using integer division, subtract 3276, then divide by 10
+with one decimal place. The result has a 0.1 °C step; for example, `0x8C49` is 31.5 °C.
+Fahrenheit display uses `celsius * 1.8 + 32`.
+
+The temperature conversion is independent of block count and of the fifteen-block scalar
+layout. Both read paths use the same formula. Byte layout support remains separate:
+only the 14-block NHW20 layout is measured here; fifteen-block and spillover layouts are inferred.
+The measured standalone `61CF` response contains 16 payload bytes, just like its section in
+`21CED0CF`; a truncated final temperature is rejected. Only TB1–TB3 fit that measured layout.
 
 **`21D0`**, internal resistance, §4.1.
 
@@ -226,7 +237,7 @@ CF   8CD1 80 C5 4E AA 00 09 0000 8C49 8C1B 8C54
 ```
 
 decodes to SOC 54.5 %, current +2.67 A, 14 blocks 15.03–15.26 V, pack 212.15 V, 19 mΩ per block,
-aux 13.8 V, temps 31.45 / 30.99 / 31.56 °C. These constants are self-validating, a Gen2 block is
+aux 13.8 V, temps 31.5 / 31.0 / 31.6 °C using the NHW20 temperature conversion. These constants are self-validating, a Gen2 block is
 two 7.2 V modules, so a wrong offset yields 340 V or 0.15 V, not a subtly wrong answer.
 
 ### 5.6 Speed and RPM

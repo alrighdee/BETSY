@@ -8,7 +8,7 @@ import org.junit.Test
 
 /**
  * Synthetic fixtures built from the PROTOCOL.md §5.2 byte layouts, checked against the corrected
- * formulas (offset-binary u16/100−327.68 for temps, block count from 21D0 byte 0, etc).
+ * formulas (NHW20 integer temperature conversion, block count from 21D0 byte 0, etc).
  */
 class Gen2DecoderTest {
     private fun hex(
@@ -43,7 +43,7 @@ class Gen2DecoderTest {
         bytes[s / 2 + 1] = 178.toByte() // maxChg: (178/2 - 64) * 1.34 = 33.5 HP
         bytes[s / 2 + 2] = 170.toByte() // maxDis: (170/2 - 64) * 1.34 = 28.14 HP
         bytes[s / 2 + 3] = 100.toByte() // deltaSOC: 100 * 0.01 = 1.0 %
-        writeU16(bytes, 10, 36768) // temps: (36768/100 - 327.68) = 40.0 °C
+        writeU16(bytes, 10, 36768) // NHW20: (trunc(36768/10) - 3276) / 10 = 40.0 °C
         writeU16(bytes, 12, 36768)
         writeU16(bytes, 14, 36768)
         val cf = "CF" + bytes.joinToString("") { u8(it.toInt() and 0xFF) }
@@ -116,7 +116,7 @@ class Gen2DecoderTest {
     /**
      * The measured parked-and-charging fixture that drives the demo monitor. Its 21CF section is
      * the real 16 bytes, so this pins that the combined decoder's length guard accepts what a car
-     * actually answers, not just the synthetic 18-byte fixture above.
+     * actually answers, with the same payload width as the synthetic fixture above.
      */
     @Test
     fun measuredParkedAndChargingFixtureDecodes() {
@@ -129,8 +129,8 @@ class Gen2DecoderTest {
         assertEquals(13.8f, m.aux12V, 0.01f)
         assertEquals(listOf(19, 19, 19), m.internalResistance.take(3))
         assertEquals(14, m.blockVolts.size)
-        assertEquals(31.45f, m.temps[0], 0.01f)
-        assertEquals(30.99f, m.temps[1], 0.01f)
-        assertEquals(31.56f, m.temps[2], 0.01f)
+        assertEquals(31.5f, m.temps[0], 0.01f)
+        assertEquals(31.0f, m.temps[1], 0.01f)
+        assertEquals(31.6f, m.temps[2], 0.01f)
     }
 }

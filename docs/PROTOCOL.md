@@ -158,6 +158,9 @@ reachable on hardware this build does not otherwise support.
 Pack voltage is the sum of block voltages. Voltage difference is max minus min across blocks,
 the single most useful number for spotting a failing module.
 
+Charge and discharge control limits are stored and displayed in **kW**. They are ECU-reported
+limits, separate from instantaneous battery power. Signed values are preserved.
+
 ### 4.1 Internal resistance
 
 `21D0` returns one byte per block after a 15-byte preamble. **1 raw unit = 1 mΩ.** Display bands
@@ -210,8 +213,8 @@ identifier echo, which makes a full refresh one round trip.
 | Field | Location | Formula |
 |---|---|---|
 | 12 V auxiliary | `k+3` | `u8 * 0.2 - 25.6` |
-| Max charge (hp) | `k+4` | `(u8 / 2 - 64) * 1.34` |
-| Max discharge (hp) | `k+5` | `(u8 / 2 - 64) * 1.34` |
+| Charge control limit (kW) | `k+4` | `u8 / 2 - 64` |
+| Discharge control limit (kW) | `k+5` | `u8 / 2 - 64` |
 | ΔSOC | `k+6` | `u8 * 0.01` |
 | Temps TB1–TB3 °C | `k+10`, `k+12`, `k+14` | `u16 / 100 - 327.68` |
 
@@ -226,7 +229,7 @@ CF   8CD1 80 C5 4E AA 00 09 0000 8C49 8C1B 8C54
 ```
 
 decodes to SOC 54.5 %, current +2.67 A, 14 blocks 15.03–15.26 V, pack 212.15 V, 19 mΩ per block,
-aux 13.8 V, temps 31.45 / 30.99 / 31.56 °C. These constants are self-validating, a Gen2 block is
+aux 13.8 V, charge limit -25.0 kW, discharge limit 21.0 kW, temps 31.45 / 30.99 / 31.56 °C. These constants are self-validating, a Gen2 block is
 two 7.2 V modules, so a wrong offset yields 340 V or 0.15 V, not a subtly wrong answer.
 
 ### 5.6 Speed and RPM

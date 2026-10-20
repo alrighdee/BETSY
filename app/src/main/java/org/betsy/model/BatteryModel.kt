@@ -3,14 +3,15 @@ package org.betsy.model
 /**
  * The PROTOCOL.md §4 value slots, the contract between the PID decoders and the UI.
  * Temperatures are stored in Celsius; conversion is a display-layer concern (§5.1 note).
+ * Charge and discharge limits are stored in kW.
  * [currentAmps] is positive when discharging (§4).
  */
 data class BatteryModel(
     var soc: Float = 0f,
     var deltaSoc: Float = 0f,
     var currentAmps: Float = 0f,
-    var maxChargeHp: Float = 0f,
-    var maxDischargeHp: Float = 0f,
+    var maxChargeKw: Float = 0f,
+    var maxDischargeKw: Float = 0f,
     var aux12V: Float = 0f,
     var speedMph: Float = 0f,
     var rpm: Int = 0,

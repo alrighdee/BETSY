@@ -54,8 +54,8 @@ object Gen2Decoder {
         Normalize.requireLength(r, k + 36, "21CF")
         val s = if (fifteenBlockVariant) -4 else 0 // p044o1 scalars sit 4 hex chars earlier
         m.aux12V = Normalize.u8(r, k + 6 + s) * 0.2f - 25.6f
-        m.maxChargeHp = (Normalize.u8(r, k + 8 + s) / 2f - 64f) * 1.34f
-        m.maxDischargeHp = (Normalize.u8(r, k + 10 + s) / 2f - 64f) * 1.34f
+        m.maxChargeKw = (Normalize.u8(r, k + 8 + s) / 2f - 64f)
+        m.maxDischargeKw = (Normalize.u8(r, k + 10 + s) / 2f - 64f)
         m.deltaSoc = Normalize.u8(r, k + 12 + s) * 0.01f
         val temps = MutableList(3) { 0f }
         var kt = k + 20 // skips the intake word; TB1..TB3 (§5.2)
@@ -123,8 +123,8 @@ object Gen2Decoder {
         }
         val s = if (fifteenBlockVariant) -4 else 0
         m.aux12V = Normalize.u8(r, k + 6 + s) * 0.2f - 25.6f
-        m.maxChargeHp = (Normalize.u8(r, k + 8 + s) / 2f - 64f) * 1.34f
-        m.maxDischargeHp = (Normalize.u8(r, k + 10 + s) / 2f - 64f) * 1.34f
+        m.maxChargeKw = (Normalize.u8(r, k + 8 + s) / 2f - 64f)
+        m.maxDischargeKw = (Normalize.u8(r, k + 10 + s) / 2f - 64f)
         m.deltaSoc = Normalize.u8(r, k + 12 + s) * 0.01f
         val temps = MutableList(3) { 0f }
         var kt = k + 20

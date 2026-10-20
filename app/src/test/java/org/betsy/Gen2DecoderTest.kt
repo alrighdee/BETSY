@@ -40,8 +40,8 @@ class Gen2DecoderTest {
         val s = if (fifteen) 2 else 6
         val bytes = ByteArray(16)
         bytes[s / 2] = 192.toByte() // aux12V: 192 * 0.2 - 25.6 = 12.8 V
-        bytes[s / 2 + 1] = 178.toByte() // maxChg: (178/2 - 64) * 1.34 = 33.5 HP
-        bytes[s / 2 + 2] = 170.toByte() // maxDis: (170/2 - 64) * 1.34 = 28.14 HP
+        bytes[s / 2 + 1] = 178.toByte() // maxChg: 178/2 - 64 = 25.0 kW
+        bytes[s / 2 + 2] = 170.toByte() // maxDis: 170/2 - 64 = 21.0 kW
         bytes[s / 2 + 3] = 100.toByte() // deltaSOC: 100 * 0.01 = 1.0 %
         writeU16(bytes, 10, 36768) // temps: (36768/100 - 327.68) = 40.0 °C
         writeU16(bytes, 12, 36768)
@@ -73,8 +73,8 @@ class Gen2DecoderTest {
         assertEquals(14.40f, m.blockVolts.last(), 0.01f)
         assertEquals(listOf(25, 25, 25), m.internalResistance.take(3))
         assertEquals(12.8f, m.aux12V, 0.01f)
-        assertEquals(33.5f, m.maxChargeHp, 0.01f)
-        assertEquals(28.14f, m.maxDischargeHp, 0.01f)
+        assertEquals(25.0f, m.maxChargeKw, 0.01f)
+        assertEquals(21.0f, m.maxDischargeKw, 0.01f)
         assertEquals(1.0f, m.deltaSoc, 0.01f)
         assertEquals(listOf(40.0f, 40.0f, 40.0f), m.temps)
     }
@@ -87,8 +87,8 @@ class Gen2DecoderTest {
         assertEquals(15, m.blockVolts.size)
         assertEquals(60.0f, m.soc, 0.01f)
         assertEquals(12.8f, m.aux12V, 0.01f)
-        assertEquals(33.5f, m.maxChargeHp, 0.01f)
-        assertEquals(28.14f, m.maxDischargeHp, 0.01f)
+        assertEquals(25.0f, m.maxChargeKw, 0.01f)
+        assertEquals(21.0f, m.maxDischargeKw, 0.01f)
         assertEquals(1.0f, m.deltaSoc, 0.01f)
         assertEquals(listOf(40.0f, 40.0f, 40.0f), m.temps)
     }
@@ -127,6 +127,8 @@ class Gen2DecoderTest {
         assertEquals(54.5f, m.soc, 0.01f)
         assertEquals(2.67f, m.currentAmps, 0.01f)
         assertEquals(13.8f, m.aux12V, 0.01f)
+        assertEquals(-25.0f, m.maxChargeKw, 0.01f)
+        assertEquals(21.0f, m.maxDischargeKw, 0.01f)
         assertEquals(listOf(19, 19, 19), m.internalResistance.take(3))
         assertEquals(14, m.blockVolts.size)
         assertEquals(31.45f, m.temps[0], 0.01f)

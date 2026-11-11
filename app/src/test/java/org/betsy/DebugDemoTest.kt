@@ -29,7 +29,7 @@ import org.junit.Test
  * short-circuit that keeps a fixture from leaving the device.
  */
 class DebugDemoTest {
-    private val gen2 = VehicleInfo(VehicleModel.GEN2, supported = true, blockCount = 14, cellCount = 28)
+    private val gen2 = VehicleInfo(VehicleModel.GEN2, supported = true, blockCount = 14)
 
     @Test
     fun livePollMovesEveryCycleAndStaysDecodable() {

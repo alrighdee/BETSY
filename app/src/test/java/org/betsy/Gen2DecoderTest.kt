@@ -1,9 +1,11 @@
 package org.betsy
 
 import org.betsy.decode.Gen2Decoder
+import org.betsy.elm.NoDataException
 import org.betsy.model.BatteryModel
 import org.betsy.transport.SimulatedCar
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertThrows
 import org.junit.Test
 
 /**
@@ -132,5 +134,56 @@ class Gen2DecoderTest {
         assertEquals(31.45f, m.temps[0], 0.01f)
         assertEquals(30.99f, m.temps[1], 0.01f)
         assertEquals(31.56f, m.temps[2], 0.01f)
+    }
+
+    @Test
+    fun standalone16ByteCfMatchesTheSameFieldsInTheCombinedReply() {
+        val combined = SimulatedCar.gen2WithStoredFault.getValue("21CED0CF")
+        val whole = BatteryModel(blockCount = 14)
+        Gen2Decoder.decodeCombined(combined, whole, fifteenBlockVariant = false)
+        val separate = BatteryModel(blockCount = 14)
+        Gen2Decoder.decodeCe(combined.take(66), separate)
+        Gen2Decoder.decodeD0("61" + combined.substring(66, 126), separate)
+        Gen2Decoder.decodeCf("61" + combined.takeLast(34), separate, fifteenBlockVariant = false)
+        assertEquals(whole, separate)
+    }
+
+    @Test
+    fun batteryDecodersRespectApplicationBoundariesAndDeclaredLengths() {
+        val combined = SimulatedCar.gen2WithStoredFault.getValue("21CED0CF")
+        val ce = combined.take(66)
+        val d0 = "61" + combined.substring(66, 126)
+        val cf = "61" + combined.takeLast(34)
+        val readers: List<Pair<String, (String, BatteryModel) -> Unit>> =
+            listOf(
+                ce to { r, m -> Gen2Decoder.decodeCe(r, m) },
+                d0 to { r, m -> Gen2Decoder.decodeD0(r, m) },
+                cf to { r, m -> Gen2Decoder.decodeCf(r, m, fifteenBlockVariant = false) },
+                combined to { r, m -> Gen2Decoder.decodeCombined(r, m, fifteenBlockVariant = false) },
+            )
+        for ((valid, decode) in readers) {
+            val expected = BatteryModel(blockCount = 14)
+            decode(valid, expected)
+            val length = valid.length / 2
+            val prefixed = "%03X".format(length) + valid
+            val actual = BatteryModel(blockCount = 14)
+            decode(prefixed + "00000000", actual)
+            assertEquals(expected, actual)
+            for (bad in listOf("6200" + valid, "002" + valid, "%03X".format(length + 1) + valid, valid.dropLast(2))) {
+                val before = BatteryModel(blockCount = 14, soc = 7f, currentAmps = 8f, aux12V = 9f)
+                val after = before.copy()
+                assertThrows(NoDataException::class.java) { decode(bad, after) }
+                assertEquals(before, after)
+            }
+        }
+    }
+
+    @Test
+    fun blockCountCannotBeReadFromAnotherResponseOrOutsideDeclaredData() {
+        val raw = "61D00E" + "00".repeat(14) + "14".repeat(14)
+        assertEquals(14, Gen2Decoder.readBlockCount("%03X".format(raw.length / 2) + raw))
+        for (bad in listOf("6200" + raw, "002" + raw, "%03X".format(raw.length / 2 + 1) + raw)) {
+            assertThrows(NoDataException::class.java) { Gen2Decoder.readBlockCount(bad) }
+        }
     }
 }

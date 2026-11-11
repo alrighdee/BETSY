@@ -1,5 +1,6 @@
 package org.betsy.decode
 
+import org.betsy.elm.NoDataException
 import org.betsy.elm.Normalize
 import org.betsy.model.BatteryModel
 
@@ -19,9 +20,28 @@ object SpeedRpmDecoder {
         r: String,
         m: BatteryModel,
     ) {
-        val i = Normalize.requireTag(r, "410C")
-        m.rpm = Normalize.u16(r, i + 4) / 4
-        val j = Normalize.requireTag(r, "0D", i + 8)
-        m.speedMph = Normalize.u8(r, j + 2) * MPH_PER_KMH
+        val response = message(r)
+        Normalize.requireLength(response, 8, "010C0D RPM")
+        val speedPid = if (response.startsWith("410D", 8)) 10 else 8
+        if (!response.startsWith("0D", speedPid)) throw NoDataException("010C0D: expected speed PID after RPM")
+        Normalize.requireLength(response, speedPid + 4, "010C0D speed")
+        val rpm = Normalize.u16(response, 4) / 4
+        val speed = Normalize.u8(response, speedPid + 2) * MPH_PER_KMH
+        m.rpm = rpm
+        m.speedMph = speed
+    }
+
+    /** Bound an assembled response before interpreting either value. */
+    private fun message(r: String): String {
+        if (r.startsWith("410C")) {
+            Normalize.requireWholeBytes(r, "010C0D")
+            return r
+        }
+        if (!r.startsWith("410C", 3)) throw NoDataException("010C0D: unexpected response service or PID")
+        val declared = r.take(3).toIntOrNull(16)
+        if (declared == null || declared < 4) throw NoDataException("010C0D: invalid response length prefix")
+        val end = 3 + declared * 2
+        Normalize.requireLength(r, end, "010C0D")
+        return r.substring(3, end)
     }
 }

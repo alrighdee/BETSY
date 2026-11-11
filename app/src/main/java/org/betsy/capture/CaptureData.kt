@@ -38,7 +38,7 @@ data class CaptureData(
      * later against what that build actually did.
      */
     val build: String,
-    /** Detected generation and pack shape, e.g. "Gen2 (2004-2009) 14 blocks / 28 cells". */
+    /** Detected generation and pack shape, e.g. "Gen2 14 blocks". */
     val car: String,
     /** Adapter identity from the ELM327 banner. */
     val elm: String,
@@ -73,6 +73,10 @@ data class CaptureData(
      * session has ended.
      */
     val demo: Boolean = false,
+    /** All planned enhanced DTC reads completed; finding no codes alone does not establish this. */
+    val enhancedDtcReadsComplete: Boolean = false,
+    /** Successfully decoded compact INF pages, including pages whose Information value is zero. */
+    val infTablesResponded: Int = 0,
 ) {
     /**
      * Serialize for upload.
@@ -102,6 +106,8 @@ data class CaptureData(
                 },
             ).put("logTail", JSONArray(Redact.vin(logTail)))
             .put("hasStoredDtcs", hasStoredDtcs)
+            .put("enhancedDtcReadsComplete", enhancedDtcReadsComplete)
+            .put("infTablesResponded", infTablesResponded)
             .put("ownerNotes", ownerNotes)
             // Always false: anything the app sends came off a car. The flag exists so test
             // harnesses can mark their own submissions, which keeps a healthy real car filed as
@@ -142,7 +148,7 @@ data class CaptureData(
             CaptureData(
                 version = version,
                 build = build,
-                car = "${info.model.label} ${info.blockCount} blocks / ${info.cellCount} cells",
+                car = "${info.model.label} ${info.blockCount} blocks",
                 elm = elm.ifBlank { "unknown" },
                 raw = result.rawResponses,
                 dtcs = result.groups.flatMap { g -> g.codes.map { "${g.label}: ${it.code}" } },
@@ -156,6 +162,8 @@ data class CaptureData(
                         if (result.hasStoredDtcs) LOG_LINES_FAULT else LOG_LINES_CLEAN,
                     ),
                 hasStoredDtcs = result.hasStoredDtcs,
+                enhancedDtcReadsComplete = result.enhancedDtcReadsComplete,
+                infTablesResponded = result.infTablesResponded,
                 ownerNotes = ownerNotes,
             )
     }

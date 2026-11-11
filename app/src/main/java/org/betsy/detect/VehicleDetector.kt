@@ -1,10 +1,13 @@
 package org.betsy.detect
 
 import org.betsy.debug.CaptureLog
+import org.betsy.decode.Gen2Decoder
 import org.betsy.elm.ElmException
 import org.betsy.elm.ElmSession
 import org.betsy.elm.NoDataException
 import org.betsy.elm.Normalize
+import org.betsy.model.BatteryModel
+import org.betsy.transport.TransportException
 import kotlin.math.round
 
 /**
@@ -43,7 +46,6 @@ data class VehicleInfo(
     val model: VehicleModel,
     val supported: Boolean,
     val blockCount: Int,
-    val cellCount: Int,
     val fifteenBlockVariant: Boolean = false,
     val splitPack: Boolean = false,
     val badAdapter: Boolean = false,
@@ -75,7 +77,10 @@ object VehicleDetector {
         }
         // 2. Gen2, ATSH7E3, probe 21CE, expect 61CE
         if (probe(session, "7E3", "21CE", "61CE", crumbs)) {
-            val n = discoverGen2BlockCount(session, crumbs)
+            val ce = Normalize.normalize(session.lastRawResponse)
+            val n = Gen2Decoder.readBlockCount(session.command("21D0"))
+            // Validate the initial sample using the reported count before enabling live decoding.
+            Gen2Decoder.decodeCe(ce, BatteryModel(blockCount = n))
             return finalize(VehicleModel.GEN2, n, session, crumbs)
         }
         // 3. The same request answered by 7E2 instead. Never observed on a real car, so it is
@@ -87,7 +92,6 @@ object VehicleDetector {
                 supported = false,
                 captureOnly = true,
                 blockCount = 0,
-                cellCount = 0,
                 breadcrumbs = crumbs.map { "${it.first}: ${it.second}" },
             )
         }
@@ -113,7 +117,7 @@ object VehicleDetector {
         )
     }
 
-    /** Sets the header, sends [cmd], and returns true when the response contains [tag] (§3). */
+    /** Sets the header and matches [tag] only at the application-message boundary (§3). */
     private suspend fun probe(
         session: ElmSession,
         header: String,
@@ -124,15 +128,29 @@ object VehicleDetector {
         session.setHeader(header)
         return try {
             val r = session.command(cmd)
-            val ok = r.contains(tag)
+            val ok = matchesProbeResponse(r, tag)
             CaptureLog.log("DETECT", "$header $cmd -> ${if (ok) "hit" else "miss (no $tag)"}")
             if (!ok) crumbs += header to "no $tag"
             ok
         } catch (e: Exception) {
             CaptureLog.logThrowable("DETECT", e)
             crumbs += header to (e.message ?: e.toString())
+            if (e is TransportException || e is ElmException) throw e
             false
         }
+    }
+
+    /** The adapter may prefix an assembled reply with a three-digit application length. */
+    private fun matchesProbeResponse(
+        r: String,
+        tag: String,
+    ): Boolean {
+        if (r.startsWith(tag)) return true
+        if (!r.startsWith(tag, 3)) return false
+        val declared = r.take(3).toIntOrNull(16)
+        if (declared == null || declared * 2 < tag.length) throw ElmException("$tag: invalid probe length prefix")
+        if (r.length < 3 + declared * 2) throw ElmException("$tag: truncated declared probe response")
+        return true
     }
 
     /** Same as [probe] but also rejects responses carrying the `2213` negative-response code. */
@@ -155,19 +173,6 @@ object VehicleDetector {
             crumbs += header to (e.message ?: e.toString())
             false
         }
-    }
-
-    /** Gen2-layout block count: 21D0 byte 0 is the ECU-reported count (§5.2, §3.2 correction). */
-    private suspend fun discoverGen2BlockCount(
-        session: ElmSession,
-        crumbs: MutableList<Pair<String, String>>,
-    ): Int {
-        val r = session.command("21D0")
-        val i = Normalize.requireTag(r, "61D0")
-        val fromByte = Normalize.u8(r, i + 4)
-        if (fromByte in 1..100) return fromByte
-        crumbs += "21D0" to "byte-0 count implausible ($fromByte); scanning IR"
-        return scanIr(r, i + 34, "21D0")
     }
 
     /** Gen3 block count: scan 2195 IR bytes; bound 255 not 60 (§3.2 correction). */
@@ -201,7 +206,7 @@ object VehicleDetector {
         return n
     }
 
-    /** §3.2 post-processing: bad-adapter fallback, fifteen-block variant, cell count. */
+    /** §3.2 post-processing: bad-adapter fallback, fifteen-block variant, split-pack flag. */
     private suspend fun finalize(
         model: VehicleModel,
         n: Int,
@@ -210,12 +215,11 @@ object VehicleDetector {
     ): VehicleInfo {
         var blockCount = n
         var badAdapter = false
-        if (n < 7) {
+        if (model != VehicleModel.GEN2 && n < 7) {
             badAdapter = true
             blockCount = 10 // §3.2: assume the adapter is dropping bytes
         }
         val fifteen = blockCount == 15
-        val cellCount = if (fifteen) blockCount * 2 else blockCount * 2 // §3.2 C = N × 2
         val splitPack =
             if (fifteen) {
                 detectSplitPack(session, model, blockCount, crumbs)
@@ -224,13 +228,12 @@ object VehicleDetector {
             }
         CaptureLog.log(
             "DETECT",
-            "resolved ${model.label} n=$blockCount cells=$cellCount fifteen=$fifteen splitPack=$splitPack badAdapter=$badAdapter",
+            "resolved ${model.label} n=$blockCount fifteen=$fifteen splitPack=$splitPack badAdapter=$badAdapter",
         )
         return VehicleInfo(
             model = model,
             supported = true,
             blockCount = blockCount,
-            cellCount = cellCount,
             fifteenBlockVariant = fifteen,
             splitPack = splitPack,
             badAdapter = badAdapter,
@@ -284,7 +287,6 @@ object VehicleDetector {
             model = model,
             supported = false,
             blockCount = 0,
-            cellCount = 0,
             breadcrumbs = crumbs.map { "${it.first}: ${it.second}" },
         )
 }

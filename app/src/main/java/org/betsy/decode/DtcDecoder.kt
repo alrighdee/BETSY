@@ -1,5 +1,6 @@
 package org.betsy.decode
 
+import org.betsy.elm.NoDataException
 import org.betsy.elm.Normalize
 import org.betsy.model.Dtc
 
@@ -33,24 +34,41 @@ object DtcDecoder {
 
     /**
      * §9.3 `k.a`, count-byte parser for `53`/`4A`/`43`/`47` responses.
-     * Locates [tag], reads the count byte, then walks count × 2-byte DTCs. When the count
-     * overstates the response length, trusts the actual length (defensive, as the app does).
+     * Locates [tag], reads the count byte, then walks count × 2-byte DTCs.
+     * Rejects incomplete lists instead of reporting a partial or empty result as successful.
      */
     fun decodeCounted(
         r: String,
         tag: String,
     ): List<Dtc> {
-        val i = Normalize.requireTag(r, tag)
-        Normalize.requireLength(r, i + 2, tag)
-        var k = i + 2
-        var count = Normalize.u8(r, k)
-        k += 2
-        val available = (r.length - k) / 4
-        if (count > available) count = available
-        return (0 until count).map {
-            val raw = Normalize.u16(r, k + it * 4)
-            Dtc(raw = raw, code = format(raw))
+        val response = countedMessage(r, tag)
+        Normalize.requireLength(response, 4, tag)
+        val count = Normalize.u8(response, 2)
+        Normalize.requireLength(response, 4 + count * 4, tag)
+        val codes = mutableListOf<Dtc>()
+        for (index in 0 until count) {
+            val raw = Normalize.u16(response, 4 + index * 4)
+            if (raw == 0) break
+            codes += Dtc(raw = raw, code = format(raw))
         }
+        return codes
+    }
+
+    /** Only an application response, optionally preceded by an ELM length, can carry the list. */
+    private fun countedMessage(
+        r: String,
+        tag: String,
+    ): String {
+        if (r.startsWith(tag)) {
+            Normalize.requireWholeBytes(r, tag)
+            return r
+        }
+        if (!r.startsWith(tag, 3)) throw NoDataException("$tag: unexpected response service")
+        val declared = r.take(3).toIntOrNull(16)
+        if (declared == null || declared < 2) throw NoDataException("$tag: invalid response length prefix")
+        val end = 3 + declared * 2
+        Normalize.requireLength(r, end, tag)
+        return r.substring(3, end)
     }
 
     /** §9.1, mode 13 (`13 <mask>`, response tag `53`). */

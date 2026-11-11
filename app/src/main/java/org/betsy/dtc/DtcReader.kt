@@ -7,12 +7,14 @@ import org.betsy.decode.InfLayout
 import org.betsy.decode.InfMeaning
 import org.betsy.detect.VehicleInfo
 import org.betsy.detect.VehicleModel
+import org.betsy.elm.AdapterStatus
 import org.betsy.elm.ElmSession
 import org.betsy.elm.NegativeResponse
 import org.betsy.elm.NegativeResponseException
 import org.betsy.elm.Normalize
 import org.betsy.model.Dtc
 import org.betsy.model.InfDetail
+import org.betsy.transport.TransportException
 
 /** Logical source of an enhanced DTC observation. Never infer this from display text. */
 enum class DtcSource(
@@ -71,7 +73,7 @@ fun interface SweepProgress {
 
 /**
  * Result of the 7E2 liveness probe (`0100`). [responding] is true only when the ECU itself
- * answered: positive mode-01 (`41…`) or a negative response (`7F…`). Adapter text and unexpected
+ * answered: complete mode-01 PID-00 (`4100` + four mask bytes) or `7F01<NRC>`. Adapter text and unexpected
  * hex are not "alive."
  */
 data class EcuLiveness(
@@ -107,6 +109,8 @@ data class DtcReadResult(
     val pendingGenericDtcs: List<Dtc> = emptyList(),
     /** How many of the five INF pages returned a positive response (did not throw). */
     val infTablesResponded: Int = 0,
+    /** Every planned enhanced DTC request decoded successfully; independent of found codes. */
+    val enhancedDtcReadsComplete: Boolean = false,
 ) {
     /**
      * Toyota enhanced (KWP2000 groups + INF) only. Generic $03/$07 do **not** count: a clean
@@ -220,62 +224,70 @@ class DtcReader(
             CaptureLog.log("DTC", "liveness 7E2: responding=${liveness.responding} ${liveness.detail}")
         }
 
-        when (info.model) {
-            VehicleModel.GEN3 ->
-                readDtcGroup(
-                    DtcSource.HYBRID_CONTROL,
-                    "HV ECU (7E2)",
-                    "7E2",
-                    listOf("0A" to { DtcDecoder.decodeMode0A(it) }, "13B0" to { DtcDecoder.decodeMode13(it) }),
-                    groups,
-                    notes,
-                    raws,
-                )
-            VehicleModel.GEN2 -> {
-                readDtcGroup(
-                    DtcSource.HYBRID_CONTROL,
-                    "HV ECU (7E2)",
-                    "7E2",
-                    listOf("13B0" to { DtcDecoder.decodeMode13(it) }),
-                    groups,
-                    notes,
-                    raws,
-                )
-                readDtcGroup(
-                    DtcSource.BATTERY_CONTROL,
-                    "Battery ECU (7E3)",
-                    "7E3",
-                    listOf("1380" to { DtcDecoder.decodeMode13(it) }),
-                    groups,
-                    notes,
-                    raws,
-                )
-            }
-            VehicleModel.GEN2_7E2 ->
-                readDtcGroups(
-                    "7E2",
-                    listOf(
-                        GroupRead(
+        val hybridBatteryComplete =
+            when (info.model) {
+                VehicleModel.GEN3 ->
+                    readDtcGroup(
+                        DtcSource.HYBRID_CONTROL,
+                        "HV ECU (7E2)",
+                        "7E2",
+                        listOf("0A" to { DtcDecoder.decodeMode0A(it) }, "13B0" to { DtcDecoder.decodeMode13(it) }),
+                        groups,
+                        notes,
+                        raws,
+                    )
+                VehicleModel.GEN2 -> {
+                    val hybridComplete =
+                        readDtcGroup(
                             DtcSource.HYBRID_CONTROL,
                             "HV ECU (7E2)",
+                            "7E2",
                             listOf("13B0" to { DtcDecoder.decodeMode13(it) }),
-                        ),
-                        GroupRead(
+                            groups,
+                            notes,
+                            raws,
+                        )
+                    val batteryComplete =
+                        readDtcGroup(
                             DtcSource.BATTERY_CONTROL,
-                            "Battery ECU (7E2)",
+                            "Battery ECU (7E3)",
+                            "7E3",
                             listOf("1380" to { DtcDecoder.decodeMode13(it) }),
+                            groups,
+                            notes,
+                            raws,
+                        )
+                    hybridComplete && batteryComplete
+                }
+                VehicleModel.GEN2_7E2 ->
+                    readDtcGroups(
+                        "7E2",
+                        listOf(
+                            GroupRead(
+                                DtcSource.HYBRID_CONTROL,
+                                "HV ECU (7E2)",
+                                listOf("13B0" to { DtcDecoder.decodeMode13(it) }),
+                            ),
+                            GroupRead(
+                                DtcSource.BATTERY_CONTROL,
+                                "Battery ECU (7E2)",
+                                listOf("1380" to { DtcDecoder.decodeMode13(it) }),
+                            ),
                         ),
-                    ),
-                    groups,
-                    notes,
-                    raws,
+                        groups,
+                        notes,
+                        raws,
+                    )
+                else -> throw UnsupportedOperationException(
+                    "${info.model.label} DTC read is not supported in this build",
                 )
-            else -> throw UnsupportedOperationException(
-                "${info.model.label} DTC read is not supported in this build",
-            )
-        }
+            }
         // Always attempt the ECM so a fuse-test U0293 is not invisible when 7E2 INF is empty.
-        readEngineDtcs(groups, notes, raws)
+        val engineComplete = readEngineDtcs(groups, notes, raws)
+        val enhancedComplete = hybridBatteryComplete && engineComplete
+        if (!enhancedComplete) {
+            notes += "Toyota enhanced DTC read incomplete; stored-code status is not fully confirmed."
+        }
 
         if (gen2Family) {
             // Generic OBD after Toyota KWP groups, before INF. $07 is supplemental only.
@@ -310,6 +322,7 @@ class DtcReader(
             storedGenericDtcs = storedGeneric,
             pendingGenericDtcs = pendingGeneric,
             infTablesResponded = infResponded,
+            enhancedDtcReadsComplete = enhancedComplete,
         )
     }
 
@@ -320,11 +333,11 @@ class DtcReader(
      * extended masks up to `0140`. Generic mode 01 is implemented here, so one probe is enough and
      * an earlier `21C6` fallback has been removed rather than left in as an untested hedge.
      *
-     * Only `41…` (positive) or `7F…` (negative response) means the ECU itself answered. Adapter
+     * Only a complete `4100` mask or `7F01<NRC>` confirms this probe. Adapter
      * status text and unexpected hex are not "alive".
      */
     private suspend fun checkLiveness(raws: MutableMap<String, String>): EcuLiveness =
-        probeLiveness("7E2", "0100", raws) { it.startsWith("41") }
+        probeLiveness("7E2", "0100", raws) { it.startsWith("4100") && it.length >= 12 }
 
     /**
      * Sends one liveness request under [header] and classifies the reply. [positive] tests the
@@ -339,9 +352,8 @@ class DtcReader(
         try {
             val raw =
                 session.withEcu(header) {
-                    session.rawCommand(cmd)
+                    rawDiagnosticCommand(header, cmd, raws)
                 }
-            raws[rawKey(header, cmd)] = raw
             classifyLiveness(header, raw, positive)
         } catch (e: Exception) {
             val msg = e.message ?: e.toString()
@@ -351,6 +363,8 @@ class DtcReader(
                     msg.contains("timed out", ignoreCase = true)
                 ) {
                     "No response (timeout)"
+                } else if (msg.contains("ATH0")) {
+                    "Response format unconfirmed: $msg"
                 } else if (msg.contains("Header") || msg.contains("ATSH") || msg.contains("setup failed")) {
                     "Header setup failed: $msg"
                 } else {
@@ -365,30 +379,24 @@ class DtcReader(
         positive: (String) -> Boolean,
     ): EcuLiveness {
         val trimmed = raw.trim()
-        if (trimmed.contains('?') ||
-            trimmed.contains("STOPPED", ignoreCase = true) ||
-            trimmed.contains("UNABLE TO CONNECT", ignoreCase = true)
-        ) {
-            return EcuLiveness(header, false, "Adapter error: $trimmed")
-        }
-        if (trimmed.contains("NO DATA", ignoreCase = true) ||
-            trimmed.contains("CAN ERROR", ignoreCase = true) ||
-            trimmed.contains("BUS ERROR", ignoreCase = true)
-        ) {
-            return EcuLiveness(header, false, "No response (NO DATA)")
+        val status = AdapterStatus.find(raw)
+        if (status != null) {
+            val detail =
+                if (status in listOf("NO DATA", "CAN ERROR", "BUS ERROR")) {
+                    "No response (NO DATA)"
+                } else {
+                    "Adapter error: $trimmed"
+                }
+            return EcuLiveness(header, false, detail)
         }
         val norm = Normalize.normalize(raw)
+        if (norm.length % 2 != 0) return EcuLiveness(header, false, "Unexpected response: $trimmed")
         if (positive(norm)) {
             return EcuLiveness(header, true, "Responding")
         }
-        if (norm.startsWith("7F")) {
-            val nr = NegativeResponse.parse(norm)
-            val detail =
-                if (nr != null) {
-                    "Negative response: 7F ${nr.service} ${"%02X".format(nr.nrc)} (${nr.meaning})"
-                } else {
-                    "Negative response: $norm"
-                }
+        val nr = NegativeResponse.parse(norm)
+        if (nr != null && nr.service == "01") {
+            val detail = "Negative response: 7F ${nr.service} ${"%02X".format(nr.nrc)} (${nr.meaning})"
             return EcuLiveness(header, true, detail, nr)
         }
         return EcuLiveness(header, false, "Unexpected response: $trimmed")
@@ -402,8 +410,8 @@ class DtcReader(
      * **Single-frame only.** ATH1 puts the responder CAN ID on every line, and this takes the first
      * `7EA` line and strips 3 nibbles of ID + 2 of single-frame PCI. Past about three stored DTCs
      * the reply becomes multi-frame: the first frame's PCI is 4 nibbles, not 2, and the rest of the
-     * codes arrive on consecutive-frame lines this never reads. Such a reply is detected and
-     * reported as a note instead of being decoded, because a silently truncated DTC list reads as a
+     * codes arrive on consecutive-frame lines this never reads. Multi-frame replies and multiple
+     * matching responder lines are reported as a note instead of being decoded, because a silently truncated DTC list reads as a
      * cleaner car than the one in front of you.
      *
      * TODO: reassemble ISO-TP under ATH1 (or read with ATH0 and take the assembled reply, losing
@@ -419,21 +427,26 @@ class DtcReader(
         return try {
             session.withEcu(header) {
                 stage(SweepPhase.GENERIC_OBD, "Generic DTCs (\$$cmd)")
-                session.rawCommand("ATH1")
                 try {
-                    val raw = session.rawCommand(cmd)
-                    raws[rawKey(header, cmd)] = raw
-                    val line = rawLineContaining(raw, "7EA")
+                    session.setResponseHeaders(true)
+                    val raw = rawDiagnosticCommand(header, cmd, raws, canHeaders = true)
+                    AdapterStatus.find(raw)?.let {
+                        notes += "Generic DTCs ($cmd): adapter status $it: ${raw.trim()}"
+                        return@withEcu emptyList()
+                    }
+                    val lines = rawLinesFromCanId(raw, "7EA")
+                    val line = lines.firstOrNull()
                     if (line == null) {
                         notes += "Generic DTCs ($cmd): no 7EA response line found"
                         return@withEcu emptyList()
                     }
-                    // Strip CAN ID (3 hex) + ISO-TP PCI (2 hex) from the 7EA line.
-                    var norm = Normalize.normalize(line)
+                    // The 11-bit CAN ID is followed by the single-frame PCI length byte.
+                    val norm = Normalize.normalize(line)
                     if (norm.length < 5) {
                         notes += "Generic DTCs ($cmd): 7EA line too short"
                         return@withEcu emptyList()
                     }
+                    Normalize.requireWholeBytes(norm.drop(3), "7EA CAN frame")
                     // ISO-TP PCI type is the nibble after the CAN ID: 0 = single frame, 1 = first
                     // frame of a multi-frame reply. Only the single-frame form is assembled here.
                     if (norm.getOrNull(3) == '1') {
@@ -442,29 +455,44 @@ class DtcReader(
                             "(raw kept; more DTCs than one frame holds)"
                         return@withEcu emptyList()
                     }
-                    norm = norm.drop(5)
-                    if (norm.startsWith("7F")) {
-                        val nr = NegativeResponse.parse(norm)
+                    val pci = Normalize.u8(norm, 3)
+                    if (pci !in 1..7) {
+                        notes += "Generic DTCs ($cmd): invalid single-frame PCI 0x${"%02X".format(pci)}"
+                        return@withEcu emptyList()
+                    }
+                    if (lines.size != 1) {
+                        notes +=
+                            "Generic DTCs ($cmd): multiple 7EA response lines, not decoded " +
+                            "(raw kept; a single-frame result would omit other responses)"
+                        return@withEcu emptyList()
+                    }
+                    val end = 5 + pci * 2
+                    if (norm.length < end) {
+                        notes += "Generic DTCs ($cmd): truncated single-frame response"
+                        return@withEcu emptyList()
+                    }
+                    val payload = norm.substring(5, end)
+                    if (payload.startsWith("7F")) {
+                        val nr = NegativeResponse.parse(payload)
                         notes +=
                             if (nr != null) {
                                 "Generic DTCs ($cmd): 7F ${nr.service} ${"%02X".format(nr.nrc)} (${nr.meaning})"
                             } else {
-                                "Generic DTCs ($cmd): $norm"
+                                "Generic DTCs ($cmd): $payload"
                             }
                         return@withEcu emptyList()
                     }
                     try {
-                        decoder(norm)
+                        decoder(payload)
                     } catch (e: Exception) {
                         notes += "Generic DTCs ($cmd): ${e.message ?: e.toString()}"
                         emptyList()
                     }
                 } finally {
                     try {
-                        session.rawCommand("ATH0")
-                    } catch (_: Exception) {
-                        // adapter already in bad state; don't let cleanup failure
-                        // propagate and leave ATH1 on for the next sweep
+                        session.setResponseHeaders(false)
+                    } catch (e: Exception) {
+                        notes += "Generic DTCs ($cmd) restoring ATH0: ${e.message ?: e.toString()}"
                     }
                 }
             }
@@ -503,27 +531,13 @@ class DtcReader(
                     // reported as their own step so the slow walk keeps the progress bar moving.
                     val first = frame == 0
                     if (first) stage(SweepPhase.FREEZE_FRAME, "Freeze frame")
-                    val mask =
-                        try {
-                            session.rawCommand("0200$fr").also { raws[rawKey(header, "0200$fr")] = it }
-                        } catch (e: Exception) {
-                            notes += "Freeze frame $fr: ${e.message ?: e.toString()}"
-                            return@withEcu
-                        }
-                    val exists = Normalize.normalize(mask).startsWith("4200")
+                    val mask = readFreezeResponse(header, "0200$fr", notes, raws)
+                    val exists = mask != null
                     for (pid in FREEZE_FRAME_PIDS) {
                         if (first) stage(SweepPhase.FREEZE_FRAME, "Freeze frame · PID $pid")
                         if (!exists) continue
                         val cmd = "02$pid$fr"
-                        try {
-                            val raw = session.rawCommand(cmd)
-                            if (Normalize.normalize(raw).startsWith("42")) {
-                                raws[rawKey(header, cmd)] = raw
-                            }
-                        } catch (_: Exception) {
-                            // An absent PID is not a failure; the mask is advisory and cars
-                            // disagree with it. Silence here keeps notes about real problems.
-                        }
+                        readFreezeResponse(header, cmd, notes, raws)
                     }
                     // A frame that does not exist answers 7F or nothing; stop rather than
                     // hammering the bus for frames the ECU has already declined.
@@ -535,15 +549,85 @@ class DtcReader(
         }
     }
 
-    /** First non-empty line containing [token] (case-insensitive), for ATH1 multi-line replies. */
-    private fun rawLineContaining(
+    /** Keep raw evidence before classification; incomplete exchanges never reach value decoding. */
+    private suspend fun readFreezeResponse(
+        header: String,
+        cmd: String,
+        notes: MutableList<String>,
+        raws: MutableMap<String, String>,
+    ): String? {
+        val label = "Freeze frame ${cmd.takeLast(2)} $cmd on $header"
+        val raw =
+            try {
+                rawDiagnosticCommand(header, cmd, raws)
+            } catch (e: Exception) {
+                notes += "$label: ${e.message ?: e.toString()}"
+                return null
+            }
+        raws[rawKey(header, cmd)] = raw
+        AdapterStatus.find(raw)?.let {
+            notes += "$label: adapter status $it: ${raw.trim()}"
+            return null
+        }
+        val response = Normalize.normalize(raw)
+        NegativeResponse.parse(response)?.let {
+            notes += "$label: $it"
+            return null
+        }
+        val expected = "42${cmd.drop(2)}"
+        if (!response.startsWith(expected)) {
+            notes += "$label: unexpected response (expected $expected): ${raw.trim()}"
+            return null
+        }
+        if (response.length % 2 != 0) {
+            notes += "$label: incomplete hex byte"
+            return null
+        }
+        val pid = cmd.substring(2, 4)
+        val dataBytes = if (pid == "00") 4 else FREEZE_FRAME_DATA_BYTES.getValue(pid)
+        val needed = expected.length + dataBytes * 2
+        if (response.length < needed) {
+            notes += "$label: truncated response"
+            return null
+        }
+        return response
+    }
+
+    /** Preserve a failed exchange's bytes without ever returning them to a decoder. */
+    private suspend fun rawDiagnosticCommand(
+        header: String,
+        cmd: String,
+        raws: MutableMap<String, String>,
+        canHeaders: Boolean = false,
+    ): String =
+        try {
+            val raw = if (canHeaders) session.rawCommand(cmd) else session.headerlessRawCommand(cmd)
+            raw.also { raws[rawKey(header, cmd)] = it }
+        } catch (e: Exception) {
+            retainPartialReply(e, header, cmd, raws)
+            throw e
+        }
+
+    private fun retainPartialReply(
+        error: Exception,
+        header: String,
+        cmd: String,
+        raws: MutableMap<String, String>,
+    ) {
+        if (error is TransportException && error.partialResponse.isNotEmpty()) {
+            raws[rawKey(header, cmd)] = error.partialResponse
+        }
+    }
+
+    /** Match the responder at the start of an ATH1 line, never inside another ECU's payload. */
+    private fun rawLinesFromCanId(
         raw: String,
-        token: String,
-    ): String? =
+        canId: String,
+    ): List<String> =
         raw
             .split('\r', '\n')
             .map { it.trim() }
-            .firstOrNull { it.contains(token, ignoreCase = true) }
+            .filter { Normalize.normalize(it).startsWith(canId) }
 
     /**
      * §7.1 engine path. Physical ECM `7E0` (never functional `7DF`, §1.2).
@@ -555,7 +639,7 @@ class DtcReader(
         groups: MutableList<DtcGroup>,
         notes: MutableList<String>,
         raws: MutableMap<String, String>,
-    ) {
+    ): Boolean {
         val cmds =
             when (info.model) {
                 VehicleModel.GEN3 ->
@@ -565,9 +649,9 @@ class DtcReader(
                     )
                 VehicleModel.GEN2, VehicleModel.GEN2_7E2 ->
                     listOf("13B0" to { r: String -> DtcDecoder.decodeMode13(r) })
-                else -> return
+                else -> return false
             }
-        readDtcGroup(DtcSource.ENGINE, "Engine ECU (7E0)", "7E0", cmds, groups, notes, raws)
+        return readDtcGroup(DtcSource.ENGINE, "Engine ECU (7E0)", "7E0", cmds, groups, notes, raws)
     }
 
     /** Reads one labeled group: sets the header, runs each command, dedupes its codes. */
@@ -588,7 +672,8 @@ class DtcReader(
         groups: MutableList<DtcGroup>,
         notes: MutableList<String>,
         raws: MutableMap<String, String>,
-    ) {
+    ): Boolean {
+        var complete = true
         try {
             session.withEcu(header) {
                 for (read in reads) {
@@ -597,10 +682,17 @@ class DtcReader(
                     for ((cmd, parse) in read.commands) {
                         codes +=
                             try {
-                                val raw = session.command(cmd)
-                                raws[rawKey(header, cmd)] = raw
-                                parse(raw)
+                                val response = session.command(cmd)
+                                raws[rawKey(header, cmd)] = session.lastRawResponse
+                                parse(response)
                             } catch (e: Exception) {
+                                complete = false
+                                retainPartialReply(e, header, cmd, raws)
+                                // The session clears this before each exchange, so refusals and
+                                // adapter errors retain their own bytes, never the previous reply.
+                                session.lastRawResponse.takeIf { it.isNotBlank() }?.let {
+                                    raws.putIfAbsent(rawKey(header, cmd), it)
+                                }
                                 notes += "${read.label} $cmd: ${e.message ?: e.toString()}"
                                 emptyList()
                             }
@@ -610,8 +702,10 @@ class DtcReader(
                 }
             }
         } catch (e: Exception) {
+            complete = false
             notes += "DTC read on $header: ${e.message ?: e.toString()}"
         }
+        return complete
     }
 
     /**
@@ -658,10 +752,10 @@ class DtcReader(
                 for (table in InfLayout.tables) {
                     stage(SweepPhase.INF_CODES, "INF ${table.request}")
                     try {
-                        val raw = session.command(table.request)
-                        raws[rawKey("7E2", table.request)] = raw
-                        CaptureLog.log("DTC", "INF raw ${table.request} -> $raw")
-                        active += InfDecoder.decodeActive(raw, table)
+                        val response = session.command(table.request)
+                        raws[rawKey("7E2", table.request)] = session.lastRawResponse
+                        CaptureLog.log("DTC", "INF normalized ${table.request} -> $response")
+                        active += InfDecoder.decodeActive(response, table)
                         responded++
                     } catch (e: NegativeResponseException) {
                         notes += "INF ${table.request} on 7E2: ${e.response.meaning}"
@@ -706,21 +800,23 @@ class DtcReader(
          * which names the causing DTC. Kept explicit rather than derived from the `0200` mask:
          * the mask advertised PIDs the car then refused, so the measured list is the honest one.
          */
-        val FREEZE_FRAME_PIDS =
-            listOf(
-                "02", // the DTC that caused this frame
-                "04", // calculated engine load
-                "05", // engine coolant temperature
-                "0C", // engine rpm
-                "0D", // vehicle speed
-                "0F", // intake air temperature
-                "11", // throttle position
-                "1F", // run time since engine start
-                "31", // distance since codes cleared
-                "42", // control module voltage
-                "46", // ambient air temperature
-                "4E", // time since DTCs cleared
+        private val FREEZE_FRAME_DATA_BYTES =
+            mapOf(
+                "02" to 2, // causing DTC
+                "04" to 1, // calculated load
+                "05" to 1, // coolant temperature
+                "0C" to 2, // engine rpm
+                "0D" to 1, // vehicle speed
+                "0F" to 1, // intake temperature
+                "11" to 1, // throttle position
+                "1F" to 2, // engine run time
+                "31" to 2, // distance since codes cleared
+                "42" to 2, // control module voltage
+                "46" to 1, // ambient temperature
+                "4E" to 2, // time since codes cleared
             )
+
+        val FREEZE_FRAME_PIDS = FREEZE_FRAME_DATA_BYTES.keys.toList()
 
         /** Capture/raw map key that keeps hybrid and engine `13B0` distinct. */
         fun rawKey(

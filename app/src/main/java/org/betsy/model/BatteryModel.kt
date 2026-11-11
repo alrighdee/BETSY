@@ -18,7 +18,6 @@ data class BatteryModel(
     var internalResistance: List<Int> = emptyList(), // raw bytes, 1 unit = 1 mΩ (§4.1)
     var temps: List<Float> = emptyList(),
     var blockCount: Int = 0,
-    var cellCount: Int = 0,
 ) {
     /** §4.2 PACK VOLTAGE = Σ block voltages. */
     fun packVolts(): Float = blockVolts.sum()

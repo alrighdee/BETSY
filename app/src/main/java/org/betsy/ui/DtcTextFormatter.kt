@@ -4,11 +4,31 @@ import org.betsy.decode.DtcMeaning
 import org.betsy.decode.GenericDtcCatalog
 import org.betsy.decode.InfMeaning
 import org.betsy.dtc.DtcGroup
+import org.betsy.dtc.DtcSource
 import org.betsy.model.Dtc
 import org.betsy.model.InfDetail
 
 /** Pure text formatting for enhanced DTCs and their retained INF relationships. */
 internal object DtcTextFormatter {
+    fun enhancedReadSummary(readsComplete: Boolean): String =
+        if (readsComplete) {
+            "No stored codes reported."
+        } else {
+            "Read incomplete. Stored-code status is not fully confirmed; see scan notes."
+        }
+
+    /** Hybrid snapshot explanations apply only to DTCs reported by hybrid control. */
+    fun exactForDtc(
+        source: DtcSource,
+        code: String,
+        resolutions: List<InfMeaning.Resolution>,
+    ): List<InfMeaning.Resolution.Exact> =
+        if (source == DtcSource.HYBRID_CONTROL) {
+            resolutions.filterIsInstance<InfMeaning.Resolution.Exact>().filter { it.dtc == code }
+        } else {
+            emptyList()
+        }
+
     fun formatGroups(
         groups: List<DtcGroup>,
         resolutions: List<InfMeaning.Resolution>,
@@ -16,15 +36,10 @@ internal object DtcTextFormatter {
         if (groups.isEmpty()) return "Toyota enhanced DTCs (KWP2000): none reported\n\n"
 
         val sb = StringBuilder()
-        val exactByParent =
-            resolutions
-                .filterIsInstance<InfMeaning.Resolution.Exact>()
-                .groupBy { it.dtc }
-
         for (group in groups) {
             sb.append(group.label).append(":\n")
             for (dtc in group.codes) {
-                val exact = exactByParent[dtc.code].orEmpty()
+                val exact = exactForDtc(group.source, dtc.code, resolutions)
                 when (exact.size) {
                     0 -> sb.append("  ").append(dtc.code).append("\n")
                     1 -> {

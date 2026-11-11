@@ -48,20 +48,64 @@ class InfDecoderTest {
         assertEquals("a page carries one sub-code, not one per non-zero byte", 1, out.size)
     }
 
-    /** Short payloads cannot reach the field. Absent, not an error, and not a guess. */
+    /** Even a readable INF field does not establish that the complete page arrived. */
     @Test
-    fun aPayloadTooShortToReachTheFieldYieldsNothing() {
-        assertEquals(emptyList<Any>(), InfDecoder.decodeActive("03261C7" + "AA".repeat(20), c7))
+    fun rejectsEveryTruncatedPageWithOrWithoutAnElmLength() {
+        val body = realP0571Page.removePrefix("03261C7")
+        for (bytes in 0 until 48) {
+            for (prefix in listOf("61C7", "03261C7")) {
+                for (data in listOf(body.take(bytes * 2), "00".repeat(bytes))) {
+                    assertThrows(NoDataException::class.java) {
+                        InfDecoder.decodeActive(prefix + data, c7)
+                    }
+                }
+            }
+        }
     }
 
-    /** Non-zero bytes but nothing three-digit in the field: report nothing rather than noise. */
     @Test
-    fun anImplausibleValueIsNotReported() {
-        val b = MutableList(48) { 0 }
-        b[10] = 0x55
-        b[InfDecoder.CODE_BYTE] = 0xFF
-        b[InfDecoder.CODE_BYTE + 1] = 0xFF
-        val hex = b.joinToString("") { "%02X".format(it) }
+    fun declaredLengthCannotBeSatisfiedByAnOtherwiseReadableInfField() {
+        assertThrows(NoDataException::class.java) {
+            InfDecoder.decodeActive("033" + realP0571Page.removePrefix("032"), c7)
+        }
+    }
+
+    @Test
+    fun shortDeclaredPageCannotBorrowTrailingPadding() {
+        assertThrows(NoDataException::class.java) {
+            InfDecoder.decodeActive("021" + realP0571Page.removePrefix("032"), c7)
+        }
+    }
+
+    @Test
+    fun invalidLengthPrefixesAreRejected() {
+        for (prefix in listOf("001", "000", "32")) {
+            assertThrows(NoDataException::class.java) {
+                InfDecoder.decodeActive(prefix + realP0571Page.removePrefix("032"), c7)
+            }
+        }
+    }
+
+    @Test
+    fun completeUnprefixedPageStillDecodes() {
+        assertEquals(115, InfDecoder.decodeActive(realP0571Page.removePrefix("032"), c7).single().code)
+    }
+
+    /** The wire field is unsigned 16-bit; decimal digit count does not establish validity. */
+    @Test
+    fun retainsNonzeroValuesAcrossTheUnsignedFieldRange() {
+        for (code in listOf(1, 99, 100, 999, 1000, 32767, 32768, 65535)) {
+            val b = MutableList(48) { 0 }
+            b[InfDecoder.CODE_BYTE] = code ushr 8
+            b[InfDecoder.CODE_BYTE + 1] = code and 0xFF
+            val hex = b.joinToString("") { "%02X".format(it) }
+            assertEquals(code, InfDecoder.decodeActive("03261C7$hex", c7).single().code)
+        }
+    }
+
+    @Test
+    fun aPopulatedPageWithZeroDetailYieldsNothing() {
+        val hex = "55" + "00".repeat(47)
         assertEquals(emptyList<Any>(), InfDecoder.decodeActive("03261C7$hex", c7))
     }
 

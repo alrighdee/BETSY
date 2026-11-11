@@ -1,8 +1,10 @@
 package org.betsy
 
 import org.betsy.decode.SpeedRpmDecoder
+import org.betsy.elm.NoDataException
 import org.betsy.model.BatteryModel
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertThrows
 import org.junit.Test
 
 /**
@@ -47,6 +49,47 @@ class SpeedRpmDecoderTest {
     fun `trailing bytes after the speed byte are ignored`() {
         val m = BatteryModel()
         SpeedRpmDecoder.decode("410C0FA00D6400000000", m)
+        assertEquals(1000, m.rpm)
+        assertEquals(62.5f, m.speedMph, 0.001f)
+    }
+
+    @Test
+    fun malformedOrIncompleteReplyDoesNotUpdateEitherValue() {
+        val replies =
+            listOf(
+                "410C0F",
+                "410C0FA0",
+                "410C0FA00D",
+                "410C0FA0410D",
+                "410C0FA00F0D64",
+                "410C0FA00E000D64",
+                "410C0FA000D64",
+                "6200410C0FA00D64",
+                "008410C0FA00D64",
+                "004410C0FA00D64",
+            )
+        for (reply in replies) {
+            val m = BatteryModel()
+            m.rpm = 777
+            m.speedMph = 12f
+            assertThrows(NoDataException::class.java) { SpeedRpmDecoder.decode(reply, m) }
+            assertEquals(777, m.rpm)
+            assertEquals(12f, m.speedMph, 0f)
+        }
+    }
+
+    @Test
+    fun repeatedPositiveServiceAtThePidBoundaryRemainsSupported() {
+        val m = BatteryModel()
+        SpeedRpmDecoder.decode("410C0FA0410D64", m)
+        assertEquals(1000, m.rpm)
+        assertEquals(62.5f, m.speedMph, 0.001f)
+    }
+
+    @Test
+    fun completeDeclaredMessageAcceptsPaddingOutsideItsBoundary() {
+        val m = BatteryModel()
+        SpeedRpmDecoder.decode("006410C0FA00D640000", m)
         assertEquals(1000, m.rpm)
         assertEquals(62.5f, m.speedMph, 0.001f)
     }

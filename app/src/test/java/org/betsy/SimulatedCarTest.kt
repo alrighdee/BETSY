@@ -23,7 +23,7 @@ import org.junit.Test
  * rules that cannot be produced by the single-fault fixture.
  */
 class SimulatedCarTest {
-    private val gen2 = VehicleInfo(VehicleModel.GEN2, supported = true, blockCount = 14, cellCount = 28)
+    private val gen2 = VehicleInfo(VehicleModel.GEN2, supported = true, blockCount = 14)
 
     private fun read(script: Map<String, String>): Pair<ReplayTransport, org.betsy.dtc.DtcReadResult> {
         val t = ReplayTransport(script)
@@ -170,8 +170,17 @@ class SimulatedCarTest {
                 "7E2/07",
                 "7E2/020000",
                 "7E2/020200",
+                "7E2/020400",
                 "7E2/020500",
+                "7E2/020C00",
+                "7E2/020D00",
+                "7E2/020F00",
+                "7E2/021100",
+                "7E2/021F00",
+                "7E2/023100",
                 "7E2/024200",
+                "7E2/024600",
+                "7E2/024E00",
                 // the refusal is kept deliberately: it is how the frame count is discovered,
                 // and a capture should record what was asked as well as what answered
                 "7E2/020001",
@@ -219,7 +228,6 @@ class SimulatedCarTest {
                 supported = false,
                 captureOnly = true,
                 blockCount = 0,
-                cellCount = 0,
             )
         assertFalse(info.supported)
         assertTrue(info.captureOnly)

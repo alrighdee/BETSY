@@ -11,7 +11,7 @@ package org.betsy.model
 data class InfDetail(
     /** Local identifier of the page this came from, 0xC6..0xCA. */
     val table: Int,
-    /** The 3-digit sub-code the car transmitted, e.g. 115 or 612. */
+    /** The nonzero unsigned 16-bit detail value transmitted, e.g. 115 or 612; meaning may be unknown. */
     val code: Int,
 ) {
     /** "Detail Code 1".."Detail Code 5", the labelling dealer tooling uses. */

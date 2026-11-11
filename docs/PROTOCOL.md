@@ -33,6 +33,12 @@ ATSTFF        maximum timeout
 breaks. `ATSTFF` matters because the first request after protocol detection can exceed a second,
 and a short timeout turns that into a spurious `NO DATA`.
 
+After a missing prompt, EOF, read failure, or failed write, a stream transport closes the
+connection and rejects further commands before writing or reading. Reconnect with a new
+transport instance; retrying ATZ on the failed stream cannot restore a known boundary.
+Partial bytes remain evidence for the failed request. This deliberately does not attempt to
+drain late responses, and does not change how complete ECU refusals or NO DATA are handled.
+
 Transports are interchangeable above the byte link: classic Bluetooth (RFCOMM/SPP, UUID
 `00001101-0000-1000-8000-00805F9B34FB`), BLE (GATT), or Wi-Fi (TCP, commonly
 `192.168.0.10:35000`).
@@ -68,6 +74,15 @@ On Gen2 the **battery** ECU is `7E3`, not `7E2`, this is stated backwards in a l
 circulating material. Use physical addressing throughout; never send any of this to the
 functional address `7DF`.
 
+For setup commands and `ATSH`, require one standalone `OK` response line (case-insensitive),
+allowing surrounding whitespace and an optional leading echo of that same command. Reject
+substring matches such as `NOT OK` or `OKAY`, unexpected extra lines, and adapter error text even
+when an `OK` line is also present. Keep the existing one retry; if neither reply confirms the
+command, stop setup or skip the addressed ECU block and report the failure. The final raw reply
+remains available in the session and failure message. The ATZ banner check is unchanged.
+This is client-side acknowledgement validation, covered by synthetic tests; no new on-car
+verification or change to ECU requests is implied.
+
 **`ATSH` is adapter-global state.** The header and the request that follows must be one atomic
 critical section. A background poller that can set its own header between another task's `ATSH`
 and its request will eventually do so, and the request then goes to the wrong ECU and returns
@@ -85,8 +100,24 @@ lines (`0:`, `1:`, `2:` …). **The declared count is authoritative**, the adapt
 frame, so concatenating frames over-counts. Single-frame replies carry no count; stripping three
 characters unconditionally eats real payload. Both mistakes are silent.
 
-`NO DATA`, `ERROR`, `STOPPED`, `UNABLE TO CONNECT`, `BUFFER FULL` and `?` are status, not data.
-Strip them before hex extraction or `NO DATA` reduces to the plausible-looking `DAA`.
+`NO DATA`, `CAN ERROR`, `BUS ERROR`, `ERROR`, `STOPPED`, `UNABLE TO CONNECT`,
+`BUFFER FULL` and `?` are error status, not data. Classify them case-insensitively before
+hex extraction and reject the exchange, even when positive data precedes the error text.
+Do not strip an error and decode what remains: `NO DATA` reduces to plausible-looking
+`DAA`, and `STOPPED` contributes `ED`, which can supply a missing PID byte.
+
+The same status check applies to normalized session reads, raw generic DTCs, mode-02 freeze
+frames, and liveness. Preserve the entire raw response and an error note; a failed INF page
+does not increment the responded-page count. An error in a freeze-frame mask stops frame
+discovery, while an individual PID error leaves subsequent reads intact. This does not add
+retry, recovery, or a rule to scan ordinary hex payloads for embedded negative-response tags.
+
+A normalized unprefixed byte response must contain pairs of hex digits. A dangling nibble
+is an incomplete byte, even after otherwise readable data; reject it before updating values.
+For length-prefixed messages, the three ELM length digits are metadata and are not subject to
+this byte-pair check; the bounded application data is. For ATH1, remove the three-digit CAN ID
+before checking the PCI/data byte sequence. Existing declared-boundary padding handling remains
+unchanged. Preserve malformed raw evidence and report the failed read.
 
 ### 2.1 Indexing
 
@@ -102,6 +133,13 @@ diagnostic the difference between "no fault" and "we failed to ask" is the whole
 ---
 
 ## 3. Vehicle detection
+
+For the Gen2 detection path, probe tags must be at the application-message boundary, optionally
+after a complete three-digit ELM length envelope. After `21D0` supplies the block count, the
+already received `21CE` sample must contain the full CE fields for that count before live data
+is enabled. This validation adds no requests. Transport failures and malformed declared probe
+messages abort detection rather than count as evidence for another layout; ordinary unsupported
+PID replies still allow fallback. This is BETSY detection policy, not the original OEM model-selection flow.
 
 A fallback chain. Each probe sets a header, issues one command, and looks for the expected
 positive tag; a miss falls through. Do not ask the user which car they have.
@@ -146,6 +184,16 @@ discovery there is *inferred*, unverified, and deliberately not relied on.
 
 ### 3.3 Block count and split packs
 
+For Gen2, block count `N` is read directly from D0 payload byte 0. The complete 15-byte
+preamble and all `N` resistance bytes must be present. The implemented P4 voltage layout
+supports 1–20 blocks; counts outside that range are rejected. This is a decoder limit,
+not a claim about every Toyota battery. An invalid Gen2 count is never inferred from resistance
+values or replaced with 10. Both standalone D0 and combined reads reject a count that differs
+from the monitor configuration before updating values.
+
+The counter reports measurement blocks, not electrochemical cells. The application does not
+multiply it by two to invent a cell count; the monitor and new capture metadata show blocks only.
+
 Block count `N` comes from the ECU rather than being assumed. The `N == 15` variant additionally
 tests for a split pack by comparing the first blocks against the last: a set reading above 18 V
 where the tail reads below indicates two differently-scaled halves. *Inferred*, and only
@@ -181,7 +229,7 @@ only, so a unit toggle can never alter a decoded value. Speed follows the same p
 Two containers recur:
 
 ```
-u16 offset-binary:  value = u16 / 100 - 327.68      (volts, and °C)
+u16 offset-binary:  value = (u16 - 32768) / 100      (volts, amps)
 u8  half-scale:     value = u8 / 2                  (percent)
 ```
 
@@ -197,23 +245,33 @@ Service `0x21` with a **single-byte** local identifier. Several identifiers may 
 one message on `7E3`, `21CED0CF` returns all three blocks concatenated, each behind its own
 identifier echo, which makes a full refresh one round trip.
 
+Section identifiers are checked at the calculated byte boundaries, never searched inside
+sensor data. For the measured 14-block NHW20 reply, `D0` follows the 31-byte CE payload
+and `CF` follows the 29-byte D0 payload. A voltage or resistance byte equal to `D0` or `CF`
+is a sensor value, not a section marker. Truncated CE data is rejected before updating the model.
+
 **`21CE`**, SOC, current, block voltages:
 
 | Field | Location | Formula |
 |---|---|---|
 | SOC % | byte 0 | `u8 / 2` |
-| Pack current A | bytes 1–2 | `u16 / 100 - 327.68`, negative = discharge |
-| Block voltage `[0 .. min(N,17)-1]` | bytes 3+, 2 bytes each | `u16 / 100 - 327.68` |
+| Pack current A | bytes 1–2 | `(u16 - 32768) / 100`, negative = discharge |
+| Block voltage `[0 .. min(N,17)-1]` | bytes 3+, 2 bytes each | `(u16 - 32768) / 100` |
 
 **`21CF`**, if `N > 17`, blocks 18..N appear first; skip them. From offset `k`:
 
 | Field | Location | Formula |
 |---|---|---|
-| 12 V auxiliary | `k+3` | `u8 * 0.2 - 25.6` |
+| 12 V auxiliary | `k+3` | `(2 * u8 - 256) / 10` |
 | Max charge (hp) | `k+4` | `(u8 / 2 - 64) * 1.34` |
 | Max discharge (hp) | `k+5` | `(u8 / 2 - 64) * 1.34` |
 | ΔSOC | `k+6` | `u8 * 0.01` |
 | Temps TB1–TB3 °C | `k+10`, `k+12`, `k+14` | `u16 / 100 - 327.68` |
+
+For current and block voltages, subtract the integer midpoint before converting to floating
+point and dividing by 100. For auxiliary voltage, calculate `2 * raw - 256` as an integer
+before dividing by 10. This preserves the source decimal scale without subtracting two
+already-rounded floating-point values. It changes numerical rounding, not coefficients or signs.
 
 **`21D0`**, internal resistance, §4.1.
 
@@ -229,9 +287,22 @@ decodes to SOC 54.5 %, current +2.67 A, 14 blocks 15.03–15.26 V, pack 212.15 V
 aux 13.8 V, temps 31.45 / 30.99 / 31.56 °C. These constants are self-validating, a Gen2 block is
 two 7.2 V modules, so a wrong offset yields 340 V or 0.15 V, not a subtly wrong answer.
 
+The Gen2 CE/D0/CF and combined decoders require the expected service/PID at the application
+start, optionally after a three-digit ELM application length. Declared bytes must all arrive;
+only the declared message is decoded, so trailing padding cannot supply missing fields.
+For the supported 14-block compact layout, standalone CF needs the 16 payload bytes actually
+used by its scalar and three-temperature fields, not an extra two bytes. This does not establish
+a universal CF size for every ECU support map. Numeric formulas are unchanged by these guards.
+
 ### 5.6 Speed and RPM
 
 `010C0D` returns both in one reply: `41 0C <rpm u16> 0D <speed u8>`.
+The RPM record must start the application response, and speed must follow its complete two-byte
+value at the next PID boundary. A repeated `41` before `0D` remains accepted. Arbitrary
+substring matches, incomplete values, and missing bytes from an ELM-declared message are
+rejected before either model value is assigned. Bytes outside the declared message cannot
+supply the speed value; trailing padding after a complete message is ignored.
+
 
 **RPM is a u16 and must be divided by 4; speed is a single byte.** Reading `0x0D` as a u16 throws
 on every poll cycle and takes the whole live screen down with it. There is a regression fixture
@@ -247,6 +318,18 @@ after `ATSP0` may take longer than any later one; do not tighten this to make de
 faster.
 
 ---
+
+The battery monitor shows a waiting status before the first successful battery cycle. If the
+primary read returns NO DATA, fails decoding, or has a connection error, it immediately marks
+the displayed values as not updated instead of silently leaving them on screen. Existing values
+are retained for reference. The next successful cycle clears that warning and renders fresh
+battery values. Existing repeated-failure stop thresholds are unchanged.
+
+The supplemental `010C0D` read is optional. A complete ECU refusal, NO DATA, or a malformed
+speed/RPM response records a `010C0D skipped` capture entry and preserves the previous two
+values; a successfully decoded battery cycle still completes. Transport/session failures and
+invalid primary battery data remain failures. This does not add response-pending retries or
+suppress connection errors.
 
 ## 7. Trouble codes and INF detail codes
 
@@ -266,6 +349,20 @@ substitute for Toyota enhanced DTCs or INF freeze pages.
 
 *Measured:* `13B0` and `1380` both answer `5300` on a healthy car's hybrid/battery ECUs. Masks
 `1381` and `1382` are refused with `7F1312`.
+
+Failed enhanced DTC reads retain their own verbatim ECU refusal or adapter-error output
+under the ECU/request raw key, alongside the error note. A timeout with no received bytes
+must not copy the preceding ECU's reply or an ATSH acknowledgement into that key. Failed
+responses remain errors and are not decoded as an empty successful DTC list. Partial
+transport replies remain incomplete evidence, even when their bytes look like a valid list.
+
+Enhanced DTC completeness is tracked separately from whether any codes were found. Only
+successful decoding of every planned enhanced request confirms an empty stored-code result.
+A header-setup failure, refusal, transport error, or malformed list marks the read incomplete;
+already found codes remain visible. The result card then reports unconfirmed stored-code
+status, and an explicit incomplete-read note travels in the existing capture notes. Failures
+of supplemental generic, freeze-frame, or INF reads do not change enhanced DTC completeness.
+`hasStoredDtcs` still means codes were found, not that every ECU was read successfully.
 
 Service `0A` is generic OBD-II permanent-DTC storage and is unrelated to Toyota INF detail codes.
 
@@ -296,12 +393,15 @@ Before Gen2 / Gen2-on-7E2 DTC or INF reads, the app sends `ATSH7E2` then `0100` 
 
 | Adapter / ECU output | ECU alive? | UI / result detail |
 |---|---|---|
-| Normalized response starts with `41` | yes | Responding |
-| Normalized response starts with `7F` | yes | Negative response + NRC meaning |
+| Complete `4100` + four supported-PID mask bytes | yes | Responding |
+| Complete `7F01<NRC>` for the requested service | yes | Negative response + NRC meaning |
 | `NO DATA` / `CAN ERROR` / `BUS ERROR` | no | No response (NO DATA) |
 | Transport timeout | no | No response (timeout) |
 | `?` / `STOPPED` / `UNABLE TO CONNECT` | no | Adapter error |
-| Other hex | no | Unexpected response |
+| Truncated `41`/`7F`, another PID/service, or other hex | no | Unexpected response |
+
+The raw probe response is retained even when it is incomplete or belongs to another PID/service.
+This validates the single mode-01 probe; it is not full vehicle identification.
 
 A clean "no DTCs" result is only meaningful if liveness says the ECU is responding.
 
@@ -314,7 +414,11 @@ After KWP2000 group reads and before INF freeze pages, Gen2 sweeps also:
 3. `ATH0` in a `finally` block  
 
 The raw line containing `7EA` is stripped of CAN ID + ISO-TP PCI before count-byte decode
-(tags `43` / `47`). Mode `$07` is **supplemental**: Toyota enhanced / non-emissions faults may
+(tags `43` / `47`). The responder must be the CAN ID at the start of the line, not a
+matching sequence inside another ECU's data. Only classical-CAN single-frame PCI lengths
+1–7 are accepted; every declared byte must be present, and padding beyond that length is
+excluded from decoding. Invalid PCI and truncated frames are retained in raw responses with
+an error note. Multi-frame replies remain explicitly unparsed. Mode `$07` is **supplemental**: Toyota enhanced / non-emissions faults may
 not appear there. A clean `$03`/`$07` result must **not** be interpreted as "HV ECU has no
 Toyota DTCs." KWP2000 groups, generic OBD, and INF remain three separate observations.
 
@@ -322,8 +426,18 @@ New raw keys: `7E2/0100`, `7E2/03`, `7E2/07`.
 
 ### 7.2 Response layout
 
-`53 <count> <DTC 2B> …`, no per-DTC status byte. `5300` means zero stored codes. Where the count
-overstates the body, trust the body length.
+`53 <count> <DTC 2B> …`, no per-DTC status byte. `5300` means zero stored codes. The count byte and all counted
+2-byte codes must be present. An incomplete list is a failed read, not a shorter or empty
+successful list; the reader retains the raw response and records a note. Trailing padding
+beyond the counted list is ignored. The positive service must start the application message;
+a matching byte sequence inside another response is not a DTC list. An optional three-digit
+ELM application-length prefix bounds the message: all declared bytes must arrive, and bytes
+outside that length cannot satisfy the count. This validates a single assembled response;
+it does not add collection of multiple application responses. After the complete counted
+body has been verified, a zero code word (`0000`) terminates the list without producing
+`P0000`; earlier codes are retained and later words are not interpreted. Individual zero
+bytes inside a nonzero code remain valid. The raw response, including the marker and tail,
+is preserved for review. The zero marker does not waive the completeness checks above.
 
 ### 7.3 Letter mapping and parsing
 
@@ -369,6 +483,16 @@ These are five per-DTC freeze pages, not bitmap tables partitioned by the hundre
 page is all zero. When a DTC writes a page, its INF value and analog snapshot occupy the 48-byte
 payload.
 
+BETSY currently decodes the captured Gen2 compact layout with a 48-byte payload. A shorter
+page is a failed read, even if bytes 29–30 are already present or every received byte is zero.
+This is a completeness guard for the supported layout, not a universal expanded-data length:
+other compact layouts require their own support-map handling before fixed offsets are safe.
+When ELM prefixes a response with an application length (for example `032` = 50 bytes,
+including `61 C7`), all declared bytes must arrive. Only then may trailing padding be ignored.
+A declared shorter page cannot borrow padding to pass the completeness guard. Failed pages
+retain their raw responses and an error note, do not increment the completed-page count, and
+do not prevent the remaining pages from being read.
+
 Four consequences for any implementation, all *measured*:
 
 1. **Mode 22 does not exist here.** `2205CA` answers `7F2211`, and so does `22F186`, the refusal
@@ -401,11 +525,28 @@ alongside analog snapshot data.
 
 **Reading the sub-code.** One field, `u16` big-endian at bytes **29-30** of a page's payload. It
 is the only 16-bit field in a page; every other field is 8 or 1 bit, and a three-digit code cannot
-fit in 8 bits. A page that is entirely zero holds nothing.
+fit in 8 bits. A page that is entirely zero holds nothing. The detail field itself is
+unsigned 16-bit with identity scaling and no unit. Retain any nonzero value, including values
+outside 100–999, as raw evidence; decimal digit count is not a validity check. Zero yields no
+INF entry even when other snapshot fields are nonzero. Unknown values remain unresolved and
+must not acquire a guessed DTC relationship or description.
+
+The detail-ID list is a separate format: it uses service `12 <snapshot index> 01 C5`,
+response `52`, a high-bit presence flag and a 15-bit identifier. Its presence mask must not be
+applied to the 16-bit Information field inside a `61 C6`–`61 CA` snapshot.
 
 **A page is a stored snapshot, not live data.** The 48 bytes remained identical across an ignition
-cycle. Live values would have drifted. The remaining bytes are analog readings, offset-binary,
-which is why a car at rest shows `80 80 80 80`: those are midpoints, not flags.
+cycle. Live values would have drifted. Some numeric fields use midpoint encoding, but the
+remaining data must not be treated as a uniform array of offset-binary analog values or INF
+flags. Shared page definitions also contain enums, individual flags, counters, and optional
+fields for other vehicle layouts.
+
+BETSY currently decodes only the Information value from these pages. InfLayout's legacy field
+lists are empty; it does not provide names, formulas, or units for additional snapshot values.
+Decoding those values requires the selected ECU's byte-support mapping and effective field
+metadata. Shared definitions extend through bit 455 of an expanded buffer, whereas the recorded
+compact page has 48 payload bytes; expanded offsets are not direct wire offsets. A shared field
+name, including rear-motor entries, is not evidence that NHW20 supports it.
 
 **Three things this rules out**, all measured:
 
@@ -423,7 +564,12 @@ documented `(DTC, INF)` pairs for the DTCs reported by hybrid control:
 2. Several matching parents produce one shared explanation only when their full detail is equal.
 3. No match, or conflicting matches, remains unresolved.
 
-Raw pages stay beside every interpretation. Page order never selects a parent, and DTCs reported
+Raw pages stay beside every interpretation. A transport failure without any received bytes
+records an error note and no raw-response entry for that request. Bytes received before a
+missing prompt, read failure, or disconnect are retained under the failed request as partial
+raw evidence alongside the failure; they are never decoded as a successful result. Session-level raw evidence
+is cleared before each exchange, so a timeout cannot copy the preceding page or header reply.
+Actual ECU refusals and adapter error text remain available as the current request's raw reply. Page order never selects a parent, and DTCs reported
 only by the engine or battery-control observation cannot acquire a hybrid-control INF explanation.
 Confirmation against other on-car DTCs and multi-fault combinations remains useful, but is not a
 precondition for deterministic pair resolution.
@@ -470,6 +616,104 @@ them:
 Generic mode 02 is useful parallel evidence, but it is not the Toyota INF carrier. INF extraction
 uses the hybrid-control freeze pages described in §7.4.1 and §7.4.2.
 
+Every mode-02 reply, including negative responses and adapter errors, is retained under its
+ECU/request raw key before classification. Refusals and transport errors produce a note naming
+the ECU, request, and frame index; a failed PID does not stop the remaining PID reads. A
+transport exception may retain partial bytes from its own exchange, but must not copy the
+preceding command's response or decode incomplete evidence as a successful PID value.
+The positive header must echo service, PID, and frame index; the mask requires all four mask
+bytes. Individual PID replies require their complete value: two bytes for `02`, `0C`, `1F`,
+`31`, `42`, and `4E`; one byte for `04`, `05`, `0D`, `0F`, `11`, and `46`. This guards the
+current PID list; it does not decode values or establish a universal transport-message length. A failed mask stops further frame discovery while
+subsequent INF reads continue. A refusal is evidence that the request was declined, not proof
+that the ECU contains no recorded faults.
+
+
+The generic DTC reader checks the ATH1 acknowledgement before issuing `$03`/`$07`.
+ATH1 and ATH0 each require one standalone `OK` line (case-insensitive), allowing whitespace
+and an optional leading echo of the current command, with no additional retries. An unconfirmed ATH1 skips that generic request and creates an error note.
+ATH0 restoration is attempted even if enabling headers failed. A rejected restoration or
+transport exception is reported separately without hiding the original error or discarding
+an already decoded generic result. AT acknowledgements are never stored as ECU replies.
+An attempted ATH1, ATH0, or ATZ invalidates the headerless response format before transport I/O.
+Until a standalone ATH0 acknowledgement confirms it again, block normalized reads and raw
+headerless liveness/freeze reads before transmission. Clear latest-response evidence for a blocked
+request so an earlier AT reply cannot be recorded as its ECU response. The check and exchange
+share the session lock. Existing application setup remains required; this tracks changes during
+the session and does not discover an adapter's initial configuration.
+
+Already decoded DTCs and format-restoration notes remain available. Generic reads whose parser
+explicitly handles CAN headers and AT control exchanges remain possible. If the existing next
+generic read restores ATH0 successfully, later freeze/INF reads may proceed; otherwise they
+record format errors without transmitting. Shared battery polling also uses the normalized guard.
+No automatic recovery, extra retries, or new ECU requests are added. A reset banner alone does
+not restore permission for headerless reads; normal configuration must confirm ATH0.
+
+Generic `$03`/`$07` parsing with ATH1 requires exactly one matching `7EA` single-frame
+line. If additional `7EA` lines arrive, the reader retains the entire raw exchange and reports
+that multiple responses were not decoded; it must not silently present the first line as the
+complete result. Repeated identical frames, a trailing refusal, and an orphan consecutive
+frame are also ambiguous and are not silently discarded. Lines from other CAN IDs do not count
+as additional `7EA` responses. ISO-TP multi-frame reassembly and collection of multiple
+application responses remain unimplemented; this guard does not add either capability.
+
 ### 7.5 Clearing
 
 Not implemented in this build. The wire command itself would be straightforward to add, but clearing is deliberately omitted for now. Everything in this build is a read: nothing clears a code, runs an actuator test, or writes to an ECU.
+
+### INF display and ECU source
+
+The `21C6`–`21CA` pages read on `7E2` are hybrid-control snapshot evidence. The reader
+resolves documented INF candidates against hybrid-control DTCs only. Preserve that source
+restriction in both fault cards and text formatting: an identical DTC number reported by
+Engine (`7E0`) or HV Battery (`7E3`) must not inherit a hybrid INF value or its explanation.
+Use structured `DtcSource`, never a translated ECU label, for this decision. Keep all
+original DTC groups and raw snapshot pages. This corrects presentation of existing candidate
+resolutions; it does not prove page ownership, add a new matching algorithm, or change any
+request, formula, or shared-INF resolution. Covered by synthetic duplicate-code tests;
+no new on-car verification.
+
+### Verbatim enhanced DTC and INF capture evidence
+
+For enhanced DTC and INF reads, save the adapter's original response in the capture `raw`
+map before decoding. Preserve whitespace, letter case, ELM length prefixes, and indexed
+continuation lines, both for valid replies and replies that later fail parsing. Pass the
+normalized application string separately to the existing decoder. Reading `lastRawResponse`
+and saving it remain inside the same ECU command group lock, so another exchange cannot
+replace the evidence between command completion and insertion. ECU refusals, adapter errors,
+and transport failures keep their existing evidence and notes handling. The transport's `>`
+prompt is consumed as a delimiter and is not part of the returned raw response; existing VIN
+redaction still applies during export. Covered by synthetic formatted NHW20 replies and JSON
+round-trip checks; no new on-car verification or change to formulas or ECU requests.
+
+### Enhanced DTC completion in shared captures
+
+Export `enhancedDtcReadsComplete` separately from `hasStoredDtcs`. The first reports whether
+all planned enhanced DTC reads completed; the second reports whether any stored DTC was found.
+Neither supplemental generic reads nor INF decoding determine enhanced-read completion.
+A failed scan with no found codes must not be labelled a no-fault or healthy-car baseline.
+
+The capture worker records `enhanced_dtc_reads_complete` and marks incomplete reads explicitly,
+while retaining found DTCs, raw responses, and notes. Older payloads without this field remain
+accepted with completion `null` (unknown), never assumed complete. The existing `fault` metadata
+still means stored DTCs were found, not that absence of faults was confirmed. A completed empty
+scan is described only as no stored DTCs from the completed enhanced reads, not a full-vehicle
+health check. These are client/export status rules, tested locally with synthetic scans and
+mocked uploads; no new ECU requests or on-car verification.
+
+### INF page completion in shared captures
+
+Export `infTablesResponded` separately from decoded INF values. Despite its historical name,
+it counts C6-CA pages successfully decoded in the supported compact layout, including pages
+with zero Information; transport replies that fail parsing do not increment it. This is
+independent of enhanced DTC completion. The worker accepts integers 0-5, records the count,
+and marks fewer than five decoded pages as incomplete. Older captures without the count
+remain accepted with page completion unknown; absence is not interpreted as five successes.
+
+An empty `codes` list alone establishes only that no INF value was decoded. It must not be
+described as proof no page carried an INF, a decoder defect, or a one-to-one DTC/page relation.
+With five successfully decoded pages and no decoded values, the narrower conclusion is that
+those five compact pages contained no nonzero Information value. Retain partial decoded INF,
+raw replies, and notes. The legacy `decoder_miss` metadata remains an advisory indication of
+stored DTCs with no decoded INF, not proof of a bug; the capture title now says `no INF decoded`.
+This is capture-status handling tested locally, with no new ECU requests or on-car verification.

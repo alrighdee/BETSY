@@ -3,7 +3,8 @@ package org.betsy.model
 /**
  * The PROTOCOL.md §4 value slots, the contract between the PID decoders and the UI.
  * Temperatures are stored in Celsius; conversion is a display-layer concern (§5.1 note).
- * [currentAmps] is positive when discharging (§4).
+ * Speed is stored in km/h; unit conversion is a display-layer concern (§5.6).
+ * [currentAmps] preserves the signed current value reported by the ECU (§4).
  */
 data class BatteryModel(
     var soc: Float = 0f,
@@ -12,7 +13,7 @@ data class BatteryModel(
     var maxChargeHp: Float = 0f,
     var maxDischargeHp: Float = 0f,
     var aux12V: Float = 0f,
-    var speedMph: Float = 0f,
+    var speedKmh: Float = 0f,
     var rpm: Int = 0,
     var blockVolts: List<Float> = emptyList(),
     var internalResistance: List<Int> = emptyList(), // raw bytes, 1 unit = 1 mΩ (§4.1)

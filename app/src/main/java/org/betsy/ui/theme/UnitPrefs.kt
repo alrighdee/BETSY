@@ -42,7 +42,7 @@ object UnitPrefs {
     fun speed(
         context: Context,
         kmh: Float,
-    ): Float = if (fahrenheit(context)) kmh * 0.621371f else kmh
+    ): Float = if (fahrenheit(context)) kmh * 0.6213712f else kmh
 
     fun speedUnit(context: Context): String = if (fahrenheit(context)) "mph" else "km/h"
 }

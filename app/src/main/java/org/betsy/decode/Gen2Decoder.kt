@@ -56,7 +56,7 @@ object Gen2Decoder {
         m.aux12V = Normalize.u8(r, k + 6 + s) * 0.2f - 25.6f
         m.maxChargeHp = (Normalize.u8(r, k + 8 + s) / 2f - 64f) * 1.34f
         m.maxDischargeHp = (Normalize.u8(r, k + 10 + s) / 2f - 64f) * 1.34f
-        m.deltaSoc = Normalize.u8(r, k + 12 + s) * 0.01f
+        m.deltaSoc = Normalize.u8(r, k + 12 + s) / 2f
         val temps = MutableList(3) { 0f }
         var kt = k + 20 // skips the intake word; TB1..TB3 (§5.2)
         for (idx in 0 until 3) {
@@ -125,7 +125,7 @@ object Gen2Decoder {
         m.aux12V = Normalize.u8(r, k + 6 + s) * 0.2f - 25.6f
         m.maxChargeHp = (Normalize.u8(r, k + 8 + s) / 2f - 64f) * 1.34f
         m.maxDischargeHp = (Normalize.u8(r, k + 10 + s) / 2f - 64f) * 1.34f
-        m.deltaSoc = Normalize.u8(r, k + 12 + s) * 0.01f
+        m.deltaSoc = Normalize.u8(r, k + 12 + s) / 2f
         val temps = MutableList(3) { 0f }
         var kt = k + 20
         for (idx in 0 until 3) {

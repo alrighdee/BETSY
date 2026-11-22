@@ -212,8 +212,19 @@ identifier echo, which makes a full refresh one round trip.
 | 12 V auxiliary | `k+3` | `u8 * 0.2 - 25.6` |
 | Max charge (hp) | `k+4` | `(u8 / 2 - 64) * 1.34` |
 | Max discharge (hp) | `k+5` | `(u8 / 2 - 64) * 1.34` |
-| ΔSOC | `k+6` | `u8 * 0.01` |
+| ΔSOC % | `k+6` | `u8 / 2` |
 | Temps TB1–TB3 °C | `k+10`, `k+12`, `k+14` | `u16 / 100 - 327.68` |
+
+**Delta SOC scale (verified against original Techstream definitions and conversion code).**
+In `EU/NA/JP battery_P4.ddb`, the Delta SOC field uses physical formula 3: multiply by 5,
+divide by 1, add 0, then apply one decimal place, giving `raw / 2` in **percent**. It shares
+that formula and unit `%` with Battery State of Charge. The source raw range 0–200 represents
+0–100%; each raw step is 0.5 percentage points. Raw 100 therefore means 50%, not 1%.
+The previous `raw * 0.01` formula understated nonzero values by a factor of 50. The available
+measured captures have zero in this field, so they could not expose that error; nonzero
+regression vectors are synthetic. The field remains payload byte 6 on the measured 14-block
+layout, and no new ECU commands are needed. Values above raw 200 exceed the source range;
+the conversion itself does not clamp them.
 
 **`21D0`**, internal resistance, §4.1.
 

@@ -10,9 +10,9 @@ import org.betsy.model.BatteryModel
  * Two decoder families: the general case (`p041n1/`) and the `N == 15` variant (`p044o1/`) whose
  * 21CF scalar offsets sit 4 hex chars earlier. [fifteenBlockVariant] selects the latter.
  *
- * Temps are decoded in Celsius directly as `u16/100 − 327.68` (the offset-binary container, §5.2
- * correction), the doc's `°F = 0.018·u16 − 557.824` is exactly that converted. The model stores
- * °C; unit conversion is a display-layer concern.
+ * P4 CF temperatures are unsigned 16-bit values decoded as
+ * `(raw / 10 - 3276) / 10` °C, with integer division before the offset and a 0.1 °C step.
+ * The model stores °C; unit conversion is a display concern.
  */
 object Gen2Decoder {
     /** Unsigned 16-bit midpoint encoding; the signed result is in hundredths of an amp or volt. */
@@ -31,6 +31,9 @@ object Gen2Decoder {
         Normalize.requireLength(response, i + 34 + count * 2, "21D0")
         return count
     }
+
+    /** Decode temperature with integer division, an offset, and one decimal place (§5.2). */
+    private fun temperatureCelsius(raw: Int): Float = (raw / 10 - 3276) / 10f
 
     /** 21CE, SOC, current, block voltages 0..min(N,17)−1 (§5.2). */
     fun decodeCe(
@@ -80,7 +83,7 @@ object Gen2Decoder {
         val temps = MutableList(3) { 0f }
         var kt = k + 20 // skips the intake word; TB1..TB3 (§5.2)
         for (idx in 0 until 3) {
-            temps[idx] = Normalize.u16(response, kt) / 100f - 327.68f // °C (offset-binary)
+            temps[idx] = temperatureCelsius(Normalize.u16(response, kt))
             kt += 4
         }
         m.temps = temps
@@ -154,7 +157,7 @@ object Gen2Decoder {
         val temps = MutableList(3) { 0f }
         var kt = k + 20
         for (idx in 0 until 3) {
-            temps[idx] = Normalize.u16(response, kt) / 100f - 327.68f // °C
+            temps[idx] = temperatureCelsius(Normalize.u16(response, kt))
             kt += 4
         }
         m.temps = temps

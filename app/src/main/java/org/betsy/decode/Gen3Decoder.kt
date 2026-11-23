@@ -80,8 +80,8 @@ object Gen3Decoder {
         val i = Normalize.requireTag(r, "6198")
         Normalize.requireLength(r, i + 12, "2198")
         m.currentAmps = Normalize.u16(r, i + 4) / 100f - 327.68f
-        m.maxChargeHp = (Normalize.u8(r, i + 8) / 2f - 64f) * 1.34f
-        m.maxDischargeHp = (Normalize.u8(r, i + 10) / 2f - 64f) * 1.34f
+        m.maxChargeKw = (Normalize.u8(r, i + 8) / 2f - 64f)
+        m.maxDischargeKw = (Normalize.u8(r, i + 10) / 2f - 64f)
         m.deltaSoc = Normalize.u8(r, i + 12) / 2f
     }
 
@@ -123,8 +123,8 @@ object Gen3Decoder {
         m.temps = temps
 
         m.currentAmps = Normalize.u16(r, u + 2) / 100f - 327.68f
-        m.maxChargeHp = (Normalize.u8(r, u + 6) / 2f - 64f) * 1.34f
-        m.maxDischargeHp = (Normalize.u8(r, u + 8) / 2f - 64f) * 1.34f
+        m.maxChargeKw = (Normalize.u8(r, u + 6) / 2f - 64f)
+        m.maxDischargeKw = (Normalize.u8(r, u + 8) / 2f - 64f)
         m.deltaSoc = Normalize.u8(r, u + 10) / 2f
     }
 }

@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.9](https://github.com/alrighdee/BETSY/compare/v0.0.8...v0.0.9) (2026-11-23)
+
+
+### Documentation
+
+* use wire vocabulary for the OEM definition references ([7739315](https://github.com/alrighdee/BETSY/commit/773931503a76987d2e16dae75b7055c18d8f037a))
+
 ## [0.0.8](https://github.com/alrighdee/BETSY/compare/v0.0.7...v0.0.8) (2026-11-23)
 
 

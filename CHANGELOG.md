@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.0.11](https://github.com/alrighdee/BETSY/compare/v0.0.10...v0.0.11) (2026-11-23)
+
+
+### Documentation
+
+* cache-bust the licence badge URL so refreshed detection reaches browsers ([479d1b4](https://github.com/alrighdee/BETSY/commit/479d1b4799feaadb701ecf4943342ac3b066ba78))
+* pure MIT licence file and stale-proof release link ([0c929c1](https://github.com/alrighdee/BETSY/commit/0c929c10681b69b4227874e75a5994d824f2a1ab))
+
 ## [0.0.10](https://github.com/alrighdee/BETSY/compare/v0.0.9...v0.0.10) (2026-11-23)
 
 

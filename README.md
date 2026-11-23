@@ -10,7 +10,7 @@
 [![Download the APK](https://img.shields.io/github/v/release/alrighdee/BETSY?sort=semver&display_name=tag&style=for-the-badge&label=download%20the%20apk&color=3DDC84)](https://github.com/alrighdee/BETSY/releases/latest)
 [![Downloads](https://img.shields.io/github/downloads/alrighdee/BETSY/total?style=for-the-badge&label=downloads&color=2C7BE5)](https://github.com/alrighdee/BETSY/releases)
 [![Build](https://img.shields.io/github/actions/workflow/status/alrighdee/BETSY/ci.yml?branch=main&style=for-the-badge&label=build)](https://github.com/alrighdee/BETSY/actions/workflows/ci.yml)
-[![Licence](https://img.shields.io/github/license/alrighdee/BETSY?style=for-the-badge&label=licence)](LICENSE)
+[![Licence](https://img.shields.io/github/license/alrighdee/BETSY?style=for-the-badge&label=licence&v=2)](LICENSE)
 
 Every release is tagged with its signed APK; the newest one is always on the
 [latest release](https://github.com/alrighdee/BETSY/releases/latest) page, and the

@@ -9,6 +9,11 @@
 
 ## [0.0.8](https://github.com/alrighdee/BETSY/compare/v0.0.7...v0.0.8) (2026-11-23)
 
+**Battery decoding corrections and response validation, contributed by
+[@KostyaSha](https://github.com/KostyaSha).** Delta SOC, charge and discharge limits, block
+temperatures and vehicle speed now follow the OEM unit definitions exactly, and every response is
+checked for completeness, framing and adapter errors before a value reaches the screen or a
+capture.
 
 ### Fixed
 

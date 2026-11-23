@@ -287,8 +287,8 @@ point and dividing by 100. For auxiliary voltage, calculate `2 * raw - 256` as a
 before dividing by 10. This preserves the source decimal scale without subtracting two
 already-rounded floating-point values. It changes numerical rounding, not coefficients or signs.
 
-**Delta SOC scale (verified against original Techstream definitions and conversion code).**
-In `EU/NA/JP battery_P4.ddb`, the Delta SOC field uses physical formula 3: multiply by 5,
+**Delta SOC scale (verified against the OEM diagnostic definitions and conversion code).**
+In the EU/NA/JP battery-ECU definition sets, the Delta SOC field uses physical formula 3: multiply by 5,
 divide by 1, add 0, then apply one decimal place, giving `raw / 2` in **percent**. It shares
 that formula and unit `%` with Battery State of Charge. The source raw range 0–200 represents
 0–100%; each raw step is 0.5 percentage points. Raw 100 therefore means 50%, not 1%.

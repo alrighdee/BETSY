@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.10](https://github.com/alrighdee/BETSY/compare/v0.0.9...v0.0.10) (2026-11-23)
+
+
+### Documentation
+
+* credit the contributor in the 0.0.8 notes ([108688b](https://github.com/alrighdee/BETSY/commit/108688bbe15a15c84af6d0d7b0f7e972b4c4fff1))
+
 ## [0.0.9](https://github.com/alrighdee/BETSY/compare/v0.0.8...v0.0.9) (2026-11-23)
 
 

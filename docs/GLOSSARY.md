@@ -171,9 +171,9 @@ identical.
 ## The battery
 
 ### Block, cell, module, pack
-A Gen2 traction battery holds **28 cells** in **14 blocks** of two. The car reports voltages per
-block, not per cell, so the finest resolution available is a pair. The whole assembly is the
-**pack**, nominally around 200 V.
+The Gen2 ECU reports **14 battery blocks** and a voltage for each block. A block is the
+measurement group named by the ECU; its count does not provide a separate cell or module count.
+BETSY reports blocks without inferring a total cell count. The whole battery assembly is the **pack**.
 
 ### Block voltage spread (delta)
 The gap between the highest and lowest block. The single most useful number for battery health: a
@@ -203,7 +203,7 @@ are how the decoding gets better.
 
 ### Generation
 - **Gen1** NHW10 and NHW11, 2000 to 2003
-- **Gen2** NHW20, 2004 to 2009. 14 blocks, 28 cells
+- **Gen2** NHW20, 2004 to 2009. 14 reported battery blocks
 - **Gen3** ZVW30, 2010 to 2015
 
 Each generation uses different addresses and encodings, so a decoder for one is wrong for another.

@@ -4,6 +4,7 @@ import org.betsy.decode.DtcDecoder
 import org.betsy.elm.NoDataException
 import org.betsy.model.Dtc
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertThrows
 import org.junit.Test
 
 /**
@@ -43,11 +44,86 @@ class DtcDecoderTest {
         assertEquals(emptyList<Dtc>(), DtcDecoder.decodeMode13("5300"))
     }
 
+    @Test(expected = NoDataException::class)
+    fun mode13RejectsPartialList() {
+        DtcDecoder.decodeMode13("53033000")
+    }
+
+    @Test(expected = NoDataException::class)
+    fun mode13RejectsMissingCount() {
+        DtcDecoder.decodeMode13("53")
+    }
+
+    @Test(expected = NoDataException::class)
+    fun mode13RejectsMissingBody() {
+        DtcDecoder.decodeMode13("5302")
+    }
+
+    @Test(expected = NoDataException::class)
+    fun mode13RejectsIncompleteCode() {
+        DtcDecoder.decodeMode13("530130")
+    }
+
     @Test
-    fun mode13CountOverstatesLengthIsTrustedDown() {
-        // count says 3 but only 1 DTC fits; must not read past the end.
-        val r = "53033000"
-        assertEquals(listOf("P3000"), DtcDecoder.decodeMode13(r).map { it.code })
+    fun mode13IgnoresPaddingBeyondCountedList() {
+        assertEquals(listOf("P3000"), DtcDecoder.decodeMode13("530130000000").map { it.code })
+        assertEquals(emptyList<Dtc>(), DtcDecoder.decodeMode13("530000000000"))
+    }
+
+    @Test
+    fun mode13AcceptsACompleteElmLengthPrefixedListAndPadding() {
+        assertEquals(listOf("P3000"), DtcDecoder.decodeMode13("004530130000000").map { it.code })
+        assertEquals(emptyList<Dtc>(), DtcDecoder.decodeMode13("00253000000"))
+    }
+
+    @Test
+    fun mode13RejectsTagsInsideAnUnrelatedResponseOrAtANibbleBoundary() {
+        for (r in listOf("62005300", "15300", "005300", "AA5300", "620053013000")) {
+            assertThrows(NoDataException::class.java) { DtcDecoder.decodeMode13(r) }
+        }
+    }
+
+    @Test
+    fun mode13CannotReadACodeFromOutsideTheDeclaredMessage() {
+        assertThrows(NoDataException::class.java) { DtcDecoder.decodeMode13("00253013000") }
+    }
+
+    @Test
+    fun mode13RequiresTheEntireDeclaredMessageEvenWhenTheCountAlreadyFits() {
+        assertThrows(NoDataException::class.java) { DtcDecoder.decodeMode13("00653013000") }
+    }
+
+    @Test
+    fun mode13RejectsDeclaredLengthsWithoutACompleteHeader() {
+        for (r in listOf("0005300", "0015300")) {
+            assertThrows(NoDataException::class.java) { DtcDecoder.decodeMode13(r) }
+        }
+    }
+
+    @Test
+    fun zeroWordIsAnEndMarkerRatherThanP0000() {
+        assertEquals(emptyList<Dtc>(), DtcDecoder.decodeMode13("53010000"))
+        assertEquals(listOf("P3000"), DtcDecoder.decodeMode13("530230000000").map { it.code })
+        assertEquals(listOf("P3000"), DtcDecoder.decodeMode13("5303300000000571").map { it.code })
+        assertEquals(emptyList<Dtc>(), DtcDecoder.decodeMode13("530200000571"))
+    }
+
+    @Test
+    fun zeroBytesWithinANonzeroCodeAreNotAnEndMarker() {
+        assertEquals(listOf("P0001", "P0100"), DtcDecoder.decodeMode13("530200010100").map { it.code })
+    }
+
+    @Test
+    fun zeroMarkerDoesNotExcuseAMissingCountedBody() {
+        assertThrows(NoDataException::class.java) { DtcDecoder.decodeMode13("53020000") }
+        assertThrows(NoDataException::class.java) { DtcDecoder.decodeMode13("00253010000") }
+    }
+
+    @Test
+    fun sharedCountedDecodersDoNotReportZeroWordsAsFaults() {
+        assertEquals(emptyList<Dtc>(), DtcDecoder.decodeMode03("43010000"))
+        assertEquals(emptyList<Dtc>(), DtcDecoder.decodeMode07("47010000"))
+        assertEquals(emptyList<Dtc>(), DtcDecoder.decodeMode0A("4A010000"))
     }
 
     @Test

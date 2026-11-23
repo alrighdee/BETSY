@@ -50,8 +50,8 @@ object DtcMeaning {
     /**
      * "Battery block N becomes weak", `P3011` upward, one code per block.
      *
-     * **This is the family BETSY exists for.** A weak block is the repairable case: one pair of
-     * cells has aged faster than its neighbours, and the code names which. Replacing that module
+     * **This is the family BETSY exists for.** A weak block is the repairable case: one measured
+     * block has aged faster than its neighbours, and the code names which. Replacing that module
      * costs a fraction of a whole pack, and the difference between those two outcomes is most of
      * the value this app can offer an owner.
      *
@@ -64,7 +64,7 @@ object DtcMeaning {
                 Meaning(
                     what = "Battery block $block is weaker than the rest of the pack.",
                     usually =
-                        "One pair of cells has aged faster than its neighbours, so the car keeps " +
+                        "One measured battery block has aged faster than its neighbours, so the car keeps " +
                             "charging and discharging around it. This is usually a single failing " +
                             "module rather than a dead battery, and the block number tells a " +
                             "specialist exactly which one to look at.",

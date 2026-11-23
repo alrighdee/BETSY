@@ -7,6 +7,7 @@ import org.betsy.decode.SpeedRpmDecoder
 import org.betsy.detect.VehicleInfo
 import org.betsy.detect.VehicleModel
 import org.betsy.elm.ElmSession
+import org.betsy.elm.NegativeResponseException
 import org.betsy.elm.NoDataException
 import org.betsy.model.BatteryModel
 import java.util.Locale
@@ -46,7 +47,6 @@ class Poller(
             // Count has to be on the model before decode: the combined reply is sliced
             // by N, and a first poll with N still 0 paints an empty pack.
             m.blockCount = info.blockCount
-            m.cellCount = info.cellCount
             decode(session.command(cmd))
             speedRpm(m)
         }
@@ -66,12 +66,11 @@ class Poller(
 
     /** §5.6 generic speed/RPM. Optional, a non-answering ECU leaves last values stale. */
     private suspend fun speedRpm(m: BatteryModel) {
-        val r =
-            try {
-                session.command("010C0D")
-            } catch (_: NoDataException) {
-                return
-            }
-        SpeedRpmDecoder.decode(r, m)
+        try {
+            SpeedRpmDecoder.decode(session.command("010C0D"), m)
+        } catch (e: Exception) {
+            if (e !is NoDataException && e !is NegativeResponseException) throw e
+            CaptureLog.log("POLL", "010C0D skipped: ${e.message ?: e.toString()}")
+        }
     }
 }

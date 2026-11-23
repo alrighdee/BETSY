@@ -27,7 +27,7 @@ import org.betsy.ui.theme.applyBetsyTheme
  * background thread, renders into programmatically-built TextViews + [BlockBarView].
  */
 class BatteryActivity : Activity() {
-    /** "Gen 2 · 14 blocks · 28 cells", filled in once detection is known. */
+    /** "Gen2 · 14 blocks", filled in once detection is known. */
     private val vehicleText: TextView by lazy {
         TextStyles.body(this, "", DesignTokens.TEXT_2, DesignTokens.GRAY_11)
     }
@@ -55,7 +55,7 @@ class BatteryActivity : Activity() {
         CaptureLog.log("UI", "BatteryActivity created")
         val info = SessionHolder.info()
         // The mockup puts the vehicle summary in the header, dot-separated, not in the body.
-        vehicleText.text = "${info.model.label} \u00b7 ${info.blockCount} blocks \u00b7 ${info.cellCount} cells"
+        vehicleText.text = "${info.model.label} \u00b7 ${info.blockCount} blocks"
 
         val poller = Poller(SessionHolder.session(), info)
         Thread {
@@ -64,10 +64,16 @@ class BatteryActivity : Activity() {
                 try {
                     awaitBlocking { poller.poll(model) }
                     consecutiveFailures = 0
-                    handler.post { render() }
-                } catch (_: NoDataException) {
-                    // transient, keep showing last good frame
-                } catch (_: TransportException) {
+                    handler.post {
+                        statusText.text = ""
+                        statusText.visibility = View.GONE
+                        render()
+                    }
+                } catch (e: NoDataException) {
+                    CaptureLog.log("UI", "battery data not updated: ${e.message}")
+                    showPollingError("Battery data not updated: ${e.message}")
+                } catch (e: TransportException) {
+                    showPollingError("Battery connection error: ${e.message}")
                     if (++consecutiveFailures >= 3) {
                         CaptureLog.log("UI", "adapter disconnected after $consecutiveFailures failures")
                         handler.post {
@@ -79,6 +85,7 @@ class BatteryActivity : Activity() {
                         break
                     }
                 } catch (e: Exception) {
+                    showPollingError("Battery data not updated: ${e.message}")
                     if (++consecutiveFailures >= 3) {
                         CaptureLog.logThrowable("UI", e)
                         handler.post {
@@ -153,10 +160,10 @@ class BatteryActivity : Activity() {
 
         statusText =
             TextView(this).apply {
-                text = ""
+                text = "Waiting for battery data..."
                 textSize = 13f
                 setTextColor(Color.GRAY)
-                visibility = View.GONE
+                visibility = View.VISIBLE
             }
         body.addView(statusText)
 
@@ -294,6 +301,14 @@ class BatteryActivity : Activity() {
             setTextColor(Color.GRAY)
             setPadding(0, dp(8), 0, 0)
         }
+
+    private fun showPollingError(message: String) {
+        handler.post {
+            statusText.text = message
+            statusText.setTextColor(Color.RED)
+            statusText.visibility = View.VISIBLE
+        }
+    }
 
     private fun render() {
         socText.text = String.format("%.1f %%", model.soc)

@@ -14,6 +14,44 @@ import org.junit.Test
 
 class DtcTextFormatterTest {
     @Test
+    fun incompleteEnhancedReadsCannotProduceAnEmptyStoredCodeClaim() {
+        assertEquals("No stored codes reported.", DtcTextFormatter.enhancedReadSummary(true))
+        val incomplete = DtcTextFormatter.enhancedReadSummary(false)
+        assertTrue(incomplete.contains("Read incomplete"))
+        assertTrue(incomplete.contains("not fully confirmed"))
+        assertFalse(incomplete.contains("No stored codes"))
+    }
+
+    @Test
+    fun identicalDtcWordsFromOtherEcusDoNotInheritHybridInf() {
+        val groups =
+            listOf(
+                group(DtcSource.ENGINE, "Engine ECU (7E0)", 0x0AA6 to "P0AA6"),
+                group(DtcSource.HYBRID_CONTROL, "HV ECU (7E2)", 0x0AA6 to "P0AA6"),
+                group(DtcSource.BATTERY_CONTROL, "Battery ECU (7E3)", 0x0AA6 to "P0AA6"),
+            )
+        val text = DtcTextFormatter.formatGroups(groups, listOf(exact("P0AA6", 612)))
+        assertEquals(1, occurrences(text, "P0AA6-612"))
+        assertEquals(1, occurrences(text, InfMeaning.forCode("P0AA6", 612)!!.narrows))
+        assertTrue(text.substringBefore("HV ECU (7E2)").contains("  P0AA6\n"))
+        assertFalse(text.substringAfter("Battery ECU (7E3)").contains("INF"))
+    }
+
+    @Test
+    fun severalHybridInfValuesStayWithTheirEcuWhenDtcWordsRepeat() {
+        val groups =
+            listOf(
+                group(DtcSource.HYBRID_CONTROL, "Hybrid", 0x0AA6 to "P0AA6"),
+                group(DtcSource.ENGINE, "Engine", 0x0AA6 to "P0AA6"),
+                group(DtcSource.BATTERY_CONTROL, "Battery", 0x0AA6 to "P0AA6"),
+            )
+        val text = DtcTextFormatter.formatGroups(groups, listOf(exact("P0AA6", 526), exact("P0AA6", 612)))
+        assertEquals(1, occurrences(text, "INF 526:"))
+        assertEquals(1, occurrences(text, "INF 612:"))
+        assertEquals(3, text.lines().count { it == "  P0AA6" })
+    }
+
+    @Test
     fun twoFaultsStillShowTheOneExactExplanation() {
         val groups =
             listOf(

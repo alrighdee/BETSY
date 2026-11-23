@@ -61,6 +61,14 @@ object Normalize {
         return i
     }
 
+    /** Validate a normalized byte sequence after any non-byte header has been removed. */
+    fun requireWholeBytes(
+        r: String,
+        what: String,
+    ) {
+        if (r.length % 2 != 0) throw NoDataException("$what: incomplete hex byte")
+    }
+
     fun requireLength(
         r: String,
         needed: Int,

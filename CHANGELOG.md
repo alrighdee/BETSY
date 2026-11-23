@@ -1,5 +1,58 @@
 # Changelog
 
+## [0.0.8](https://github.com/alrighdee/BETSY/compare/v0.0.7...v0.0.8) (2026-11-23)
+
+
+### Fixed
+
+* block headerless reads until ATH0 is confirmed ([2721c2f](https://github.com/alrighdee/BETSY/commit/2721c2fff006ccafddc96b80da2bcdcd7d1c5435))
+* correct Gen2 CF length and battery response boundaries ([c5ac454](https://github.com/alrighdee/BETSY/commit/c5ac454389d2dd36e416423d1fee213dedfbf55e))
+* correct Gen2 Delta SOC scaling ([d652402](https://github.com/alrighdee/BETSY/commit/d652402f896e69ce932004b02aefb911047e4473))
+* correct Gen2 Delta SOC scaling ([2e3d63f](https://github.com/alrighdee/BETSY/commit/2e3d63fd4fa1098e7d23e99874af7fd3e96aee30))
+* display battery power limits in kilowatts ([2578deb](https://github.com/alrighdee/BETSY/commit/2578debe7d9ddb57d003dae6b4e2ed9408928523))
+* display battery power limits in kilowatts ([027b97c](https://github.com/alrighdee/BETSY/commit/027b97c4b3ed87f8187c21f0cc49db136c3bc793))
+* distinguish incomplete DTC reads from confirmed empty results ([5f40784](https://github.com/alrighdee/BETSY/commit/5f40784f13f0ba50437a32cfe5e5239a411658a5))
+* keep battery polling active when optional speed reads fail ([b8c045b](https://github.com/alrighdee/BETSY/commit/b8c045b4f01f352bf31bda238b2922f92cb26d9b))
+* keep INF explanations scoped to their ECU source ([e25373a](https://github.com/alrighdee/BETSY/commit/e25373a9490a448630d771cb595a1ced8f1cd86e))
+* mark stale battery readings after polling failures ([b751a09](https://github.com/alrighdee/BETSY/commit/b751a09d5bd533003ddd0f65ff5d4326ac84ce91))
+* match Gen2 P4 battery temperatures to Techstream ([c9bf7e0](https://github.com/alrighdee/BETSY/commit/c9bf7e0d3d8b0071b13fa0dc52af3b8031a6bdf6))
+* match NHW20 battery temperatures to Techstream ([8045907](https://github.com/alrighdee/BETSY/commit/8045907d36fca4c50e2e525aa80a9c5889cdc969))
+* preserve enhanced DTC read completion in capture exports ([8838346](https://github.com/alrighdee/BETSY/commit/883834638edfb86489d733638320d89a3ee4fd32))
+* preserve Gen2 current and voltage decimal scaling ([19b4ef2](https://github.com/alrighdee/BETSY/commit/19b4ef2f3b626e3d6c6f0c89b05f36a82a8d6f69))
+* preserve INF page read completion in capture exports ([70e091b](https://github.com/alrighdee/BETSY/commit/70e091b6b204329a8fbb06fc32d48feabf03334d))
+* preserve mode 02 freeze-frame refusals and PID errors ([fd33611](https://github.com/alrighdee/BETSY/commit/fd33611c13d74227019275b1bb7f7a43113a9cee))
+* preserve negative DTC replies and ELM errors in captures ([dc52a4c](https://github.com/alrighdee/BETSY/commit/dc52a4ce73c915263589647b6dad5e50698690aa))
+* preserve original DTC and INF replies in captures ([1d10bd0](https://github.com/alrighdee/BETSY/commit/1d10bd0d80c778406caa848e62676a18480095dc))
+* preserve partial replies on transport failures ([ac85f7c](https://github.com/alrighdee/BETSY/commit/ac85f7c2a66cdc5d6754f73f1229edcb33e988d9))
+* prevent late replies from crossing failed exchanges ([d5e16eb](https://github.com/alrighdee/BETSY/commit/d5e16eb12e9ed23fc3e6f1fd86f522d81790b8b7))
+* prevent stale INF replies after transport timeouts ([e1a6823](https://github.com/alrighdee/BETSY/commit/e1a68235db9531682ca08fcf65fb2673836effe9))
+* reject ELM error text before decoding PID data ([093ee7b](https://github.com/alrighdee/BETSY/commit/093ee7b6352fd9d1d83ddd1441d00c64fefc285b))
+* reject incomplete generic DTC results with extra responder lines ([efb6f56](https://github.com/alrighdee/BETSY/commit/efb6f56422216a08ca97e87709340602d5d59b18))
+* reject incomplete hex bytes in diagnostic responses ([76e4db1](https://github.com/alrighdee/BETSY/commit/76e4db1395e6ba5a7d9bd1e8e5a3efff0cfd7253))
+* reject truncated counted DTC responses ([752936b](https://github.com/alrighdee/BETSY/commit/752936bb2c7dd2c304ada300db419ca576ae9b98))
+* reject truncated Gen2 INF freeze pages ([a09b7e0](https://github.com/alrighdee/BETSY/commit/a09b7e0c805a5ec5fb1389610ef3fa52748ab6b9))
+* remove the unsupported inferred battery cell count ([78779e4](https://github.com/alrighdee/BETSY/commit/78779e436f14a5720906a9b99f43ae3b3ca28228))
+* retain INF values outside the three-digit range ([f4c263f](https://github.com/alrighdee/BETSY/commit/f4c263f228c82559396df6d08b3e543b63a54c1a))
+* stop counted DTC lists at the zero-word marker ([4ff3328](https://github.com/alrighdee/BETSY/commit/4ff3328b990316dc4cf0b2247dddaabee87add1a))
+* store vehicle speed in kilometers per hour ([6b8410e](https://github.com/alrighdee/BETSY/commit/6b8410e6ea8bcf9bc58d370af5a3755e53dbf673))
+* store vehicle speed in kilometers per hour ([7b6cd48](https://github.com/alrighdee/BETSY/commit/7b6cd48b2f59679877b308303d8b2089be35ea96))
+* validate ATH acknowledgements and report restoration failures ([c6801c9](https://github.com/alrighdee/BETSY/commit/c6801c99074299c639e5737ee21572ea87d76c6f))
+* validate combined speed and RPM response boundaries ([414eee7](https://github.com/alrighdee/BETSY/commit/414eee7c6c3149c7f57360c58d5ae6bcc75b0e55))
+* validate counted DTC response boundaries ([d263f10](https://github.com/alrighdee/BETSY/commit/d263f1018cc6f75b10c83a876aed4dab7f0d7759))
+* validate ECU selection acknowledgements ([d8a29ee](https://github.com/alrighdee/BETSY/commit/d8a29ee82a2571ac4cd8a38e7bd975c70e1c2df1))
+* validate Gen2 battery response section boundaries ([9bc0895](https://github.com/alrighdee/BETSY/commit/9bc08950864ea5bf57c5e31eacf9b0da2d761120))
+* validate Gen2 detection responses before enabling live data ([b36fe80](https://github.com/alrighdee/BETSY/commit/b36fe80d7d4fb6226cb5689c3876d9e012861700))
+* validate Gen2 generic DTC single-frame responses ([861fdec](https://github.com/alrighdee/BETSY/commit/861fdec657913a5014d47b1b860a9c06fbbdd5c3))
+* validate Gen2 mode 01 PID 00 liveness responses ([f39bd8d](https://github.com/alrighdee/BETSY/commit/f39bd8d2fa5cd318a8425ad9dc5cd5cf5df3b477))
+* validate mode 02 freeze-frame PID value lengths ([f1c9060](https://github.com/alrighdee/BETSY/commit/f1c9060dc13160ee11ff22a07280a343daaface9))
+* validate the ECU-reported Gen2 battery block count ([ccb1150](https://github.com/alrighdee/BETSY/commit/ccb115093f03a4d07f8b0ba75276e8099594a98d))
+
+
+### Documentation
+
+* correct INF snapshot field descriptions ([7d7011f](https://github.com/alrighdee/BETSY/commit/7d7011f7c2965bccf5405f3266b504d9d2270c35))
+* note the latest release and link the changelog ([3c49efb](https://github.com/alrighdee/BETSY/commit/3c49efb7bbe9bb98017d8164ff7c71c056667ca5))
+
 ## [0.0.7](https://github.com/alrighdee/BETSY/compare/v0.0.6...v0.0.7) (2026-10-04)
 
 **More of the car's codes, explained.** Legacy and current names for the same fault now read alike,

@@ -12,8 +12,9 @@
 [![Build](https://img.shields.io/github/actions/workflow/status/alrighdee/BETSY/ci.yml?branch=main&style=for-the-badge&label=build)](https://github.com/alrighdee/BETSY/actions/workflows/ci.yml)
 [![Licence](https://img.shields.io/github/license/alrighdee/BETSY?style=for-the-badge&label=licence)](LICENSE)
 
-**Latest release: [0.0.7](https://github.com/alrighdee/BETSY/releases/tag/v0.0.7).** Every release is
-tagged with its signed APK; the [changelog](CHANGELOG.md) lists what changed.
+Every release is tagged with its signed APK; the newest one is always on the
+[latest release](https://github.com/alrighdee/BETSY/releases/latest) page, and the
+[changelog](CHANGELOG.md) lists what changed.
 
 ## See it run
 

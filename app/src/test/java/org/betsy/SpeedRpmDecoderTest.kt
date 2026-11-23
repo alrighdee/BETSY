@@ -19,7 +19,7 @@ class SpeedRpmDecoderTest {
         val m = BatteryModel()
         SpeedRpmDecoder.decode("410C00000D00", m)
         assertEquals(0, m.rpm)
-        assertEquals(0f, m.speedMph, 0.001f)
+        assertEquals(0f, m.speedKmh, 0.001f)
     }
 
     @Test
@@ -31,18 +31,18 @@ class SpeedRpmDecoderTest {
     }
 
     @Test
-    fun `speed is a single byte in km per hour converted to mph`() {
+    fun `speed is a single byte stored in km per hour`() {
         val m = BatteryModel()
-        // 0x64 = 100 km/h -> 62.5 mph at the section 5.6 factor.
+        // 0x64 = 100 km/h. Imperial conversion belongs to the display.
         SpeedRpmDecoder.decode("410C00000D64", m)
-        assertEquals(62.5f, m.speedMph, 0.001f)
+        assertEquals(100f, m.speedKmh, 0.001f)
     }
 
     @Test
     fun `a full-scale speed byte stays a byte`() {
         val m = BatteryModel()
         SpeedRpmDecoder.decode("410C00000DFF", m)
-        assertEquals(255 * 0.625f, m.speedMph, 0.001f)
+        assertEquals(255f, m.speedKmh, 0.001f)
     }
 
     @Test
@@ -50,7 +50,17 @@ class SpeedRpmDecoderTest {
         val m = BatteryModel()
         SpeedRpmDecoder.decode("410C0FA00D6400000000", m)
         assertEquals(1000, m.rpm)
-        assertEquals(62.5f, m.speedMph, 0.001f)
+        assertEquals(100f, m.speedKmh, 0.001f)
+    }
+
+    @Test
+    fun `rpm vectors preserve unsigned width and truncate fractional revolutions`() {
+        val vectors = listOf(0 to 0, 1 to 0, 2 to 0, 32767 to 8191, 32768 to 8192, 65534 to 16383, 65535 to 16383)
+        val m = BatteryModel()
+        for ((raw, expectedRpm) in vectors) {
+            SpeedRpmDecoder.decode("410C%04X0D00".format(raw), m)
+            assertEquals("raw rpm $raw", expectedRpm, m.rpm)
+        }
     }
 
     @Test
@@ -71,10 +81,10 @@ class SpeedRpmDecoderTest {
         for (reply in replies) {
             val m = BatteryModel()
             m.rpm = 777
-            m.speedMph = 12f
+            m.speedKmh = 12f
             assertThrows(NoDataException::class.java) { SpeedRpmDecoder.decode(reply, m) }
             assertEquals(777, m.rpm)
-            assertEquals(12f, m.speedMph, 0f)
+            assertEquals(12f, m.speedKmh, 0f)
         }
     }
 
@@ -83,7 +93,7 @@ class SpeedRpmDecoderTest {
         val m = BatteryModel()
         SpeedRpmDecoder.decode("410C0FA0410D64", m)
         assertEquals(1000, m.rpm)
-        assertEquals(62.5f, m.speedMph, 0.001f)
+        assertEquals(100f, m.speedKmh, 0.001f)
     }
 
     @Test
@@ -91,6 +101,6 @@ class SpeedRpmDecoderTest {
         val m = BatteryModel()
         SpeedRpmDecoder.decode("006410C0FA00D640000", m)
         assertEquals(1000, m.rpm)
-        assertEquals(62.5f, m.speedMph, 0.001f)
+        assertEquals(100f, m.speedKmh, 0.001f)
     }
 }

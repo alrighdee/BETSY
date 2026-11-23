@@ -74,9 +74,9 @@ object Gen2Decoder {
         }
         val s = if (fifteenBlockVariant) -4 else 0 // p044o1 scalars sit 4 hex chars earlier
         m.aux12V = (Normalize.u8(response, k + 6 + s) * 2 - 256) / 10f
-        m.maxChargeHp = (Normalize.u8(response, k + 8 + s) / 2f - 64f) * 1.34f
-        m.maxDischargeHp = (Normalize.u8(response, k + 10 + s) / 2f - 64f) * 1.34f
-        m.deltaSoc = Normalize.u8(response, k + 12 + s) * 0.01f
+        m.maxChargeKw = (Normalize.u8(response, k + 8 + s) / 2f - 64f)
+        m.maxDischargeKw = (Normalize.u8(response, k + 10 + s) / 2f - 64f)
+        m.deltaSoc = Normalize.u8(response, k + 12 + s) / 2f
         val temps = MutableList(3) { 0f }
         var kt = k + 20 // skips the intake word; TB1..TB3 (§5.2)
         for (idx in 0 until 3) {
@@ -148,9 +148,9 @@ object Gen2Decoder {
         }
         val s = if (fifteenBlockVariant) -4 else 0
         m.aux12V = (Normalize.u8(response, k + 6 + s) * 2 - 256) / 10f
-        m.maxChargeHp = (Normalize.u8(response, k + 8 + s) / 2f - 64f) * 1.34f
-        m.maxDischargeHp = (Normalize.u8(response, k + 10 + s) / 2f - 64f) * 1.34f
-        m.deltaSoc = Normalize.u8(response, k + 12 + s) * 0.01f
+        m.maxChargeKw = (Normalize.u8(response, k + 8 + s) / 2f - 64f)
+        m.maxDischargeKw = (Normalize.u8(response, k + 10 + s) / 2f - 64f)
+        m.deltaSoc = Normalize.u8(response, k + 12 + s) / 2f
         val temps = MutableList(3) { 0f }
         var kt = k + 20
         for (idx in 0 until 3) {

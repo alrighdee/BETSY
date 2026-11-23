@@ -206,6 +206,9 @@ reachable on hardware this build does not otherwise support.
 Pack voltage is the sum of block voltages. Voltage difference is max minus min across blocks,
 the single most useful number for spotting a failing module.
 
+Charge and discharge control limits are stored and displayed in **kW**. They are ECU-reported
+limits, separate from instantaneous battery power. Signed values are preserved.
+
 ### 4.1 Internal resistance
 
 `21D0` returns one byte per block after a 15-byte preamble. **1 raw unit = 1 mΩ.** Display bands
@@ -263,15 +266,26 @@ is a sensor value, not a section marker. Truncated CE data is rejected before up
 | Field | Location | Formula |
 |---|---|---|
 | 12 V auxiliary | `k+3` | `(2 * u8 - 256) / 10` |
-| Max charge (hp) | `k+4` | `(u8 / 2 - 64) * 1.34` |
-| Max discharge (hp) | `k+5` | `(u8 / 2 - 64) * 1.34` |
-| ΔSOC | `k+6` | `u8 * 0.01` |
+| Charge control limit (kW) | `k+4` | `u8 / 2 - 64` |
+| Discharge control limit (kW) | `k+5` | `u8 / 2 - 64` |
+| ΔSOC % | `k+6` | `u8 / 2` |
 | Temps TB1–TB3 °C | `k+10`, `k+12`, `k+14` | `u16 / 100 - 327.68` |
 
 For current and block voltages, subtract the integer midpoint before converting to floating
 point and dividing by 100. For auxiliary voltage, calculate `2 * raw - 256` as an integer
 before dividing by 10. This preserves the source decimal scale without subtracting two
 already-rounded floating-point values. It changes numerical rounding, not coefficients or signs.
+
+**Delta SOC scale (verified against original Techstream definitions and conversion code).**
+In `EU/NA/JP battery_P4.ddb`, the Delta SOC field uses physical formula 3: multiply by 5,
+divide by 1, add 0, then apply one decimal place, giving `raw / 2` in **percent**. It shares
+that formula and unit `%` with Battery State of Charge. The source raw range 0–200 represents
+0–100%; each raw step is 0.5 percentage points. Raw 100 therefore means 50%, not 1%.
+The previous `raw * 0.01` formula understated nonzero values by a factor of 50. The available
+measured captures have zero in this field, so they could not expose that error; nonzero
+regression vectors are synthetic. The field remains payload byte 6 on the measured 14-block
+layout, and no new ECU commands are needed. Values above raw 200 exceed the source range;
+the conversion itself does not clamp them.
 
 **`21D0`**, internal resistance, §4.1.
 
@@ -284,7 +298,7 @@ CF   8CD1 80 C5 4E AA 00 09 0000 8C49 8C1B 8C54
 ```
 
 decodes to SOC 54.5 %, current +2.67 A, 14 blocks 15.03–15.26 V, pack 212.15 V, 19 mΩ per block,
-aux 13.8 V, temps 31.45 / 30.99 / 31.56 °C. These constants are self-validating, a Gen2 block is
+aux 13.8 V, charge limit -25.0 kW, discharge limit 21.0 kW, temps 31.45 / 30.99 / 31.56 °C. These constants are self-validating, a Gen2 block is
 two 7.2 V modules, so a wrong offset yields 340 V or 0.15 V, not a subtly wrong answer.
 
 The Gen2 CE/D0/CF and combined decoders require the expected service/PID at the application
@@ -303,6 +317,10 @@ substring matches, incomplete values, and missing bytes from an ELM-declared mes
 rejected before either model value is assigned. Bytes outside the declared message cannot
 supply the speed value; trailing padding after a complete message is ignored.
 
+
+The model stores the speed byte directly in **km/h**. Imperial display uses
+`km/h * 0.6213712`; decoding never passes through an approximate mph intermediate.
+RPM uses unsigned integer division by 4, discarding the quarter-revolution remainder.
 
 **RPM is a u16 and must be divided by 4; speed is a single byte.** Reading `0x0D` as a u16 throws
 on every poll cycle and takes the whole live screen down with it. There is a regression fixture

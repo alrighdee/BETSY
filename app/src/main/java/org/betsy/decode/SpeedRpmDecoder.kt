@@ -13,9 +13,6 @@ import org.betsy.model.BatteryModel
  * runs off the end of a minimal `410C00000D00` response and throws.
  */
 object SpeedRpmDecoder {
-    /** km/h → mph (0.6214), rounded up slightly, as §5.6 specifies. */
-    private const val MPH_PER_KMH = 0.625f
-
     fun decode(
         r: String,
         m: BatteryModel,
@@ -26,9 +23,9 @@ object SpeedRpmDecoder {
         if (!response.startsWith("0D", speedPid)) throw NoDataException("010C0D: expected speed PID after RPM")
         Normalize.requireLength(response, speedPid + 4, "010C0D speed")
         val rpm = Normalize.u16(response, 4) / 4
-        val speed = Normalize.u8(response, speedPid + 2) * MPH_PER_KMH
+        val speed = Normalize.u8(response, speedPid + 2).toFloat()
         m.rpm = rpm
-        m.speedMph = speed
+        m.speedKmh = speed
     }
 
     /** Bound an assembled response before interpreting either value. */

@@ -57,10 +57,10 @@ class ResponseByteAlignmentTest {
     fun speedResponseRejectsAnUnpairedHexDigitBeforeUpdatingEitherValue() {
         val m = BatteryModel()
         m.rpm = 777
-        m.speedMph = 12f
+        m.speedKmh = 12f
         assertThrows(NoDataException::class.java) { SpeedRpmDecoder.decode("410C0FA00D64F", m) }
         assertEquals(777, m.rpm)
-        assertEquals(12f, m.speedMph, 0f)
+        assertEquals(12f, m.speedKmh, 0f)
     }
 
     @Test

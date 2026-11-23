@@ -50,8 +50,8 @@ class PollerTest {
         for (reply in listOf("NO DATA", "7F0111", "7F0112", "7F0122", "410C0FA0", "410C0FA00F0D64")) {
             val t = PollTransport(battery, reply)
             val p = poller(t)
-            val m = BatteryModel(rpm = 777, speedMph = 12f)
-            val expected = BatteryModel(blockCount = 14, rpm = 777, speedMph = 12f)
+            val m = BatteryModel(rpm = 777, speedKmh = 12f)
+            val expected = BatteryModel(blockCount = 14, rpm = 777, speedKmh = 12f)
             Gen2Decoder.decodeCombined(battery, expected, fifteenBlockVariant = false)
             repeat(4) { awaitBlocking { p.poll(m) } }
             assertEquals(expected, m)
@@ -65,7 +65,7 @@ class PollerTest {
         val m = BatteryModel()
         awaitBlocking { poller(PollTransport(battery, "410C0FA00D64")).poll(m) }
         assertEquals(1000, m.rpm)
-        assertEquals(62.5f, m.speedMph, 0.001f)
+        assertEquals(100f, m.speedKmh, 0.001f)
         assertEquals(14, m.blockVolts.size)
     }
 

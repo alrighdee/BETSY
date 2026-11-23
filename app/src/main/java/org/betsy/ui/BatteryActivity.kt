@@ -316,17 +316,16 @@ class BatteryActivity : Activity() {
         packText.text = String.format("%.1f V", model.packVolts())
         diffText.text = String.format("%.3f V", model.voltDiff())
         auxText.text = String.format("%.2f V", model.aux12V)
-        chargeText.text = String.format("%.1f HP", model.maxChargeHp)
-        dischargeText.text = String.format("%.1f HP", model.maxDischargeHp)
+        chargeText.text = String.format("%.1f kW", model.maxChargeKw)
+        dischargeText.text = String.format("%.1f kW", model.maxDischargeKw)
         val tempUnit = if (UnitPrefs.fahrenheit(this)) "F" else "C"
         tempsText.text =
             "BATT TEMP  " +
             model.temps.joinToString("  ") {
                 String.format("%.1f%s", UnitPrefs.temperature(this, it), tempUnit)
             }
-        val kmh = model.speedMph / 0.625f
         speedText.text =
-            "SPEED ${String.format("%.0f %s", UnitPrefs.speed(this, kmh), UnitPrefs.speedUnit(this))}   RPM ${model.rpm}"
+            "SPEED ${String.format("%.0f %s", UnitPrefs.speed(this, model.speedKmh), UnitPrefs.speedUnit(this))}   RPM ${model.rpm}"
         barsView.syncFromModel()
     }
 
